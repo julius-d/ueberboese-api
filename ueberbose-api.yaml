@@ -1,0 +1,181 @@
+openapi: 3.0.3
+info:
+  title: Überböse Streaming API
+  description: Reverse engineered API specification
+  version: 1.2.0
+paths:
+  /streaming/sourceproviders:
+    get:
+      summary: Get streaming source providers
+      description: Retrieves a list of available streaming source providers
+      operationId: getSourceProviders
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: Accept
+          in: header
+          required: true
+          schema:
+            type: string
+            enum:
+              - application/vnd.bose.streaming-v1.2+xml
+          example: application/vnd.bose.streaming-v1.2+xml
+        - name: Content-type
+          in: header
+          required: true
+          schema:
+            type: string
+            enum:
+              - application/vnd.bose.streaming-v1.2+xml
+          example: application/vnd.bose.streaming-v1.2+xml
+        - name: User-agent
+          in: header
+          required: false
+          schema:
+            type: string
+          example: Bose_Lisa/27.0.6
+      responses:
+        '200':
+          description: Successful response with list of source providers
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: application/vnd.bose.streaming-v1.2+xml
+            ETag:
+              schema:
+                type: string
+                example: "1762017390476"
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+                example: "*"
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+                example: "GET, POST, OPTIONS"
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+                example: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization"
+            Access-Control-Expose-Headers:
+              schema:
+                type: string
+                example: "Authorization"
+          content:
+            application/vnd.bose.streaming-v1.2+xml:
+              schema:
+                $ref: '#/components/schemas/SourceProvidersResponse'
+              example: |
+                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                <sourceProviders>
+                  <sourceprovider id="1">
+                    <createdOn>2012-09-19T12:43:00.000+00:00</createdOn>
+                    <name>PANDORA</name>
+                    <updatedOn>2012-09-19T12:43:00.000+00:00</updatedOn>
+                  </sourceprovider>
+                  <sourceprovider id="15">
+                    <createdOn>2014-03-17T15:30:27.000+00:00</createdOn>
+                    <name>SPOTIFY</name>
+                    <updatedOn>2014-03-17T15:30:27.000+00:00</updatedOn>
+                  </sourceprovider>
+                </sourceProviders>
+        '401':
+          description: Unauthorized - Invalid or missing Bearer token
+        '403':
+          description: Forbidden - Valid token but insufficient permissions
+        '500':
+          description: Internal server error
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Bearer token authentication
+
+  schemas:
+    SourceProvidersResponse:
+      type: object
+      description: XML response containing list of source providers
+      xml:
+        name: sourceProviders
+      properties:
+        sourceprovider:
+          type: array
+          items:
+            $ref: '#/components/schemas/SourceProvider'
+          xml:
+            wrapped: false
+
+    SourceProvider:
+      type: object
+      description: A streaming source provider
+      xml:
+        name: sourceprovider
+      required:
+        - id
+        - createdOn
+        - name
+        - updatedOn
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the source provider
+          xml:
+            attribute: true
+          example: 1
+        createdOn:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp when the provider was created
+          example: "2012-09-19T12:43:00.000+00:00"
+        name:
+          type: string
+          description: Name/type of the streaming source provider
+          enum:
+            - PANDORA
+            - INTERNET_RADIO
+            - OFF
+            - LOCAL
+            - AIRPLAY
+            - CURRATED_RADIO
+            - STORED_MUSIC
+            - SLAVE_SOURCE
+            - AUX
+            - RECOMMENDED_INTERNET_RADIO
+            - LOCAL_INTERNET_RADIO
+            - GLOBAL_INTERNET_RADIO
+            - HELLO
+            - DEEZER
+            - SPOTIFY
+            - IHEART
+            - SIRIUSXM
+            - GOOGLE_PLAY_MUSIC
+            - QQMUSIC
+            - AMAZON
+            - LOCAL_MUSIC
+            - WBMX
+            - SOUNDCLOUD
+            - TIDAL
+            - TUNEIN
+            - QPLAY
+            - JUKE
+            - BBC
+            - DARFM
+            - 7DIGITAL
+            - SAAVN
+            - RDIO
+            - PHONE_MUSIC
+            - ALEXA
+            - RADIOPLAYER
+            - RADIO.COM
+            - RADIO_COM
+            - SIRIUSXM_EVEREST
+          example: PANDORA
+        updatedOn:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp when the provider was last updated
+          example: "2012-09-19T12:43:00.000+00:00"
