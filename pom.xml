@@ -39,6 +39,14 @@
             <artifactId>jackson-dataformat-xml</artifactId>
         </dependency>
         <dependency>
+            <groupId>jakarta.xml.bind</groupId>
+            <artifactId>jakarta.xml.bind-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.openapitools</groupId>
             <artifactId>jackson-databind-nullable</artifactId>
             <version>0.2.7</version>
@@ -125,6 +133,7 @@
                                 <skipDefaultInterface>true</skipDefaultInterface>
                                 <hideGenerationTimestamp>true</hideGenerationTimestamp>
                                 <modelPackage>com.github.juliusd.ueberboeseapi.generated.dtos</modelPackage>
+                                <withXml>true</withXml>
                             </configOptions>
                         </configuration>
                     </execution>
