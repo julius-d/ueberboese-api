@@ -69,22 +69,24 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Build Docker image
-      run: |
-        mvn spring-boot:build-image \
-          -Dspring-boot.build-image.imageName=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+      run: mvn spring-boot:build-image
 
-    - name: Push Docker image with tags
+    - name: Tag and push Docker image
       run: |
+        # Tag the locally built image with the GHCR name and SHA
+        docker tag ueberboese-api:0.0.1-SNAPSHOT ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
         # Push the SHA-tagged image
         docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
-        # Tag and push with branch name if on main/develop
+        # Tag and push with branch name if on main
         if [[ "${{ github.ref_name }}" == "main" ]]; then
-          docker tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          docker tag ueberboese-api:0.0.1-SNAPSHOT ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
         fi
 
+        # Tag and push with branch name if not main
         if [[ "${{ github.ref_name }}" != "main" ]]; then
-          docker tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}
+          docker tag ueberboese-api:0.0.1-SNAPSHOT ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}
           docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}
         fi
