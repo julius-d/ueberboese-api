@@ -118,6 +118,7 @@ services:
   ueberboese-api:
     container_name: ueberboese-api
     image: ghcr.io/julius-d/ueberboese-api:latest
+    user: "${UID:-1000}:${GID:-1000}"  # Run as current user to avoid permission issues
     ports:
       - "8080:8080"      # Main application
       - "8081:8081"      # Management/Actuator endpoints
@@ -127,7 +128,7 @@ services:
       - PROXY_AUTH_TARGET_HOST=https://auth.your-target-host.com
     volumes:
       # Persist application logs on the host system
-      - ./logs:/app/logs
+      - ~/ueberboeselogs:/workspace/logs
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
@@ -143,8 +144,12 @@ services:
 # Login to GitHub Container Registry (if using private repo)
 echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
 
-# Create logs directory on host (if it doesn't exist)
-mkdir -p logs
+# Create logs directory on host
+mkdir -p ~/ueberboeselogs
+
+# Set user ID for proper permissions (Linux/macOS)
+export UID=$(id -u)
+export GID=$(id -g)
 
 # Start the services
 docker compose up -d
@@ -153,7 +158,7 @@ docker compose up -d
 docker compose logs -f ueberboese-api
 
 # View application logs (persistent log files)
-tail -f logs/proxy-requests.log
+tail -f ~/ueberboeselogs/proxy-requests.log
 
 # Stop the services
 docker compose down
@@ -165,9 +170,10 @@ docker compose pull && docker compose up -d
 **Persistent Logging**:
 
 The docker-compose configuration includes a volume mount that persists application log files on the host system:
-- **Host path**: `./logs` (relative to docker-compose.yml location)
-- **Container path**: `/app/logs` (where the application writes log files)
+- **Host path**: `~/ueberboeselogs` (user's home directory)
+- **Container path**: `/workspace/logs` (where the application writes log files)
 - **Log files**: `proxy-requests.log` and other application logs will be persisted
+- **Permissions**: Container runs as current user (`${UID}:${GID}`) to avoid permission issues
 
 This ensures that log files are retained even when containers are stopped, restarted, or updated.
 
@@ -175,14 +181,14 @@ This ensures that log files are retained even when containers are stopped, resta
 
 The application supports the following environment variables:
 
-| Variable                           | Default                | Description                                                 |
-|------------------------------------|------------------------|-------------------------------------------------------------|
-| `PROXY_TARGET_HOST`                | `https://example.org`  | Default target host for proxying unknown requests          |
-| `PROXY_AUTH_TARGET_HOST`           | -                      | Auth-specific target host for requests containing "auth"   |
-| `SPRING_PROFILES_ACTIVE`           | -                      | Active Spring profiles (e.g., `production`, `development`) |
-| `SERVER_PORT`                      | `8080`                 | Port the main application runs on                          |
-| `MANAGEMENT_SERVER_PORT`           | `8081`                 | Port for actuator/management endpoints                     |
-| `LOGGING_LEVEL_COM_GITHUB_JULIUSD` | `INFO`                 | Logging level for application packages                     |
+| Variable                           | Default               | Description                                                |
+|------------------------------------|-----------------------|------------------------------------------------------------|
+| `PROXY_TARGET_HOST`                | `https://example.org` | Default target host for proxying unknown requests          |
+| `PROXY_AUTH_TARGET_HOST`           | -                     | Auth-specific target host for requests containing "auth"   |
+| `SPRING_PROFILES_ACTIVE`           | -                     | Active Spring profiles (e.g., `production`, `development`) |
+| `SERVER_PORT`                      | `8080`                | Port the main application runs on                          |
+| `MANAGEMENT_SERVER_PORT`           | `8081`                | Port for actuator/management endpoints                     |
+| `LOGGING_LEVEL_COM_GITHUB_JULIUSD` | `INFO`                | Logging level for application packages                     |
 
 ### Testing
 
