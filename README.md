@@ -64,7 +64,7 @@ docker run -p 8080:8080 -p 8081:8081 ueberboese-api:0.0.1-SNAPSHOT
 
 Docker images are automatically built and pushed to GitHub Container Registry (GHCR) via GitHub Actions:
 
-- **Image location**: `ghcr.io/USERNAME/REPOSITORY_NAME`
+- **Image location**: `ghcr.io/julius-d/ueberboese-api`
 - **Tags**:
   - `latest` (main branch)
   - `branch-name` (feature branches)
@@ -102,8 +102,8 @@ After the pipeline runs, pull and run your image:
 echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
 
 # Pull and run the latest image
-docker pull ghcr.io/USERNAME/REPOSITORY_NAME:latest
-docker run -p 8080:8080 -p 8081:8081 ghcr.io/USERNAME/REPOSITORY_NAME:latest
+docker pull ghcr.io/julius-d/ueberboese-api:latest
+docker run -p 8080:8080 -p 8081:8081 ghcr.io/julius-d/ueberboese-api:latest
 ```
 
 #### Docker Compose
@@ -140,6 +140,9 @@ services:
 
 **Usage**:
 ```bash
+# Login to GitHub Container Registry (if using private repo)
+echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
+
 # Create logs directory on host (if it doesn't exist)
 mkdir -p logs
 
