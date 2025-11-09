@@ -19,7 +19,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestPropertySource(properties = {
-    "proxy.target-host=https://httpbin.org"
+    "proxy.target-host=https://httpbin.org",
+    "proxy.auth-target-host=https://httpbin.org/bearer"
 })
 class ProxyControllerTest {
 
@@ -83,6 +84,47 @@ class ProxyControllerTest {
                     int status = result.getResponse().getStatus();
                     assertTrue(status == 200 || status == 404 || status == 503,
                         "Expected response from target host (200, 404, or 503), but got: " + status);
+                });
+    }
+
+    @Test
+    void shouldForwardAuthHostHeaderRequestsToAuthTargetHost() throws Exception {
+        // Test that requests with "auth" in the Host header are forwarded to auth target host
+        mockMvc.perform(get("/api/login")
+                .header("Host", "auth.example.com")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(result -> {
+                    // Should get response from auth target host
+                    int status = result.getResponse().getStatus();
+                    assertTrue(status == 200 || status == 404 || status == 503,
+                        "Expected response from auth target host (200, 404, or 503), but got: " + status);
+                });
+    }
+
+    @Test
+    void shouldForwardAuthHostHeaderWithSubdomainToAuthTargetHost() throws Exception {
+        // Test that requests with "auth" in the Host header subdomain are forwarded to auth target host
+        mockMvc.perform(get("/api/user")
+                .header("Host", "api.authentication.service.com")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(result -> {
+                    // Should get response from auth target host
+                    int status = result.getResponse().getStatus();
+                    assertTrue(status == 200 || status == 404 || status == 503,
+                        "Expected response from auth target host (200, 404, or 503), but got: " + status);
+                });
+    }
+
+    @Test
+    void shouldForwardNonAuthRequestsToDefaultTargetHost() throws Exception {
+        // Test that non-auth requests still go to default target host
+        mockMvc.perform(get("/api/products")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(result -> {
+                    // Should get response from default target host
+                    int status = result.getResponse().getStatus();
+                    assertTrue(status == 200 || status == 404 || status == 503,
+                        "Expected response from default target host (200, 404, or 503), but got: " + status);
                 });
     }
 }

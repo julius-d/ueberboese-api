@@ -37,7 +37,9 @@ The application will be available at `http://localhost:8080`.
 
 **Main Application (Port 8080):**
 - `GET /streaming/sourceproviders` - Returns list of source providers in XML format
-- All other requests are proxied to the configured target host
+- All other requests are proxied to the configured target hosts based on content:
+  - Auth-related requests (containing "auth" anywhere) → Auth target host
+  - All other requests → Default target host
 
 **Management/Actuator Endpoints (Port 8081):**
 - `GET /actuator/health` - Application health status
@@ -114,13 +116,15 @@ version: '3.8'
 
 services:
   ueberboese-api:
+    container_name: ueberboese-api
     image: ghcr.io/julius-d/ueberboese-api:latest
     ports:
       - "8080:8080"      # Main application
       - "8081:8081"      # Management/Actuator endpoints
     environment:
-      # Configure the target host for proxy requests
+      # Configure the target hosts for proxy requests
       - PROXY_TARGET_HOST=https://your-target-host.com
+      - PROXY_AUTH_TARGET_HOST=https://auth.your-target-host.com
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
@@ -134,29 +138,30 @@ services:
 **Usage**:
 ```bash
 # Start the services
-docker-compose up -d
+docker compose up -d
 
 # View logs
-docker-compose logs -f ueberboese-api
+docker compose logs -f ueberboese-api
 
 # Stop the services
-docker-compose down
+docker compose down
 
 # Update to latest image and restart
-docker-compose pull && docker-compose up -d
+docker compose pull && docker compose up -d
 ```
 
 **Configuration Options**:
 
 The application supports the following environment variables:
 
-| Variable                           | Default               | Description                                                |
-|------------------------------------|-----------------------|------------------------------------------------------------|
-| `PROXY_TARGET_HOST`                | `https://example.org` | Target host for proxying unknown requests                  |
-| `SPRING_PROFILES_ACTIVE`           | -                     | Active Spring profiles (e.g., `production`, `development`) |
-| `SERVER_PORT`                      | `8080`                | Port the main application runs on                          |
-| `MANAGEMENT_SERVER_PORT`           | `8081`                | Port for actuator/management endpoints                     |
-| `LOGGING_LEVEL_COM_GITHUB_JULIUSD` | `INFO`                | Logging level for application packages                     |
+| Variable                           | Default                | Description                                                 |
+|------------------------------------|------------------------|-------------------------------------------------------------|
+| `PROXY_TARGET_HOST`                | `https://example.org`  | Default target host for proxying unknown requests          |
+| `PROXY_AUTH_TARGET_HOST`           | -                      | Auth-specific target host for requests containing "auth"   |
+| `SPRING_PROFILES_ACTIVE`           | -                      | Active Spring profiles (e.g., `production`, `development`) |
+| `SERVER_PORT`                      | `8080`                 | Port the main application runs on                          |
+| `MANAGEMENT_SERVER_PORT`           | `8081`                 | Port for actuator/management endpoints                     |
+| `LOGGING_LEVEL_COM_GITHUB_JULIUSD` | `INFO`                 | Logging level for application packages                     |
 
 ### Testing
 

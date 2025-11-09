@@ -126,7 +126,7 @@ public class ProxyService {
   }
 
   private String buildTargetUrl(HttpServletRequest request) {
-    String targetHost = proxyProperties.targetHost();
+    String targetHost = determineTargetHost(request);
     if (targetHost.endsWith("/")) {
       targetHost = targetHost.substring(0, targetHost.length() - 1);
     }
@@ -140,6 +140,23 @@ public class ProxyService {
     }
 
     return url.toString();
+  }
+
+  private String determineTargetHost(HttpServletRequest request) {
+    boolean isAuthRequest = isAuthRelatedRequest(request);
+    if (isAuthRequest && proxyProperties.authTargetHost() != null && !proxyProperties.authTargetHost().isEmpty()) {
+      return proxyProperties.authTargetHost();
+    }
+    return proxyProperties.targetHost();
+  }
+
+  private boolean isAuthRelatedRequest(HttpServletRequest request) {
+    String hostHeader = request.getHeader("Host");
+    if (hostHeader == null) {
+      return false;
+    }
+
+    return hostHeader.toLowerCase().contains("auth");
   }
 
   private void logRequestHeaders(HttpServletRequest request) {
