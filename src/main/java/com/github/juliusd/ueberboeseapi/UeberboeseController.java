@@ -56,7 +56,6 @@ public class UeberboeseController implements DefaultApi {
 
     return ResponseEntity.ok()
         .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
-        .header("ETag", "1762017390476")
         .header("Access-Control-Allow-Origin", "*")
         .header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         .header("Access-Control-Allow-Headers", "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization")
