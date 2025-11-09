@@ -1,5 +1,5 @@
 # Überböse Api 🔈🎶
-Überböse /ˈyːbɐˌbøːzə/ adjective — extremely or supremely evil; beyond ordinary wickedness.
+**Überböse:** /ˈyːbɐˌbøːzə/ *adjective — extremely or supremely evil; beyond ordinary wickedness.*
 
 Bose has announced the end of life for its consumer streaming boxes called SoundTouch ☹️
 This will render millions of completely working streaming boxes useless.
