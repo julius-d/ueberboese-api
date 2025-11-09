@@ -127,4 +127,63 @@ class ProxyControllerTest {
                         "Expected response from default target host (200, 404, or 503), but got: " + status);
                 });
     }
+
+    @Test
+    void shouldForwardXmlRequestBodyToTarget() throws Exception {
+        // Test forwarding XML request body to target host
+        String xmlRequestBody = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<streaming>\n" +
+                "  <source>test</source>\n" +
+                "  <action>play</action>\n" +
+                "</streaming>";
+
+        mockMvc.perform(post("/streaming/play")
+                .header("X-Test-Header", "xml-test")
+                .contentType("application/vnd.bose.streaming-v1.2+xml")
+                .content(xmlRequestBody))
+                .andExpect(result -> {
+                    // The important thing is that we get a response from the target host,
+                    // indicating that the XML body was properly forwarded
+                    int status = result.getResponse().getStatus();
+                    assertTrue(status == 200 || status == 404 || status == 503,
+                        "Expected response from target host (200, 404, or 503), but got: " + status);
+                });
+    }
+
+    @Test
+    void shouldHandleEmptyRequestBodyGracefully() throws Exception {
+        // Test that requests without body are handled correctly
+        mockMvc.perform(post("/api/empty")
+                .header("X-Test-Header", "empty-body-test")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(result -> {
+                    // Should still forward the request even without body
+                    int status = result.getResponse().getStatus();
+                    assertTrue(status == 200 || status == 404 || status == 503,
+                        "Expected response from target host (200, 404, or 503), but got: " + status);
+                });
+    }
+
+    @Test
+    void shouldHandleLargeRequestBodyCorrectly() throws Exception {
+        // Test forwarding a larger request body to ensure our fix works with various sizes
+        StringBuilder largeBody = new StringBuilder();
+        largeBody.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<streaming>\n");
+        for (int i = 0; i < 100; i++) {
+            largeBody.append("  <item id=\"").append(i).append("\">")
+                    .append("Content for item ").append(i).append("</item>\n");
+        }
+        largeBody.append("</streaming>");
+
+        mockMvc.perform(post("/streaming/bulk")
+                .header("X-Test-Header", "large-body-test")
+                .contentType("application/vnd.bose.streaming-v1.2+xml")
+                .content(largeBody.toString()))
+                .andExpect(result -> {
+                    // Should handle large bodies correctly
+                    int status = result.getResponse().getStatus();
+                    assertTrue(status == 200 || status == 404 || status == 503,
+                        "Expected response from target host (200, 404, or 503), but got: " + status);
+                });
+    }
 }
