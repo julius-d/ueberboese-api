@@ -4,7 +4,7 @@
 Bose has announced the end of life for its consumer streaming boxes called SoundTouch ☹️
 This will render millions of completely working streaming boxes useless.
 
-The aim of this project is to make sure that SoundTouch can still be used for a long time.
+The aim of this project is to make sure that SoundTouch boxes can still be used for a long time.
 
 The idea on how to achieve that is to revers-engineer and rebuild the bose streaming http api.
 
