@@ -1,6 +1,7 @@
 package com.github.juliusd.ueberboeseapi;
 
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.containsString;
 import static org.xmlunit.matchers.CompareMatcher.isSimilarTo;
 
 import io.restassured.RestAssured;
@@ -227,5 +228,241 @@ class UeberboeseControllerTest {
         .statusCode(200)
         .contentType("application/vnd.bose.streaming-v1.2+xml")
         .body(isSimilarTo(expectedXml).ignoreWhitespace());
+  }
+
+  @Test
+  void addRecentItem_shouldCreateNewRecentItem() {
+    // language=XML
+    String requestXml =
+        """
+        <?xml version="1.0" encoding="UTF-8" ?>
+        <recent>
+          <lastplayedat>2025-11-01T17:32:59+00:00</lastplayedat>
+          <sourceid>19989313</sourceid>
+          <name>Radio TEDDY</name>
+          <location>/v1/playback/station/s80044</location>
+          <contentItemType>stationurl</contentItemType>
+        </recent>""";
+
+    given()
+        .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+        .header("User-agent", "Bose_Lisa/27.0.6")
+        .header("Authorization", "Bearer foo/bar/blob")
+        .header("Content-type", "application/vnd.bose.streaming-v1.2+xml")
+        .body(requestXml)
+        .when()
+        .post("/streaming/account/6921042/device/587A628A4042/recent")
+        .then()
+        .statusCode(201)
+        .contentType("application/vnd.bose.streaming-v1.2+xml")
+        .header(
+            "Location",
+            containsString(
+                "http://streamingqa.bose.com/account/6921042/device/587A628A4042/recent/"));
+
+    // Extract the response for XML comparison
+    String actualXml =
+        given()
+            .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+            .header("User-agent", "Bose_Lisa/27.0.6")
+            .header("Authorization", "Bearer foo/bar/blob")
+            .header("Content-type", "application/vnd.bose.streaming-v1.2+xml")
+            .body(requestXml)
+            .when()
+            .post("/streaming/account/6921042/device/587A628A4042/recent")
+            .then()
+            .statusCode(201)
+            .extract()
+            .body()
+            .asString();
+
+    // Normalize dynamic fields for comparison (only recent item ID and its updatedOn)
+    String normalizedXml =
+        actualXml
+            .replaceAll("<recent id=\"\\d+\"", "<recent id=\"DYNAMIC_ID\"")
+            .replaceAll(
+                "</source>\\s*<sourceid>19989313</sourceid>\\s*<updatedOn>[^<]+</updatedOn>",
+                "</source><sourceid>19989313</sourceid><updatedOn>DYNAMIC_TIMESTAMP</updatedOn>");
+
+    // language=XML
+    String expectedXml =
+        """
+        <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <recent id="DYNAMIC_ID">
+          <contentItemType>stationurl</contentItemType>
+          <createdOn>2018-11-27T18:20:01.000+00:00</createdOn>
+          <lastplayedat>2025-11-01T17:32:59.000+00:00</lastplayedat>
+          <location>/v1/playback/station/s80044</location>
+          <name>Radio TEDDY</name>
+          <source id="19989313" type="Audio">
+            <createdOn>2018-08-11T08:55:41.000+00:00</createdOn>
+            <credential type="token">
+              <value>eyDu=</value>
+            </credential>
+            <name/>
+            <sourceproviderid>25</sourceproviderid>
+            <sourcename/>
+            <sourceSettings/>
+            <updatedOn>2019-07-20T17:48:31.000+00:00</updatedOn>
+            <username/>
+          </source>
+          <sourceid>19989313</sourceid>
+          <updatedOn>DYNAMIC_TIMESTAMP</updatedOn>
+        </recent>""";
+
+    // Use XMLUnit comparison like the existing test
+    org.hamcrest.MatcherAssert.assertThat(
+        normalizedXml, isSimilarTo(expectedXml).ignoreWhitespace());
+  }
+
+  @Test
+  void addRecentItem_shouldHandleDifferentRequestData() {
+    // language=XML
+    String requestXml =
+        """
+        <?xml version="1.0" encoding="UTF-8" ?>
+        <recent>
+          <lastplayedat>2025-11-09T18:00:00+00:00</lastplayedat>
+          <sourceid>12345678</sourceid>
+          <name>Test Station</name>
+          <location>/v1/playback/test/station</location>
+          <contentItemType>testurl</contentItemType>
+        </recent>""";
+
+    given()
+        .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+        .header("User-agent", "Bose_Lisa/27.0.6")
+        .header("Authorization", "Bearer test-token")
+        .header("Content-type", "application/vnd.bose.streaming-v1.2+xml")
+        .body(requestXml)
+        .when()
+        .post("/streaming/account/1234567/device/TESTDEVICE/recent")
+        .then()
+        .statusCode(201)
+        .contentType("application/vnd.bose.streaming-v1.2+xml")
+        .header(
+            "Location",
+            containsString(
+                "http://streamingqa.bose.com/account/1234567/device/TESTDEVICE/recent/"));
+
+    // Extract the response for XML comparison
+    String actualXml =
+        given()
+            .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+            .header("User-agent", "Bose_Lisa/27.0.6")
+            .header("Authorization", "Bearer test-token")
+            .header("Content-type", "application/vnd.bose.streaming-v1.2+xml")
+            .body(requestXml)
+            .when()
+            .post("/streaming/account/1234567/device/TESTDEVICE/recent")
+            .then()
+            .statusCode(201)
+            .extract()
+            .body()
+            .asString();
+
+    // Normalize dynamic fields for comparison (only recent item ID and its updatedOn)
+    String normalizedXml =
+        actualXml
+            .replaceAll("<recent id=\"\\d+\"", "<recent id=\"DYNAMIC_ID\"")
+            .replaceAll(
+                "</source>\\s*<sourceid>12345678</sourceid>\\s*<updatedOn>[^<]+</updatedOn>",
+                "</source><sourceid>12345678</sourceid><updatedOn>DYNAMIC_TIMESTAMP</updatedOn>");
+
+    // language=XML
+    String expectedXml =
+        """
+        <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <recent id="DYNAMIC_ID">
+          <contentItemType>testurl</contentItemType>
+          <createdOn>2018-11-27T18:20:01.000+00:00</createdOn>
+          <lastplayedat>2025-11-09T18:00:00.000+00:00</lastplayedat>
+          <location>/v1/playback/test/station</location>
+          <name>Test Station</name>
+          <source id="12345678" type="Audio">
+            <createdOn>2018-08-11T08:55:41.000+00:00</createdOn>
+            <credential type="token">
+              <value>eyDu=</value>
+            </credential>
+            <name/>
+            <sourceproviderid>25</sourceproviderid>
+            <sourcename/>
+            <sourceSettings/>
+            <updatedOn>2019-07-20T17:48:31.000+00:00</updatedOn>
+            <username/>
+          </source>
+          <sourceid>12345678</sourceid>
+          <updatedOn>DYNAMIC_TIMESTAMP</updatedOn>
+        </recent>""";
+
+    // Use XMLUnit comparison like the existing test
+    org.hamcrest.MatcherAssert.assertThat(
+        normalizedXml, isSimilarTo(expectedXml).ignoreWhitespace());
+  }
+
+  @Test
+  void addRecentItem_shouldValidateRequestBody() {
+    // Test with invalid XML (malformed XML body)
+    String invalidRequestXml = "invalid xml content";
+
+    given()
+        .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+        .header("User-agent", "Bose_Lisa/27.0.6")
+        .header("Authorization", "Bearer test-token")
+        .header("Content-type", "application/vnd.bose.streaming-v1.2+xml")
+        .body(invalidRequestXml)
+        .when()
+        .post("/streaming/account/6921042/device/587A628A4042/recent")
+        .then()
+        .statusCode(400);
+  }
+
+  @Test
+  void addRecentItem_shouldReturnUniqueIds() {
+    // language=XML
+    String requestXml =
+        """
+        <?xml version="1.0" encoding="UTF-8" ?>
+        <recent>
+          <lastplayedat>2025-11-01T17:32:59+00:00</lastplayedat>
+          <sourceid>19989313</sourceid>
+          <name>Radio TEDDY</name>
+          <location>/v1/playback/station/s80044</location>
+          <contentItemType>stationurl</contentItemType>
+        </recent>""";
+
+    // Make first request
+    String firstLocation =
+        given()
+            .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+            .header("User-agent", "Bose_Lisa/27.0.6")
+            .header("Authorization", "Bearer test-token")
+            .header("Content-type", "application/vnd.bose.streaming-v1.2+xml")
+            .body(requestXml)
+            .when()
+            .post("/streaming/account/6921042/device/587A628A4042/recent")
+            .then()
+            .statusCode(201)
+            .extract()
+            .header("Location");
+
+    // Make second request
+    String secondLocation =
+        given()
+            .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+            .header("User-agent", "Bose_Lisa/27.0.6")
+            .header("Authorization", "Bearer test-token")
+            .header("Content-type", "application/vnd.bose.streaming-v1.2+xml")
+            .body(requestXml)
+            .when()
+            .post("/streaming/account/6921042/device/587A628A4042/recent")
+            .then()
+            .statusCode(201)
+            .extract()
+            .header("Location");
+
+    // Verify the IDs are different
+    assert !firstLocation.equals(secondLocation)
+        : "Location headers should contain different IDs for separate requests";
   }
 }

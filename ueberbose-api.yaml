@@ -64,6 +64,107 @@ paths:
         '500':
           description: Internal server error
 
+  /streaming/account/{accountId}/device/{deviceId}/recent:
+    post:
+      summary: Add recent item
+      description: Adds a recent item to the device's recent history
+      operationId: addRecentItem
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          description: Account identifier
+          schema:
+            type: string
+            example: "6921042"
+        - name: deviceId
+          in: path
+          required: true
+          description: Device identifier
+          schema:
+            type: string
+            example: "587A628A4042"
+      requestBody:
+        required: true
+        content:
+          application/vnd.bose.streaming-v1.2+xml:
+            schema:
+              $ref: '#/components/schemas/RecentItemRequest'
+            example: |
+              <?xml version="1.0" encoding="UTF-8" ?>
+              <recent>
+                <lastplayedat>2025-11-01T17:32:59+00:00</lastplayedat>
+                <sourceid>19989313</sourceid>
+                <name>Radio TEDDY</name>
+                <location>/v1/playback/station/s80044</location>
+                <contentItemType>stationurl</contentItemType>
+              </recent>
+      responses:
+        '201':
+          description: Recent item created successfully
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: application/vnd.bose.streaming-v1.2+xml
+            Location:
+              schema:
+                type: string
+                example: http://streamingqa.bose.com/account/6921042/device/587A628A4042/recent/2244536342
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+                example: "*"
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+                example: "GET, POST, OPTIONS"
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+                example: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization"
+            Access-Control-Expose-Headers:
+              schema:
+                type: string
+                example: "Credentials"
+          content:
+            application/vnd.bose.streaming-v1.2+xml:
+              schema:
+                $ref: '#/components/schemas/RecentItemResponse'
+              example: |
+                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                <recent id="2244536342">
+                  <contentItemType>stationurl</contentItemType>
+                  <createdOn>2018-11-27T18:20:01.000+00:00</createdOn>
+                  <lastplayedat>2025-11-01T17:32:59.000+00:00</lastplayedat>
+                  <location>/v1/playback/station/s80044</location>
+                  <name>Radio TEDDY</name>
+                  <source id="19989313" type="Audio">
+                    <createdOn>2018-08-11T08:55:41.000+00:00</createdOn>
+                    <credential type="token">eyDu=</credential>
+                    <name></name>
+                    <sourceproviderid>25</sourceproviderid>
+                    <sourcename></sourcename>
+                    <sourceSettings/>
+                    <updatedOn>2019-07-20T17:48:31.000+00:00</updatedOn>
+                    <username></username>
+                  </source>
+                  <sourceid>19989313</sourceid>
+                  <updatedOn>2025-11-01T17:33:00.574+00:00</updatedOn>
+                </recent>
+        '400':
+          description: Bad request - Invalid request body or parameters
+        '401':
+          description: Unauthorized - Invalid or missing Bearer token
+        '403':
+          description: Forbidden - Valid token but insufficient permissions
+        '404':
+          description: Not found - Account or device not found
+        '500':
+          description: Internal server error
+
 components:
   securitySchemes:
     BearerAuth:
@@ -117,3 +218,177 @@ components:
           format: date-time
           description: ISO 8601 timestamp when the provider was last updated
           example: "2012-09-19T12:43:00.000+00:00"
+
+    RecentItemRequest:
+      type: object
+      description: XML request body for adding a recent item
+      xml:
+        name: recent
+      required:
+        - lastplayedat
+        - sourceid
+        - name
+        - location
+        - contentItemType
+      properties:
+        lastplayedat:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp when the item was last played
+          example: "2025-11-01T17:32:59+00:00"
+        sourceid:
+          type: string
+          description: Identifier of the source
+          example: "19989313"
+        name:
+          type: string
+          description: Name of the content item
+          example: "Radio TEDDY"
+        location:
+          type: string
+          description: Location/path of the content item
+          example: "/v1/playback/station/s80044"
+        contentItemType:
+          type: string
+          description: Type of the content item
+          example: "stationurl"
+
+    RecentItemResponse:
+      type: object
+      description: XML response containing recent item details
+      xml:
+        name: recent
+      required:
+        - id
+        - contentItemType
+        - createdOn
+        - lastplayedat
+        - location
+        - name
+        - source
+        - sourceid
+        - updatedOn
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the recent item
+          xml:
+            attribute: true
+          example: "2244536335"
+        contentItemType:
+          type: string
+          description: Type of the content item
+          example: "stationurl"
+        createdOn:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp when the item was created
+          example: "2018-11-27T18:20:01.000+00:00"
+        lastplayedat:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp when the item was last played
+          example: "2025-11-01T17:32:59.000+00:00"
+        location:
+          type: string
+          description: Location/path of the content item
+          example: "/v1/playback/station/s80044"
+        name:
+          type: string
+          description: Name of the content item
+          example: "Radio TEDDY"
+        source:
+          $ref: '#/components/schemas/Source'
+        sourceid:
+          type: string
+          description: Identifier of the source
+          example: "19989313"
+        updatedOn:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp when the item was last updated
+          example: "2025-11-01T17:33:00.574+00:00"
+
+    Source:
+      type: object
+      description: Source information for a recent item
+      xml:
+        name: source
+      required:
+        - id
+        - type
+        - createdOn
+        - credential
+        - name
+        - sourceproviderid
+        - sourcename
+        - sourceSettings
+        - updatedOn
+        - username
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the source
+          xml:
+            attribute: true
+          example: "19989313"
+        type:
+          type: string
+          description: Type of the source
+          xml:
+            attribute: true
+          example: "Audio"
+        createdOn:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp when the source was created
+          example: "2018-08-11T08:55:41.000+00:00"
+        credential:
+          $ref: '#/components/schemas/Credential'
+        name:
+          type: string
+          description: Name of the source
+          example: ""
+        sourceproviderid:
+          type: string
+          description: Identifier of the source provider
+          example: "25"
+        sourcename:
+          type: string
+          description: Name of the source
+          example: ""
+        sourceSettings:
+          type: object
+          description: Source settings (empty object)
+          xml:
+            name: sourceSettings
+        updatedOn:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp when the source was last updated
+          example: "2019-07-20T17:48:31.000+00:00"
+        username:
+          type: string
+          description: Username associated with the source
+          example: ""
+
+    Credential:
+      type: object
+      description: Credential information for a source
+      xml:
+        name: credential
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          description: Type of credential
+          xml:
+            attribute: true
+          example: "token"
+        value:
+          type: string
+          description: Credential value/token
+          xml:
+            wrapped: false
+          example: "eyDu="
