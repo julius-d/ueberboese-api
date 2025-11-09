@@ -185,7 +185,7 @@
                                 <include>**/*.yaml</include>
                                 <include>**/*.yml</include>
                                 <include>**/*.json</include>
-                                <include>**/*.xml</include>
+                                <include>/*.xml</include>
                                 <include>**/*.properties</include>
                                 <include>**/*.sql</include>
                                 <include>**/.gitignore</include>
