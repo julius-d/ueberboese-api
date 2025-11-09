@@ -144,7 +144,9 @@ public class ProxyService {
 
   private String determineTargetHost(HttpServletRequest request) {
     boolean isAuthRequest = isAuthRelatedRequest(request);
-    if (isAuthRequest && proxyProperties.authTargetHost() != null && !proxyProperties.authTargetHost().isEmpty()) {
+    if (isAuthRequest
+        && proxyProperties.authTargetHost() != null
+        && !proxyProperties.authTargetHost().isEmpty()) {
       return proxyProperties.authTargetHost();
     }
     return proxyProperties.targetHost();

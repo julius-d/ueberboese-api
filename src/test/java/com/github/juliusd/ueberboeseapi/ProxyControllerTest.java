@@ -1,5 +1,9 @@
 package com.github.juliusd.ueberboeseapi;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -8,182 +12,221 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
 /**
- * Integration tests for the proxy functionality.
- * Tests that unknown endpoints are properly forwarded to the configured target.
+ * Integration tests for the proxy functionality. Tests that unknown endpoints are properly
+ * forwarded to the configured target.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@TestPropertySource(properties = {
-    "proxy.target-host=https://httpbin.org",
-    "proxy.auth-target-host=https://httpbin.org/bearer"
-})
+@TestPropertySource(
+    properties = {
+      "proxy.target-host=https://httpbin.org",
+      "proxy.auth-target-host=https://httpbin.org/bearer"
+    })
 class ProxyControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+  @Autowired private MockMvc mockMvc;
 
-    @Test
-    void shouldForwardUnknownGetRequestToTarget() throws Exception {
-        // Test forwarding a GET request to target host
-        // We expect some response from the target (even if it's an error),
-        // which proves the proxy forwarding is working
-        mockMvc.perform(get("/unknown-endpoint")
+  @Test
+  void shouldForwardUnknownGetRequestToTarget() throws Exception {
+    // Test forwarding a GET request to target host
+    // We expect some response from the target (even if it's an error),
+    // which proves the proxy forwarding is working
+    mockMvc
+        .perform(
+            get("/unknown-endpoint")
                 .header("X-Test-Header", "test-value")
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(result -> {
-                    // The important thing is that we get a response from the target host,
-                    // not a 404 from our application (which would indicate no forwarding)
-                    int status = result.getResponse().getStatus();
-                    assertTrue(status == 200 || status == 404 || status == 503,
-                        "Expected response from target host (200, 404, or 503), but got: " + status);
-                });
-    }
+        .andExpect(
+            result -> {
+              // The important thing is that we get a response from the target host,
+              // not a 404 from our application (which would indicate no forwarding)
+              int status = result.getResponse().getStatus();
+              assertTrue(
+                  status == 200 || status == 404 || status == 503,
+                  "Expected response from target host (200, 404, or 503), but got: " + status);
+            });
+  }
 
-    @Test
-    void shouldForwardUnknownPostRequestToTarget() throws Exception {
-        // Test forwarding a POST request to target host
-        String requestBody = "{\"test\": \"data\"}";
+  @Test
+  void shouldForwardUnknownPostRequestToTarget() throws Exception {
+    // Test forwarding a POST request to target host
+    String requestBody = "{\"test\": \"data\"}";
 
-        mockMvc.perform(post("/api/test")
+    mockMvc
+        .perform(
+            post("/api/test")
                 .header("X-Test-Header", "test-value")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody))
-                .andExpect(result -> {
-                    // The important thing is that we get a response from the target host,
-                    // not a 404 from our application (which would indicate no forwarding)
-                    int status = result.getResponse().getStatus();
-                    assertTrue(status == 200 || status == 404 || status == 503,
-                        "Expected response from target host (200, 404, or 503), but got: " + status);
-                });
-    }
+        .andExpect(
+            result -> {
+              // The important thing is that we get a response from the target host,
+              // not a 404 from our application (which would indicate no forwarding)
+              int status = result.getResponse().getStatus();
+              assertTrue(
+                  status == 200 || status == 404 || status == 503,
+                  "Expected response from target host (200, 404, or 503), but got: " + status);
+            });
+  }
 
-    @Test
-    void shouldNotForwardKnownEndpoints() throws Exception {
-        // Test that known endpoints are not forwarded
-        mockMvc.perform(get("/streaming/sourceproviders")
+  @Test
+  void shouldNotForwardKnownEndpoints() throws Exception {
+    // Test that known endpoints are not forwarded
+    mockMvc
+        .perform(
+            get("/streaming/sourceproviders")
                 .contentType("application/vnd.bose.streaming-v1.2+xml"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType("application/vnd.bose.streaming-v1.2+xml"));
-    }
+        .andExpect(status().isOk())
+        .andExpect(content().contentType("application/vnd.bose.streaming-v1.2+xml"));
+  }
 
-    @Test
-    void shouldForwardRequestWithQueryParameters() throws Exception {
-        // Test forwarding a request with query parameters
-        mockMvc.perform(get("/test-with-params")
+  @Test
+  void shouldForwardRequestWithQueryParameters() throws Exception {
+    // Test forwarding a request with query parameters
+    mockMvc
+        .perform(
+            get("/test-with-params")
                 .param("param1", "value1")
                 .param("param2", "value2")
                 .header("X-Custom-Header", "custom-value"))
-                .andExpect(result -> {
-                    // The important thing is that we get a response from the target host,
-                    // which proves query parameters are forwarded correctly
-                    int status = result.getResponse().getStatus();
-                    assertTrue(status == 200 || status == 404 || status == 503,
-                        "Expected response from target host (200, 404, or 503), but got: " + status);
-                });
-    }
+        .andExpect(
+            result -> {
+              // The important thing is that we get a response from the target host,
+              // which proves query parameters are forwarded correctly
+              int status = result.getResponse().getStatus();
+              assertTrue(
+                  status == 200 || status == 404 || status == 503,
+                  "Expected response from target host (200, 404, or 503), but got: " + status);
+            });
+  }
 
-    @Test
-    void shouldForwardAuthHostHeaderRequestsToAuthTargetHost() throws Exception {
-        // Test that requests with "auth" in the Host header are forwarded to auth target host
-        mockMvc.perform(get("/api/login")
+  @Test
+  void shouldForwardAuthHostHeaderRequestsToAuthTargetHost() throws Exception {
+    // Test that requests with "auth" in the Host header are forwarded to auth target host
+    mockMvc
+        .perform(
+            get("/api/login")
                 .header("Host", "auth.example.com")
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(result -> {
-                    // Should get response from auth target host
-                    int status = result.getResponse().getStatus();
-                    assertTrue(status == 200 || status == 404 || status == 503,
-                        "Expected response from auth target host (200, 404, or 503), but got: " + status);
-                });
-    }
+        .andExpect(
+            result -> {
+              // Should get response from auth target host
+              int status = result.getResponse().getStatus();
+              assertTrue(
+                  status == 200 || status == 404 || status == 503,
+                  "Expected response from auth target host (200, 404, or 503), but got: " + status);
+            });
+  }
 
-    @Test
-    void shouldForwardAuthHostHeaderWithSubdomainToAuthTargetHost() throws Exception {
-        // Test that requests with "auth" in the Host header subdomain are forwarded to auth target host
-        mockMvc.perform(get("/api/user")
+  @Test
+  void shouldForwardAuthHostHeaderWithSubdomainToAuthTargetHost() throws Exception {
+    // Test that requests with "auth" in the Host header subdomain are forwarded to auth target host
+    mockMvc
+        .perform(
+            get("/api/user")
                 .header("Host", "api.authentication.service.com")
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(result -> {
-                    // Should get response from auth target host
-                    int status = result.getResponse().getStatus();
-                    assertTrue(status == 200 || status == 404 || status == 503,
-                        "Expected response from auth target host (200, 404, or 503), but got: " + status);
-                });
-    }
+        .andExpect(
+            result -> {
+              // Should get response from auth target host
+              int status = result.getResponse().getStatus();
+              assertTrue(
+                  status == 200 || status == 404 || status == 503,
+                  "Expected response from auth target host (200, 404, or 503), but got: " + status);
+            });
+  }
 
-    @Test
-    void shouldForwardNonAuthRequestsToDefaultTargetHost() throws Exception {
-        // Test that non-auth requests still go to default target host
-        mockMvc.perform(get("/api/products")
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(result -> {
-                    // Should get response from default target host
-                    int status = result.getResponse().getStatus();
-                    assertTrue(status == 200 || status == 404 || status == 503,
-                        "Expected response from default target host (200, 404, or 503), but got: " + status);
-                });
-    }
+  @Test
+  void shouldForwardNonAuthRequestsToDefaultTargetHost() throws Exception {
+    // Test that non-auth requests still go to default target host
+    mockMvc
+        .perform(get("/api/products").contentType(MediaType.APPLICATION_JSON))
+        .andExpect(
+            result -> {
+              // Should get response from default target host
+              int status = result.getResponse().getStatus();
+              assertTrue(
+                  status == 200 || status == 404 || status == 503,
+                  "Expected response from default target host (200, 404, or 503), but got: "
+                      + status);
+            });
+  }
 
-    @Test
-    void shouldForwardXmlRequestBodyToTarget() throws Exception {
-        // Test forwarding XML request body to target host
-        String xmlRequestBody = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                "<streaming>\n" +
-                "  <source>test</source>\n" +
-                "  <action>play</action>\n" +
-                "</streaming>";
+  @Test
+  void shouldForwardXmlRequestBodyToTarget() throws Exception {
+    // Test forwarding XML request body to target host
+    String xmlRequestBody =
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            + "<streaming>\n"
+            + "  <source>test</source>\n"
+            + "  <action>play</action>\n"
+            + "</streaming>";
 
-        mockMvc.perform(post("/streaming/play")
+    mockMvc
+        .perform(
+            post("/streaming/play")
                 .header("X-Test-Header", "xml-test")
                 .contentType("application/vnd.bose.streaming-v1.2+xml")
                 .content(xmlRequestBody))
-                .andExpect(result -> {
-                    // The important thing is that we get a response from the target host,
-                    // indicating that the XML body was properly forwarded
-                    int status = result.getResponse().getStatus();
-                    assertTrue(status == 200 || status == 404 || status == 503,
-                        "Expected response from target host (200, 404, or 503), but got: " + status);
-                });
-    }
+        .andExpect(
+            result -> {
+              // The important thing is that we get a response from the target host,
+              // indicating that the XML body was properly forwarded
+              int status = result.getResponse().getStatus();
+              assertTrue(
+                  status == 200 || status == 404 || status == 503,
+                  "Expected response from target host (200, 404, or 503), but got: " + status);
+            });
+  }
 
-    @Test
-    void shouldHandleEmptyRequestBodyGracefully() throws Exception {
-        // Test that requests without body are handled correctly
-        mockMvc.perform(post("/api/empty")
+  @Test
+  void shouldHandleEmptyRequestBodyGracefully() throws Exception {
+    // Test that requests without body are handled correctly
+    mockMvc
+        .perform(
+            post("/api/empty")
                 .header("X-Test-Header", "empty-body-test")
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(result -> {
-                    // Should still forward the request even without body
-                    int status = result.getResponse().getStatus();
-                    assertTrue(status == 200 || status == 404 || status == 503,
-                        "Expected response from target host (200, 404, or 503), but got: " + status);
-                });
+        .andExpect(
+            result -> {
+              // Should still forward the request even without body
+              int status = result.getResponse().getStatus();
+              assertTrue(
+                  status == 200 || status == 404 || status == 503,
+                  "Expected response from target host (200, 404, or 503), but got: " + status);
+            });
+  }
+
+  @Test
+  void shouldHandleLargeRequestBodyCorrectly() throws Exception {
+    // Test forwarding a larger request body to ensure our fix works with various sizes
+    StringBuilder largeBody = new StringBuilder();
+    largeBody.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<streaming>\n");
+    for (int i = 0; i < 100; i++) {
+      largeBody
+          .append("  <item id=\"")
+          .append(i)
+          .append("\">")
+          .append("Content for item ")
+          .append(i)
+          .append("</item>\n");
     }
+    largeBody.append("</streaming>");
 
-    @Test
-    void shouldHandleLargeRequestBodyCorrectly() throws Exception {
-        // Test forwarding a larger request body to ensure our fix works with various sizes
-        StringBuilder largeBody = new StringBuilder();
-        largeBody.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<streaming>\n");
-        for (int i = 0; i < 100; i++) {
-            largeBody.append("  <item id=\"").append(i).append("\">")
-                    .append("Content for item ").append(i).append("</item>\n");
-        }
-        largeBody.append("</streaming>");
-
-        mockMvc.perform(post("/streaming/bulk")
+    mockMvc
+        .perform(
+            post("/streaming/bulk")
                 .header("X-Test-Header", "large-body-test")
                 .contentType("application/vnd.bose.streaming-v1.2+xml")
                 .content(largeBody.toString()))
-                .andExpect(result -> {
-                    // Should handle large bodies correctly
-                    int status = result.getResponse().getStatus();
-                    assertTrue(status == 200 || status == 404 || status == 503,
-                        "Expected response from target host (200, 404, or 503), but got: " + status);
-                });
-    }
+        .andExpect(
+            result -> {
+              // Should handle large bodies correctly
+              int status = result.getResponse().getStatus();
+              assertTrue(
+                  status == 200 || status == 404 || status == 503,
+                  "Expected response from target host (200, 404, or 503), but got: " + status);
+            });
+  }
 }

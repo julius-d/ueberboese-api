@@ -1,13 +1,13 @@
 package com.github.juliusd.ueberboeseapi;
 
+import static io.restassured.RestAssured.given;
+import static org.xmlunit.matchers.CompareMatcher.isSimilarTo;
+
 import io.restassured.RestAssured;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-
-import static io.restassured.RestAssured.given;
-import static org.xmlunit.matchers.CompareMatcher.isSimilarTo;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class UeberboeseControllerTest {
