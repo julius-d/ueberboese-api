@@ -240,8 +240,8 @@ The application supports the following environment variables:
 
 **OAuth Controller Configuration**:
 
-The OAuth token refresh endpoint (`POST /oauth/device/{deviceId}/music/musicprovider/{providerId}/token/{tokenType}`) 
-is conditionally enabled via the `UEBERBOESE_OAUTH_ENABLED` environment variable. 
+The OAuth token refresh endpoint (`POST /oauth/device/{deviceId}/music/musicprovider/{providerId}/token/{tokenType}`)
+is conditionally enabled via the `UEBERBOESE_OAUTH_ENABLED` environment variable.
 This allows you to run the application with or without the **experimental** OAuth support.
 
 ### Testing
