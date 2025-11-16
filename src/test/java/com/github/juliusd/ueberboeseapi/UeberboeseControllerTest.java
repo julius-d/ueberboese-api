@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.xmlunit.placeholder.PlaceholderDifferenceEvaluator;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class UeberboeseControllerTest {
@@ -276,19 +277,11 @@ class UeberboeseControllerTest {
             .body()
             .asString();
 
-    // Normalize dynamic fields for comparison (only recent item ID and its updatedOn)
-    String normalizedXml =
-        actualXml
-            .replaceAll("<recent id=\"\\d+\"", "<recent id=\"DYNAMIC_ID\"")
-            .replaceAll(
-                "</source>\\s*<sourceid>19989313</sourceid>\\s*<updatedOn>[^<]+</updatedOn>",
-                "</source><sourceid>19989313</sourceid><updatedOn>DYNAMIC_TIMESTAMP</updatedOn>");
-
     // language=XML
     String expectedXml =
         """
         <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-        <recent id="DYNAMIC_ID">
+        <recent id="${xmlunit.isNumber}">
           <contentItemType>stationurl</contentItemType>
           <createdOn>2018-11-27T18:20:01.000+00:00</createdOn>
           <lastplayedat>2025-11-01T17:32:59.000+00:00</lastplayedat>
@@ -307,12 +300,14 @@ class UeberboeseControllerTest {
             <username/>
           </source>
           <sourceid>19989313</sourceid>
-          <updatedOn>DYNAMIC_TIMESTAMP</updatedOn>
+          <updatedOn>${xmlunit.isDateTime}</updatedOn>
         </recent>""";
 
-    // Use XMLUnit comparison like the existing test
     org.hamcrest.MatcherAssert.assertThat(
-        normalizedXml, isSimilarTo(expectedXml).ignoreWhitespace());
+        actualXml,
+        isSimilarTo(expectedXml)
+            .ignoreWhitespace()
+            .withDifferenceEvaluator(new PlaceholderDifferenceEvaluator()));
   }
 
   @Test
@@ -361,19 +356,11 @@ class UeberboeseControllerTest {
             .body()
             .asString();
 
-    // Normalize dynamic fields for comparison (only recent item ID and its updatedOn)
-    String normalizedXml =
-        actualXml
-            .replaceAll("<recent id=\"\\d+\"", "<recent id=\"DYNAMIC_ID\"")
-            .replaceAll(
-                "</source>\\s*<sourceid>12345678</sourceid>\\s*<updatedOn>[^<]+</updatedOn>",
-                "</source><sourceid>12345678</sourceid><updatedOn>DYNAMIC_TIMESTAMP</updatedOn>");
-
     // language=XML
     String expectedXml =
         """
         <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-        <recent id="DYNAMIC_ID">
+        <recent id="${xmlunit.isNumber}">
           <contentItemType>testurl</contentItemType>
           <createdOn>2018-11-27T18:20:01.000+00:00</createdOn>
           <lastplayedat>2025-11-09T18:00:00.000+00:00</lastplayedat>
@@ -392,12 +379,15 @@ class UeberboeseControllerTest {
             <username/>
           </source>
           <sourceid>12345678</sourceid>
-          <updatedOn>DYNAMIC_TIMESTAMP</updatedOn>
+          <updatedOn>${xmlunit.isDateTime}</updatedOn>
         </recent>""";
 
-    // Use XMLUnit comparison like the existing test
+    // Use XMLUnit placeholders to ignore dynamic fields (recent id and updatedOn)
     org.hamcrest.MatcherAssert.assertThat(
-        normalizedXml, isSimilarTo(expectedXml).ignoreWhitespace());
+        actualXml,
+        isSimilarTo(expectedXml)
+            .ignoreWhitespace()
+            .withDifferenceEvaluator(new PlaceholderDifferenceEvaluator()));
   }
 
   @Test
