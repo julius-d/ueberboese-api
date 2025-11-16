@@ -165,6 +165,84 @@ paths:
         '500':
           description: Internal server error
 
+  /oauth/device/{deviceId}/music/musicprovider/{providerId}/token/{tokenType}:
+    post:
+      summary: Refresh OAuth token
+      description: Refreshes an OAuth token for a specific music provider
+      operationId: refreshOAuthToken
+      tags:
+        - oauth
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          description: Device identifier
+          schema:
+            type: string
+            example: "587A628A4042"
+        - name: providerId
+          in: path
+          required: true
+          description: Music provider identifier (e.g., 15 for Spotify)
+          schema:
+            type: string
+            example: "15"
+        - name: tokenType
+          in: path
+          required: true
+          description: Token type identifier
+          schema:
+            type: string
+            example: "cs3"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OAuthTokenRequest'
+            example:
+              code: ""
+              grant_type: "refresh_token"
+              redirect_uri: ""
+              refresh_token: "AQC-x0O-W2aVur-OIA"
+      responses:
+        '200':
+          description: Token refreshed successfully
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: application/json
+            Content-Length:
+              schema:
+                type: string
+                example: "633"
+            Connection:
+              schema:
+                type: string
+                example: "keep-alive"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthTokenResponse'
+              example:
+                access_token: "123fooAccessExampleToken"
+                token_type: "Bearer"
+                expires_in: 3600
+                scope: "playlist-read-private playlist-read-collaborative streaming user-library-read user-library-modify playlist-modify-private playlist-modify-public user-read-email user-read-private user-top-read"
+        '400':
+          description: Bad request - Invalid request body or parameters
+        '401':
+          description: Unauthorized - Invalid or missing Bearer token
+        '403':
+          description: Forbidden - Valid token but insufficient permissions
+        '404':
+          description: Not found - Device or provider not found
+        '500':
+          description: Internal server error
+
 components:
   securitySchemes:
     BearerAuth:
@@ -392,3 +470,52 @@ components:
           xml:
             wrapped: false
           example: "eyDu="
+
+    OAuthTokenRequest:
+      type: object
+      description: OAuth token refresh request
+      required:
+        - grant_type
+        - refresh_token
+      properties:
+        code:
+          type: string
+          description: Authorization code (empty for refresh token flow)
+          example: ""
+        grant_type:
+          type: string
+          description: OAuth grant type
+          example: "refresh_token"
+        redirect_uri:
+          type: string
+          description: Redirect URI (empty for refresh token flow)
+          example: ""
+        refresh_token:
+          type: string
+          description: Refresh token to exchange for new access token
+          example: "AQC-x0O-W2aVur-OIA"
+
+    OAuthTokenResponse:
+      type: object
+      description: OAuth token response
+      required:
+        - access_token
+        - token_type
+        - expires_in
+      properties:
+        access_token:
+          type: string
+          description: Access token for API authorization
+          example: "123fooAccessExampleToken"
+        token_type:
+          type: string
+          description: Type of the token
+          example: "Bearer"
+        expires_in:
+          type: integer
+          description: Token expiration time in seconds
+          example: 3600
+        scope:
+          type: string
+          description: Space-separated list of granted scopes
+          example: "playlist-read-private playlist-read-collaborative streaming user-library-read user-library-modify playlist-modify-private playlist-modify-public user-read-email user-read-private user-top-read"
