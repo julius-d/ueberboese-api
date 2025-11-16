@@ -171,6 +171,8 @@ services:
       # Configure the target hosts for proxy requests
       - PROXY_TARGET_HOST=https://your-target-host.com
       - PROXY_AUTH_TARGET_HOST=https://auth.your-target-host.com
+      # OAuth is disabled by default
+      - UEBERBOESE_OAUTH_ENABLED=false
     volumes:
       # Persist application logs on the host system
       - ~/ueberboeselogs:/workspace/logs
@@ -230,10 +232,17 @@ The application supports the following environment variables:
 |------------------------------------|-----------------------|------------------------------------------------------------|
 | `PROXY_TARGET_HOST`                | `https://example.org` | Default target host for proxying unknown requests          |
 | `PROXY_AUTH_TARGET_HOST`           | -                     | Auth-specific target host for requests containing "auth"   |
+| `UEBERBOESE_OAUTH_ENABLED`         | `false`               | Enable OAuth token endpoints (set to `true` to activate)   |
 | `SPRING_PROFILES_ACTIVE`           | -                     | Active Spring profiles (e.g., `production`, `development`) |
 | `SERVER_PORT`                      | `8080`                | Port the main application runs on                          |
 | `MANAGEMENT_SERVER_PORT`           | `8081`                | Port for actuator/management endpoints                     |
 | `LOGGING_LEVEL_COM_GITHUB_JULIUSD` | `INFO`                | Logging level for application packages                     |
+
+**OAuth Controller Configuration**:
+
+The OAuth token refresh endpoint (`POST /oauth/device/{deviceId}/music/musicprovider/{providerId}/token/{tokenType}`) 
+is conditionally enabled via the `UEBERBOESE_OAUTH_ENABLED` environment variable. 
+This allows you to run the application with or without the **experimental** OAuth support.
 
 ### Testing
 
