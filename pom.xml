@@ -158,6 +158,7 @@
                             <inputSpec>${project.basedir}/ueberbose-api.yaml</inputSpec>
                             <apiPackage>com.github.juliusd.ueberboeseapi.generated</apiPackage>
                             <skipIfSpecIsUnchanged>true</skipIfSpecIsUnchanged>
+                            <templateDirectory>${project.basedir}/src/main/resources/templates/spring</templateDirectory>
                             <configOptions>
                                 <useTags>true</useTags>
                                 <dateLibrary>java8</dateLibrary>

@@ -245,14 +245,21 @@ public {{>sealed}}class {{classname}}{{#parent}} extends {{{parent}}}{{/parent}}
             {{#jackson}}
                 @JsonProperty("{{baseName}}")
                 {{#withXml}}
+                    {{#vendorExtensions.x-isXmlText}}
+                        @com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText
+                    {{/vendorExtensions.x-isXmlText}}
+                    {{^vendorExtensions.x-isXmlText}}
                     @JacksonXmlProperty(localName = "{{items.xmlName}}{{^items.xmlName}}{{xmlName}}{{^xmlName}}{{baseName}}{{/xmlName}}{{/items.xmlName}}"{{#isXmlAttribute}}, isAttribute = true{{/isXmlAttribute}}{{#xmlNamespace}}, namespace = "{{.}}"{{/xmlNamespace}})
                     {{#isContainer}}
                         @JacksonXmlElementWrapper({{#isXmlWrapped}}localName = "{{xmlName}}{{^xmlName}}{{baseName}}{{/xmlName}}", {{#xmlNamespace}}namespace = "{{.}}", {{/xmlNamespace}}{{/isXmlWrapped}}useWrapping = {{isXmlWrapped}})
                     {{/isContainer}}
+                    {{/vendorExtensions.x-isXmlText}}
                 {{/withXml}}
             {{/jackson}}
             {{#withXml}}
+                {{^vendorExtensions.x-isXmlText}}
                 @Xml{{#isXmlAttribute}}Attribute{{/isXmlAttribute}}{{^isXmlAttribute}}Element{{/isXmlAttribute}}(name = "{{items.xmlName}}{{^items.xmlName}}{{xmlName}}{{^xmlName}}{{baseName}}{{/xmlName}}{{/items.xmlName}}"{{#xmlNamespace}}, namespace = "{{.}}"{{/xmlNamespace}})
+                {{/vendorExtensions.x-isXmlText}}
                 {{#isXmlWrapped}}
                     @XmlElementWrapper(name = "{{xmlName}}{{^xmlName}}{{baseName}}{{/xmlName}}"{{#xmlNamespace}}, namespace = "{{.}}"{{/xmlNamespace}})
                 {{/isXmlWrapped}}
