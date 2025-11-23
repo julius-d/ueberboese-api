@@ -6,24 +6,10 @@ import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.xmlunit.matchers.CompareMatcher.isSimilarTo;
 
-import io.restassured.RestAssured;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.test.context.TestPropertySource;
 import org.xmlunit.placeholder.PlaceholderDifferenceEvaluator;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@TestPropertySource(properties = "ueberboese.experimental.enabled=true")
-class UeberboeseExperimentalControllerTest {
-
-  @LocalServerPort private int port;
-
-  @BeforeEach
-  void setUp() {
-    RestAssured.port = port;
-  }
+class UeberboeseExperimentalControllerTest extends TestBase {
 
   @Test
   void getFullAccount_shouldReturnCompleteAccountDetails() {
