@@ -287,7 +287,7 @@ class UeberboeseControllerTest {
           <createdOn>2018-11-27T18:20:01.000+00:00</createdOn>
           <lastplayedat>2025-11-01T17:32:59.000+00:00</lastplayedat>
           <location>/v1/playback/station/s80044</location>
-          <name>Radio Foobar</name>
+          <name>Radio TEDDY</name>
           <source id="19989313" type="Audio">
             <createdOn>2018-08-11T08:55:41.000+00:00</createdOn>
             <credential type="token">
