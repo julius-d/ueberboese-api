@@ -73,12 +73,6 @@ jobs:
         name: test-results
         path: target/surefire-reports/
 
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: jar-artifact
-        path: target/*.jar
-
   build-and-push-docker:
     name: Build & Push Docker Image
     needs: [version, test]
