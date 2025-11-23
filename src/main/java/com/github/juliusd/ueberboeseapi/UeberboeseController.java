@@ -1,7 +1,7 @@
 package com.github.juliusd.ueberboeseapi;
 
 import com.github.juliusd.ueberboeseapi.generated.DefaultApi;
-import com.github.juliusd.ueberboeseapi.generated.dtos.RecentItemCredentialApiDto;
+import com.github.juliusd.ueberboeseapi.generated.dtos.CredentialApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.RecentItemRequestApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.RecentItemResponseApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.SourceApiDto;
@@ -56,7 +56,7 @@ public class UeberboeseController implements DefaultApi {
   }
 
   private static SourceApiDto buildSourceApiDto(RecentItemRequestApiDto recentItemRequestApiDto) {
-    var credential = new RecentItemCredentialApiDto();
+    var credential = new CredentialApiDto();
     credential.setType("token");
     credential.setValue("eyDu=");
 

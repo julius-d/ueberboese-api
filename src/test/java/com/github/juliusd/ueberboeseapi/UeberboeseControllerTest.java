@@ -278,9 +278,7 @@ class UeberboeseControllerTest extends TestBase {
           <name>Radio TEDDY</name>
           <source id="19989313" type="Audio">
             <createdOn>2018-08-11T08:55:41.000+00:00</createdOn>
-            <credential type="token">
-              <value>eyDu=</value>
-            </credential>
+            <credential type="token">eyDu=</credential>
             <name/>
             <sourceproviderid>25</sourceproviderid>
             <sourcename/>
@@ -357,9 +355,7 @@ class UeberboeseControllerTest extends TestBase {
           <name>Test Station</name>
           <source id="12345678" type="Audio">
             <createdOn>2018-08-11T08:55:41.000+00:00</createdOn>
-            <credential type="token">
-              <value>eyDu=</value>
-            </credential>
+            <credential type="token">eyDu=</credential>
             <name/>
             <sourceproviderid>25</sourceproviderid>
             <sourcename/>

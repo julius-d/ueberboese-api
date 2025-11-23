@@ -480,7 +480,7 @@ components:
           description: ISO 8601 timestamp when the source was created
           example: "2018-08-11T08:55:41.000+00:00"
         credential:
-          $ref: '#/components/schemas/RecentItemCredential'
+          $ref: '#/components/schemas/Credential'
         name:
           type: string
           description: Name of the source
@@ -508,30 +508,7 @@ components:
           description: Username associated with the source
           example: ""
 
-    RecentItemCredential:
-      type: object
-      description: Credential information for a recent item source
-      xml:
-        name: credential
-      required:
-        - type
-        - value
-      properties:
-        type:
-          type: string
-          description: Type of credential
-          xml:
-            attribute: true
-          example: "token"
-        value:
-          type: string
-          description: Credential value/token
-          xml:
-            name: value
-            wrapped: true
-          example: "eyDu="
-
-    FullAccountCredential:
+    Credential:
       type: object
       description: Credential information for a source
       xml:
@@ -587,7 +564,7 @@ components:
           description: ISO 8601 timestamp when the source was created
           example: "2018-08-11T08:55:41.000+00:00"
         credential:
-          $ref: '#/components/schemas/FullAccountCredential'
+          $ref: '#/components/schemas/Credential'
         name:
           type: string
           description: Name of the source
@@ -984,7 +961,7 @@ components:
           description: ISO 8601 timestamp when the source was created
           example: "2018-08-11T08:55:28.000+00:00"
         credential:
-          $ref: '#/components/schemas/FullAccountCredential'
+          $ref: '#/components/schemas/Credential'
         name:
           type: string
           description: Name of the source

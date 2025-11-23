@@ -3,10 +3,10 @@ package com.github.juliusd.ueberboeseapi;
 import com.github.juliusd.ueberboeseapi.generated.ExperimentalApi;
 import com.github.juliusd.ueberboeseapi.generated.dtos.AccountSourceApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.AttachedProductApiDto;
+import com.github.juliusd.ueberboeseapi.generated.dtos.CredentialApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.DeviceApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.DeviceSourceApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.DevicesContainerApiDto;
-import com.github.juliusd.ueberboeseapi.generated.dtos.FullAccountCredentialApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.FullAccountResponseApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.PresetApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.PresetsContainerApiDto;
@@ -297,7 +297,7 @@ public class UeberboeseExperimentalController implements ExperimentalApi {
     source.setUpdatedOn(OffsetDateTime.parse("2019-07-20T17:48:31.000+00:00"));
     source.setUsername("");
 
-    FullAccountCredentialApiDto credential = new FullAccountCredentialApiDto();
+    var credential = new CredentialApiDto();
     if ("19989643".equals(sourceId) || "20260226".equals(sourceId)) {
       credential.setType("token_version_3");
       credential.setValue("token-User1-Spot");
@@ -343,7 +343,7 @@ public class UeberboeseExperimentalController implements ExperimentalApi {
     source.setUpdatedOn(OffsetDateTime.parse("2018-08-11T08:55:28.000+00:00"));
     source.setUsername(username);
 
-    var credential = new FullAccountCredentialApiDto();
+    var credential = new CredentialApiDto();
     credential.setType(credentialType);
     credential.setValue(credentialValue);
     source.setCredential(credential);
