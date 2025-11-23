@@ -44,6 +44,7 @@ public class XmlMessageConverterConfig implements WebMvcConfigurer {
   public static ObjectMapper xmlObjectMapper() {
     XmlMapper xmlMapper = new XmlMapper();
     xmlMapper.enable(ToXmlGenerator.Feature.WRITE_XML_DECLARATION);
+    xmlMapper.enable(ToXmlGenerator.Feature.WRITE_STANDALONE_YES_TO_XML_DECLARATION);
     xmlMapper.registerModule(new JavaTimeModule());
     xmlMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
