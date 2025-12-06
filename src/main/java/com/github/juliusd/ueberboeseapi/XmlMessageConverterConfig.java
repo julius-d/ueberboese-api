@@ -2,7 +2,6 @@ package com.github.juliusd.ueberboeseapi;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
@@ -14,6 +13,7 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.ByteArrayHttpMessageConverter;
@@ -30,7 +30,7 @@ public class XmlMessageConverterConfig implements WebMvcConfigurer {
         new MappingJackson2XmlHttpMessageConverter();
 
     // Use the primary ObjectMapper bean we configured
-    xmlConverter.setObjectMapper(xmlObjectMapper());
+    xmlConverter.setObjectMapper(xmlMapper());
 
     // Add support for the custom Bose XML content type
     List<MediaType> supportedMediaTypes = new ArrayList<>(xmlConverter.getSupportedMediaTypes());
@@ -41,7 +41,8 @@ public class XmlMessageConverterConfig implements WebMvcConfigurer {
     converters.add(1, xmlConverter);
   }
 
-  public static ObjectMapper xmlObjectMapper() {
+  @Bean
+  public XmlMapper xmlMapper() {
     XmlMapper xmlMapper = new XmlMapper();
     xmlMapper.enable(ToXmlGenerator.Feature.WRITE_XML_DECLARATION);
     xmlMapper.enable(ToXmlGenerator.Feature.WRITE_STANDALONE_YES_TO_XML_DECLARATION);
@@ -52,7 +53,7 @@ public class XmlMessageConverterConfig implements WebMvcConfigurer {
     SimpleModule module = new SimpleModule();
     module.addSerializer(
         OffsetDateTime.class,
-        new JsonSerializer<OffsetDateTime>() {
+        new JsonSerializer<>() {
           @Override
           public void serialize(
               OffsetDateTime value, JsonGenerator gen, SerializerProvider serializers)
