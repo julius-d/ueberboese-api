@@ -27,7 +27,7 @@
         <url/>
     </scm>
     <properties>
-        <java.version>21</java.version>
+        <java.version>25</java.version>
         <revision>0.0.1-SNAPSHOT</revision>
     </properties>
     <dependencies>
@@ -213,7 +213,7 @@
                     </formats>
                     <java>
                         <googleJavaFormat>
-                            <version>1.19.2</version>
+                            <version>1.30.0</version>
                         </googleJavaFormat>
                         <removeUnusedImports/>
                         <indent>

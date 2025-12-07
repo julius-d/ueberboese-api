@@ -381,14 +381,18 @@ class ProxyControllerTest {
                 aResponse()
                     .withStatus(200)
                     .withHeader("Content-Type", "application/json")
-                    .withBody("""
+                    .withBody(
+                        """
                               {"products": []}""")));
 
     // When & Then
     mockMvc
         .perform(get("/api/products").contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
-        .andExpect(content().json("""
+        .andExpect(
+            content()
+                .json(
+                    """
                                   {"products": []}"""));
 
     // Verify request went to main server
@@ -443,7 +447,8 @@ class ProxyControllerTest {
                 aResponse()
                     .withStatus(200)
                     .withHeader("Content-Type", "application/json")
-                    .withBody("""
+                    .withBody(
+                        """
                               {"data": "content"}""")));
 
     // When & Then
@@ -453,7 +458,10 @@ class ProxyControllerTest {
                 .header("Host", "api.example.com")
                 .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
-        .andExpect(content().json("""
+        .andExpect(
+            content()
+                .json(
+                    """
                                   {"data": "content"}"""));
 
     // Verify request went to default server
