@@ -32,7 +32,8 @@ import org.springframework.test.web.servlet.MockMvc;
 @TestPropertySource(
     properties = {
       "proxy.target-host=http://localhost:8089",
-      "proxy.auth-target-host=http://localhost:8090"
+      "proxy.auth-target-host=http://localhost:8090",
+      "proxy.software-update-target-host=http://localhost:8091"
     })
 class ProxyControllerTest {
 
@@ -40,6 +41,7 @@ class ProxyControllerTest {
 
   private WireMockServer wireMockServer;
   private WireMockServer authWireMockServer;
+  private WireMockServer softwareUpdateWireMockServer;
 
   @BeforeEach
   void setUp() {
@@ -50,6 +52,10 @@ class ProxyControllerTest {
     // Set up auth target host mock server
     authWireMockServer = new WireMockServer(options().port(8090));
     authWireMockServer.start();
+
+    // Set up software update target host mock server
+    softwareUpdateWireMockServer = new WireMockServer(options().port(8091));
+    softwareUpdateWireMockServer.start();
   }
 
   @AfterEach
@@ -59,6 +65,9 @@ class ProxyControllerTest {
     }
     if (authWireMockServer != null) {
       authWireMockServer.stop();
+    }
+    if (softwareUpdateWireMockServer != null) {
+      softwareUpdateWireMockServer.stop();
     }
   }
 
@@ -387,5 +396,70 @@ class ProxyControllerTest {
 
     // Verify request did NOT go to auth server
     authWireMockServer.verify(0, getRequestedFor(urlEqualTo("/api/products")));
+  }
+
+  @Test
+  void shouldForwardRequestsToSoftwareUpdateTargetHost() throws Exception {
+    // Given
+    String updateRequestBody =
+        """
+                             {"version": "1.2.3", "checksum": "abc123"}
+                             """;
+
+    softwareUpdateWireMockServer.stubFor(
+        WireMock.post(urlEqualTo("/api/firmware/update"))
+            .willReturn(
+                aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json")
+                    .withBody("{\"status\": \"update available\"}")));
+
+    // When & Then
+    mockMvc
+        .perform(
+            post("/api/firmware/update")
+                .header("Host", "downloads.example.org")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(updateRequestBody))
+        .andExpect(status().isOk())
+        .andExpect(content().json("{\"status\": \"update available\"}"));
+
+    // Verify request went to software update server
+    softwareUpdateWireMockServer.verify(
+        postRequestedFor(urlEqualTo("/api/firmware/update"))
+            .withRequestBody(equalToJson(updateRequestBody)));
+
+    // Verify request did NOT go to main or auth servers
+    wireMockServer.verify(0, postRequestedFor(urlEqualTo("/api/firmware/update")));
+    authWireMockServer.verify(0, postRequestedFor(urlEqualTo("/api/firmware/update")));
+  }
+
+  @Test
+  void shouldNotForwardNonSoftwareUpdateRequestsToUpdateTarget() throws Exception {
+    // Given
+    wireMockServer.stubFor(
+        WireMock.get(urlEqualTo("/api/data"))
+            .willReturn(
+                aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json")
+                    .withBody("""
+                              {"data": "content"}""")));
+
+    // When & Then
+    mockMvc
+        .perform(
+            get("/api/data")
+                .header("Host", "api.example.com")
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(content().json("""
+                                  {"data": "content"}"""));
+
+    // Verify request went to default server
+    wireMockServer.verify(getRequestedFor(urlEqualTo("/api/data")));
+
+    // Verify request did NOT go to software update server
+    softwareUpdateWireMockServer.verify(0, getRequestedFor(urlEqualTo("/api/data")));
   }
 }

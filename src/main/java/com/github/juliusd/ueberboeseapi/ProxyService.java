@@ -148,6 +148,15 @@ public class ProxyService {
         && !proxyProperties.authTargetHost().isEmpty()) {
       return proxyProperties.authTargetHost();
     }
+
+    boolean isSoftwareUpdateRequest = isSoftwareUpdateRequest(request);
+    if (isSoftwareUpdateRequest
+        && proxyProperties.softwareUpdateTargetHost() != null
+        && !proxyProperties.softwareUpdateTargetHost().isEmpty()) {
+      return proxyProperties.softwareUpdateTargetHost();
+    }
+
+    // Default target for all other requests
     return proxyProperties.targetHost();
   }
 
@@ -158,6 +167,15 @@ public class ProxyService {
     }
 
     return hostHeader.toLowerCase().contains("auth");
+  }
+
+  private boolean isSoftwareUpdateRequest(HttpServletRequest request) {
+    String hostHeader = request.getHeader("Host");
+    if (hostHeader == null) {
+      return false;
+    }
+
+    return hostHeader.toLowerCase().contains("downloads");
   }
 
   private void logRequestHeaders(HttpServletRequest request) {
