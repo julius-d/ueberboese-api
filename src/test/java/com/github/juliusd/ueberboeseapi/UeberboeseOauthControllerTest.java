@@ -4,17 +4,24 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.github.juliusd.ueberboeseapi.spotify.SpotifyTokenService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.annotation.DirtiesContext;
 import se.michaelthelin.spotify.model_objects.credentials.AuthorizationCodeCredentials;
 
+@DirtiesContext
 class UeberboeseOauthControllerTest extends TestBase {
 
   @MockBean private SpotifyTokenService spotifyTokenService;
+  @MockBean private ProxyService proxyService;
 
   @BeforeEach
   void setUpMocks() {
@@ -76,6 +83,22 @@ class UeberboeseOauthControllerTest extends TestBase {
          "refresh_token": "different-refresh-token"
        }""";
 
+    // Mock proxy response for non-Spotify provider (ID 20)
+    String proxyResponseJson =
+        """
+        {
+          "access_token": "proxied-access-token",
+          "token_type": "Bearer",
+          "expires_in": 7200,
+          "scope": "custom-scope"
+        }""";
+
+    when(proxyService.forwardRequest(any(), anyString()))
+        .thenReturn(
+            ResponseEntity.ok()
+                .header("Content-Type", "application/json")
+                .body(proxyResponseJson.getBytes()));
+
     given()
         .header("Accept", "*/*")
         .header("User-agent", "Bose_Lisa/27.0.6")
@@ -87,9 +110,14 @@ class UeberboeseOauthControllerTest extends TestBase {
         .then()
         .statusCode(200)
         .contentType("application/json")
-        .body("access_token", equalTo("123fooAccessExampleToken"))
+        .body("access_token", equalTo("proxied-access-token"))
         .body("token_type", equalTo("Bearer"))
-        .body("expires_in", equalTo(3600));
+        .body("expires_in", equalTo(7200));
+
+    // Verify proxy was called
+    verify(proxyService).forwardRequest(any(), anyString());
+    // Verify Spotify service was NOT called
+    verify(spotifyTokenService, never()).loadSpotifyAuth(any());
   }
 
   @Test
@@ -156,6 +184,85 @@ class UeberboeseOauthControllerTest extends TestBase {
   }
 
   @Test
+  void refreshOAuthToken_shouldUseSpotifyForProvider15() {
+    // language=JSON
+    String requestJson =
+        """
+       {
+         "code": "",
+         "grant_type": "refresh_token",
+         "redirect_uri": "",
+         "refresh_token": "spotify-refresh-token"
+       }""";
+
+    given()
+        .header("Accept", "*/*")
+        .header("User-agent", "Bose_Lisa/27.0.6")
+        .header("Authorization", "test-token")
+        .header("Content-type", "application/json")
+        .body(requestJson)
+        .when()
+        .post("/oauth/device/DEVICE123/music/musicprovider/15/token/cs3")
+        .then()
+        .statusCode(200)
+        .contentType("application/json")
+        .body("access_token", equalTo("123fooAccessExampleToken"));
+
+    // Verify Spotify service was called
+    verify(spotifyTokenService).loadSpotifyAuth(any());
+    // Verify proxy was NOT called
+    verify(proxyService, never()).forwardRequest(any(), anyString());
+  }
+
+  @Test
+  void refreshOAuthToken_shouldProxyNonSpotifyProviders() {
+    // language=JSON
+    String requestJson =
+        """
+       {
+         "code": "",
+         "grant_type": "refresh_token",
+         "redirect_uri": "",
+         "refresh_token": "non-spotify-token"
+       }""";
+
+    // Mock proxy response
+    String proxyResponseJson =
+        """
+        {
+          "access_token": "non-spotify-proxied-token",
+          "token_type": "Bearer",
+          "expires_in": 7200
+        }""";
+
+    when(proxyService.forwardRequest(any(), anyString()))
+        .thenReturn(
+            ResponseEntity.ok()
+                .header("Content-Type", "application/json")
+                .body(proxyResponseJson.getBytes()));
+
+    given()
+        .header("Accept", "*/*")
+        .header("User-agent", "Bose_Lisa/27.0.6")
+        .header("Authorization", "test-token")
+        .header("Content-type", "application/json")
+        .body(requestJson)
+        .when()
+        .post("/oauth/device/TESTDEVICE456/music/musicprovider/25/token/other")
+        .then()
+        .statusCode(200)
+        .contentType("application/json")
+        .body("access_token", equalTo("non-spotify-proxied-token"))
+        .body("token_type", equalTo("Bearer"))
+        .body("expires_in", equalTo(7200));
+
+    // Verify proxy was called
+    verify(proxyService).forwardRequest(any(), anyString());
+    // Verify Spotify service was NOT called
+    verify(spotifyTokenService, never()).loadSpotifyAuth(any());
+  }
+
+  @Test
   void refreshOAuthToken_shouldValidatePathParameters() {
     // Test various path parameter combinations
     String requestJson =
@@ -167,7 +274,22 @@ class UeberboeseOauthControllerTest extends TestBase {
          "refresh_token": "AQC-x0O-W2aVur-OIA"
        }""";
 
-    // Test different device IDs
+    // Mock proxy response for non-Spotify providers
+    String proxyResponseJson =
+        """
+        {
+          "access_token": "test-token",
+          "token_type": "Bearer",
+          "expires_in": 3600
+        }""";
+
+    when(proxyService.forwardRequest(any(), anyString()))
+        .thenReturn(
+            ResponseEntity.ok()
+                .header("Content-Type", "application/json")
+                .body(proxyResponseJson.getBytes()));
+
+    // Test different device IDs with Spotify (provider 15)
     given()
         .header("Accept", "*/*")
         .header("User-agent", "Bose_Lisa/27.0.6")
@@ -179,7 +301,7 @@ class UeberboeseOauthControllerTest extends TestBase {
         .then()
         .statusCode(200);
 
-    // Test different provider IDs
+    // Test different provider IDs (25 = non-Spotify, will be proxied)
     given()
         .header("Accept", "*/*")
         .header("User-agent", "Bose_Lisa/27.0.6")
@@ -191,7 +313,7 @@ class UeberboeseOauthControllerTest extends TestBase {
         .then()
         .statusCode(200);
 
-    // Test different token types
+    // Test different token types with Spotify (provider 15)
     given()
         .header("Accept", "*/*")
         .header("User-agent", "Bose_Lisa/27.0.6")
