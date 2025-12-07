@@ -8,7 +8,11 @@ import org.springframework.test.context.TestPropertySource;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource(
-    properties = {"ueberboese.experimental.enabled=true", "ueberboese.oauth.enabled=true"})
+    properties = {
+      "ueberboese.experimental.enabled=true",
+      "ueberboese.oauth.enabled=true",
+      "ueberboese.data-directory=./data"
+    })
 public class TestBase {
 
   @LocalServerPort private int port;

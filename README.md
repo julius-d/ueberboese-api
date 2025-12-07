@@ -177,6 +177,8 @@ services:
       # OAuth is disabled by default
       - UEBERBOESE_OAUTH_ENABLED=false
     volumes:
+      # REQUIRED: Persist cached account data across container restarts
+      - ~/ueberboese-data:/data
       # Persist application logs on the host system
       - ~/ueberboeselogs:/workspace/logs
     restart: unless-stopped
@@ -194,7 +196,8 @@ services:
 # Login to GitHub Container Registry (if using private repo)
 echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
 
-# Create logs directory on host
+# Create required directories on host
+mkdir -p ~/ueberboese-data
 mkdir -p ~/ueberboeselogs
 
 # Set user ID for proper permissions (Linux/macOS)
@@ -217,30 +220,39 @@ docker compose down
 docker compose pull && docker compose up -d
 ```
 
-**Persistent Logging**:
+**Persistent Data and Logging**:
 
-The docker-compose configuration includes a volume mount that persists application log files on the host system:
+The docker-compose configuration includes volume mounts that persist data and log files on the host system:
+
+**Cached Account Data** (Required):
+- **Host path**: `~/ueberboese-data` (user's home directory)
+- **Container path**: `/data` (where the application caches account data)
+- **Purpose**: Stores cached account XML files
+- **Permissions**: Container runs as current user (`${UID}:${GID}`) to avoid permission issues
+
+**Application Logs**:
 - **Host path**: `~/ueberboeselogs` (user's home directory)
 - **Container path**: `/workspace/logs` (where the application writes log files)
 - **Log files**: `proxy-requests.log` and other application logs will be persisted
 - **Permissions**: Container runs as current user (`${UID}:${GID}`) to avoid permission issues
 
-This ensures that log files are retained even when containers are stopped, restarted, or updated.
+This ensures that both cached data and log files are retained even when containers are stopped, restarted, or updated.
 
 **Configuration Options**:
 
 The application supports the following environment variables:
 
-| Variable                           | Default               | Description                                                |
-|------------------------------------|-----------------------|------------------------------------------------------------|
-| `PROXY_TARGET_HOST`                | `https://example.org` | Default target host for proxying unknown requests          |
-| `PROXY_AUTH_TARGET_HOST`           | -                     | Auth-specific target host for requests containing "auth"   |
-| `UEBERBOESE_OAUTH_ENABLED`         | `false`               | Enable OAuth token endpoints (set to `true` to activate)   |
-| `UEBERBOESE_EXPERIMENTAL_ENABLED`  | `false`               | Enable experimental endpoints (set to `true` to activate)  |
-| `SPRING_PROFILES_ACTIVE`           | -                     | Active Spring profiles (e.g., `production`, `development`) |
-| `SERVER_PORT`                      | `8080`                | Port the main application runs on                          |
-| `MANAGEMENT_SERVER_PORT`           | `8081`                | Port for actuator/management endpoints                     |
-| `LOGGING_LEVEL_COM_GITHUB_JULIUSD` | `INFO`                | Logging level for application packages                     |
+| Variable                           | Default               | Description                                                                       |
+|------------------------------------|-----------------------|-----------------------------------------------------------------------------------|
+| `PROXY_TARGET_HOST`                | `https://example.org` | Default target host for proxying unknown requests                                 |
+| `PROXY_AUTH_TARGET_HOST`           | -                     | Auth-specific target host for requests containing "auth"                          |
+| `UEBERBOESE_DATA_DIRECTORY`        | `./data`              | Directory for cached account data. **Must be mounted as volume for persistence!** |
+| `UEBERBOESE_OAUTH_ENABLED`         | `false`               | Enable OAuth token endpoints (set to `true` to activate)                          |
+| `UEBERBOESE_EXPERIMENTAL_ENABLED`  | `false`               | Enable experimental endpoints (set to `true` to activate)                         |
+| `SPRING_PROFILES_ACTIVE`           | -                     | Active Spring profiles (e.g., `production`, `development`)                        |
+| `SERVER_PORT`                      | `8080`                | Port the main application runs on                                                 |
+| `MANAGEMENT_SERVER_PORT`           | `8081`                | Port for actuator/management endpoints                                            |
+| `LOGGING_LEVEL_COM_GITHUB_JULIUSD` | `INFO`                | Logging level for application packages                                            |
 
 **OAuth Controller Configuration**:
 
