@@ -10,6 +10,7 @@ import se.michaelthelin.spotify.requests.authorization.authorization_code.Author
 public class SpotifyInitialRefreshTokenCreator {
   private static final String CLIENT_ID = "TODO";
   private static final String CLIENT_SECRET = "TODO";
+  private static final String CODE_FROM_URL = "TODO";
 
   private final SpotifyApi spotifyApi;
 
@@ -29,6 +30,13 @@ public class SpotifyInitialRefreshTokenCreator {
     System.out.println("URI: " + uri.toString());
   }
 
+  public void createAccessToken(String code)
+      throws IOException, ParseException, SpotifyWebApiException {
+    var authorizationCodeRequest = spotifyApi.authorizationCode(code).build();
+    var authorizationCodeCredentials = authorizationCodeRequest.execute();
+    System.out.println("RefreshToken: " + authorizationCodeCredentials.getRefreshToken());
+  }
+
   public static void main(String[] args)
       throws IOException, ParseException, SpotifyWebApiException {
     var spotifyApi =
@@ -39,6 +47,9 @@ public class SpotifyInitialRefreshTokenCreator {
             .build();
 
     var spotifyAuthorization = new SpotifyInitialRefreshTokenCreator(spotifyApi);
-    spotifyAuthorization.authorizationCodeUri();
+    // First this
+    //    spotifyAuthorization.authorizationCodeUri();
+    // Second run this:
+    spotifyAuthorization.createAccessToken(CODE_FROM_URL);
   }
 }
