@@ -222,6 +222,9 @@ docker compose down
 
 # Update to latest image and restart
 docker compose pull && docker compose up -d
+
+# View logs from running container
+docker logs ueberboese-api
 ```
 
 **Persistent Data and Logging**:
