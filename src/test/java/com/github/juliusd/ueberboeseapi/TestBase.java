@@ -12,7 +12,10 @@ import org.springframework.test.context.TestPropertySource;
       "ueberboese.experimental.enabled=true",
       "ueberboese.oauth.enabled=true",
       "ueberboese.data-directory=src/test/resources/test-data",
-      "proxy.target-host=http://localhost:8089"
+      "proxy.target-host=http://localhost:8089",
+      "spotify.auth.client-id=test-client-id",
+      "spotify.auth.client-secret=test-client-secret",
+      "spotify.auth.refresh-token=test-refresh-token"
     })
 public class TestBase {
 

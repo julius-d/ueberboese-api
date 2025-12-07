@@ -3,10 +3,34 @@ package com.github.juliusd.ueberboeseapi;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
+import com.github.juliusd.ueberboeseapi.spotify.SpotifyTokenService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import se.michaelthelin.spotify.model_objects.credentials.AuthorizationCodeCredentials;
 
 class UeberboeseOauthControllerTest extends TestBase {
+
+  @MockBean private SpotifyTokenService spotifyTokenService;
+
+  @BeforeEach
+  void setUpMocks() {
+    // Create a mock AuthorizationCodeCredentials response
+    AuthorizationCodeCredentials mockCredentials =
+        new AuthorizationCodeCredentials.Builder()
+            .setAccessToken("123fooAccessExampleToken")
+            .setTokenType("Bearer")
+            .setExpiresIn(3600)
+            .setScope(
+                "playlist-read-private playlist-read-collaborative streaming user-library-read user-library-modify playlist-modify-private playlist-modify-public user-read-email user-read-private user-top-read")
+            .build();
+
+    // Mock the service to return our mock credentials
+    when(spotifyTokenService.loadSpotifyAuth(any())).thenReturn(mockCredentials);
+  }
 
   @Test
   void refreshOAuthToken_shouldRefreshToken() {
