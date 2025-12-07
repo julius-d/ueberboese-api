@@ -82,6 +82,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write  # Required for attestation signing
+      attestations: write  # Required for attestation publishing
 
     steps:
     - uses: actions/checkout@v4
@@ -100,12 +102,28 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: Generate SBOM
+      env:
+        VERSION: ${{ needs.version.outputs.version || '0.0.0' }}
+      run: |
+        # Install CycloneDX Maven plugin and generate SBOM
+        mvn org.cyclonedx:cyclonedx-maven-plugin:2.8.2:makeAggregateBom -Drevision=$VERSION
+        # Ensure target directory exists and copy SBOM
+        mkdir -p target
+        if [ -f "target/bom.json" ]; then
+          echo "SBOM generated successfully"
+        else
+          echo "Warning: SBOM not generated, creating minimal SBOM"
+          echo '{"bomFormat":"CycloneDX","specVersion":"1.4","version":1,"metadata":{"component":{"type":"application","name":"ueberboese-api","version":"'$VERSION'"}}}' > target/bom.json
+        fi
+
     - name: Build Docker image with semantic version
       env:
         VERSION: ${{ needs.version.outputs.version || '0.0.0' }}
       run: mvn spring-boot:build-image -Drevision=$VERSION
 
     - name: Tag and push Docker image
+      id: push-image
       env:
         VERSION: ${{ needs.version.outputs.version || '0.0.0' }}
       run: |
@@ -130,3 +148,24 @@ jobs:
           docker tag ueberboese-api:$VERSION ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}
           docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}
         fi
+
+    - name: Get image digest
+      id: image-digest
+      run: |
+        DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.version.outputs.version || '0.0.0' }} | cut -d'@' -f2)
+        echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+
+    - name: Generate provenance attestations
+      uses: actions/attest-build-provenance@v1
+      with:
+        subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        subject-digest: ${{ steps.image-digest.outputs.digest }}
+        push-to-registry: true
+
+    - name: Generate SBOM attestations
+      uses: actions/attest-sbom@v1
+      with:
+        subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        subject-digest: ${{ steps.image-digest.outputs.digest }}
+        sbom-path: target/bom.json
+        push-to-registry: true

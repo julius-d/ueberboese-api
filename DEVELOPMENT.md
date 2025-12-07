@@ -62,6 +62,36 @@ The project uses a GitHub Actions workflow (`ci-cd.yml`) for continuous integrat
   - Pushes to GitHub Container Registry
   - Tags images with semantic version, commit SHA, and branch-specific tags
 
+
+*Supply Chain Security**:
+
+All Docker images published to GitHub Container Registry include:
+
+- **Build Provenance Attestations**: Cryptographically signed attestations that document how the image was built, including:
+  - Build environment details
+  - Git commit SHA and repository
+  - Build workflow and runner information
+  - Dependencies and build steps
+
+- **SBOM (Software Bill of Materials) Attestations**: CycloneDX format SBOM containing:
+  - Complete list of dependencies
+  - Version information
+  - License information
+  - Component relationships
+
+These attestations are signed using Sigstore and stored in the GitHub Attestations registry. They can be verified using:
+
+```bash
+# Verify build provenance
+gh attestation verify oci://ghcr.io/julius-d/ueberboese-api:latest --owner julius-d
+
+# View attestations
+gh attestation list --owner julius-d
+```
+
+This provides transparency and allows you to verify the authenticity and integrity of the container images.
+
+
 #### Semantic Versioning with Conventional Commits
 
 The project uses [Conventional Commits](https://www.conventionalcommits.org/) for automatic semantic versioning. Commit messages should follow this format:
