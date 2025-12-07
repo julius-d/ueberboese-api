@@ -42,8 +42,9 @@ The idea on how to achieve that is to revers-engineer and rebuild the bose strea
 - `POST /streaming/account/{accountId}/device/{deviceId}/recent` - Add recent item to device history (XML format)
 - `GET /streaming/account/{accountId}/full` - Experimental endpoint (requires `ueberboese.experimental.enabled=true`)
 - `POST /oauth/device/{deviceId}/music/musicprovider/{providerId}/token/{tokenType}` - OAuth token refresh endpoint (JSON format, conditionally enabled)
-- All other requests are proxied to the configured target hosts based on content:
-  - Auth-related requests (containing "auth" anywhere) → Auth target host
+- All other requests are proxied to the configured target hosts based on Host header:
+  - Auth-related requests (Host contains "auth") → Auth target host
+  - Software update requests (Host contains "downloads") → Software update target host
   - All other requests → Default target host
 
 **Management/Actuator Endpoints (Port 8081):**
@@ -83,9 +84,6 @@ services:
       - "8080:8080"      # Main application
       - "8081:8081"      # Management/Actuator endpoints
     environment:
-      # Configure the target hosts for proxy requests
-      - PROXY_TARGET_HOST=https://your-target-host.com
-      - PROXY_AUTH_TARGET_HOST=https://auth.your-target-host.com
       # OAuth is disabled by default
       - UEBERBOESE_OAUTH_ENABLED=false
       # Spotify API authentication (required for OAuth token refresh)
@@ -161,20 +159,21 @@ This ensures that both cached data and log files are retained even when containe
 
 The application supports the following environment variables:
 
-| Variable                           | Default               | Description                                                                                                        |
-|------------------------------------|-----------------------|--------------------------------------------------------------------------------------------------------------------|
-| `PROXY_TARGET_HOST`                | `https://example.org` | Default target host for proxying unknown requests                                                                  |
-| `PROXY_AUTH_TARGET_HOST`           | -                     | Auth-specific target host for requests containing "auth"                                                           |
-| `UEBERBOESE_DATA_DIRECTORY`        | `/data`               | Directory for cached account data. **Must be mounted as volume for persistence!**                                  |
-| `UEBERBOESE_OAUTH_ENABLED`         | `false`               | Enable OAuth token endpoints (set to `true` to activate)                                                           |
-| `UEBERBOESE_EXPERIMENTAL_ENABLED`  | `false`               | Enable experimental endpoints (set to `true` to activate)                                                          |
-| `SPOTIFY_AUTH_CLIENT_ID`           | -                     | Spotify API client ID from [developer dashboard](https://developer.spotify.com/dashboard) (required for OAuth)     |
-| `SPOTIFY_AUTH_CLIENT_SECRET`       | -                     | Spotify API client secret from [developer dashboard](https://developer.spotify.com/dashboard) (required for OAuth) |
-| `SPOTIFY_AUTH_REFRESH_TOKEN`       | -                     | Spotify refresh token                                                                                              |
-| `SPRING_PROFILES_ACTIVE`           | -                     | Active Spring profiles (e.g., `production`, `development`)                                                         |
-| `SERVER_PORT`                      | `8080`                | Port the main application runs on                                                                                  |
-| `MANAGEMENT_SERVER_PORT`           | `8081`                | Port for actuator/management endpoints                                                                             |
-| `LOGGING_LEVEL_COM_GITHUB_JULIUSD` | `INFO`                | Logging level for application packages                                                                             |
+| Variable                            | Default                           | Description                                                                                                        |
+|-------------------------------------|-----------------------------------|--------------------------------------------------------------------------------------------------------------------|
+| `PROXY_TARGET_HOST`                 | `https://streaming.bose.com`      | Default target host for proxying unknown requests                                                                  |
+| `PROXY_AUTH_TARGET_HOST`            | `https://streamingoauth.bose.com` | Auth-specific target host for requests with Host header containing "auth"                                          |
+| `PROXY_SOFTWARE_UPDATE_TARGET_HOST` | `https://downloads.bose.com`      | Software update target host for requests with Host header containing "downloads"                                   |
+| `UEBERBOESE_DATA_DIRECTORY`         | `/data`                           | Directory for cached account data. **Must be mounted as volume for persistence!**                                  |
+| `UEBERBOESE_OAUTH_ENABLED`          | `false`                           | Enable OAuth token endpoints (set to `true` to activate)                                                           |
+| `UEBERBOESE_EXPERIMENTAL_ENABLED`   | `false`                           | Enable experimental endpoints (set to `true` to activate)                                                          |
+| `SPOTIFY_AUTH_CLIENT_ID`            | -                                 | Spotify API client ID from [developer dashboard](https://developer.spotify.com/dashboard) (required for OAuth)     |
+| `SPOTIFY_AUTH_CLIENT_SECRET`        | -                                 | Spotify API client secret from [developer dashboard](https://developer.spotify.com/dashboard) (required for OAuth) |
+| `SPOTIFY_AUTH_REFRESH_TOKEN`        | -                                 | Spotify refresh token                                                                                              |
+| `SPRING_PROFILES_ACTIVE`            | -                                 | Active Spring profiles (e.g., `production`, `development`)                                                         |
+| `SERVER_PORT`                       | `8080`                            | Port the main application runs on                                                                                  |
+| `MANAGEMENT_SERVER_PORT`            | `8081`                            | Port for actuator/management endpoints                                                                             |
+| `LOGGING_LEVEL_COM_GITHUB_JULIUSD`  | `INFO`                            | Logging level for application packages                                                                             |
 
 **OAuth Controller Configuration**:
 
