@@ -6,43 +6,43 @@ This will render millions of completely working streaming boxes useless.
 
 The aim of this project is to make sure that SoundTouch boxes can still be used for a long time.
 
-The idea on how to achieve that is to revers-engineer and rebuild the bose streaming http api.
+The idea to achieve that is to reverse-engineer and rebuild the Bose streaming HTTP API.
 
 ## Installation
 
-1. The docker image of this project needs to be deployed via docker compose (see below)
-2. Make running service available under 3 domains.
+1. The Docker image of this project needs to be deployed via Docker Compose (see below)
+2. Make the running service available under 3 domains:
    - `ueberboese.your-example-host.org`
    - `ueberboeseoauth.your-example-host.org`
    - `ueberboese-downloads.your-example-host.org`
 
    Replace `your-example-host.org` with whatever you like.
-   The domains do not need to be available in the public internet,
-   but have to be resolvable in the local network your SoundTouch boxes run.
-3. Every SoundTouch box needs to be configured to use this api deployment
+   The domains do not need to be available on the public internet,
+   but they must be resolvable in the local network where your SoundTouch boxes run.
+3. Every SoundTouch box needs to be configured to use this API deployment
    - Collect the local IPs of the SoundTouch boxes (e.g.: 192.168.178.2)
    - Execute the following shell commands for every IP:
-     - First connect to the service port of the box via
+     - First, connect to the service port of the box via
        ```shell
        nc 192.168.178.2 17000
        ```
-     - and then enter
+     - Then enter
        ```shell
        envswitch boseurls set https://ueberboese.your-example-host.org https://ueberboese-downloads.your-example-host.org
        ```
-4. For spotify auth support additional steps need to be done.
+4. For Spotify auth support, additional steps need to be done:
    - Create an app in the [Spotify dashboard](https://developer.spotify.com/dashboard)
    - Configure `SPOTIFY_AUTH_CLIENT_ID` and `SPOTIFY_AUTH_CLIENT_SECRET` (see below)
-   - For now the creation `SPOTIFY_AUTH_REFRESH_TOKEN` is manual and bumpy, but hey it works!
+   - For now, the creation of `SPOTIFY_AUTH_REFRESH_TOKEN` is manual and bumpy, but hey, it works!
 
 ### API Endpoints
 
 **Main Application (Port 8080):**
-- `GET /streaming/sourceproviders` - Returns list of source providers in XML format
+- `GET /streaming/sourceproviders` - Returns a list of source providers in XML format
 - `POST /streaming/account/{accountId}/device/{deviceId}/recent` - Add recent item to device history (XML format)
 - `GET /streaming/account/{accountId}/full` - Experimental endpoint (requires `ueberboese.experimental.enabled=true`)
 - `POST /oauth/device/{deviceId}/music/musicprovider/{providerId}/token/{tokenType}` - OAuth token refresh endpoint (JSON format, conditionally enabled)
-- All other requests are proxied to the configured target hosts based on Host header:
+- All other requests are proxied to the configured target hosts based on the Host header:
   - Auth-related requests (Host contains "auth") → Auth target host
   - Software update requests (Host contains "downloads") → Software update target host
   - All other requests → Default target host
@@ -139,7 +139,7 @@ docker logs ueberboese-api
 
 **Persistent Data and Logging**:
 
-The docker-compose configuration includes volume mounts that persist data and log files on the host system:
+The Docker Compose configuration includes volume mounts that persist data and log files on the host system:
 
 **Cached Account Data** (Required):
 - **Host path**: `~/ueberboese-data` (user's home directory)
@@ -188,8 +188,8 @@ When OAuth is enabled, you must also configure the Spotify API credentials:
 
 ### Researching the API
 
-When running and using this docker-image, the log file folder will collect all request that made.
-To get a simple statistic, call
+When running and using this Docker image, the log file folder will collect all requests that are made.
+To get a simple statistic, run:
 ```bash
 grep -r -h -o -P "Target URL: \K\S+" /path/to/your/log_folder | sort | uniq -c | sort -nr
 ```
