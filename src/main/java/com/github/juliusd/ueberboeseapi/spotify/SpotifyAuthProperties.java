@@ -13,7 +13,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * <pre>
  * spotify.auth.client-id=your-spotify-client-id
  * spotify.auth.client-secret=your-spotify-client-secret
- * spotify.auth.refresh-token=your-default-refresh-token
+ * spotify.auth.refresh-token=your-refresh-token
  * </pre>
  *
  * <p>Example environment variable configuration:
@@ -21,7 +21,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * <pre>
  * SPOTIFY_AUTH_CLIENT_ID=your-spotify-client-id
  * SPOTIFY_AUTH_CLIENT_SECRET=your-spotify-client-secret
- * SPOTIFY_AUTH_REFRESH_TOKEN=your-default-refresh-token
+ * SPOTIFY_AUTH_REFRESH_TOKEN=your-refresh-token
  * </pre>
  */
 @ConfigurationProperties(prefix = "spotify.auth")
@@ -36,9 +36,4 @@ public record SpotifyAuthProperties(
      * with the client ID to authenticate your application.
      */
     String clientSecret,
-    /**
-     * Optional default refresh token. If provided, this will be used as a fallback when no refresh
-     * token is provided in the request. Can be left null if refresh tokens are always provided per
-     * request.
-     */
     String refreshToken) {}
