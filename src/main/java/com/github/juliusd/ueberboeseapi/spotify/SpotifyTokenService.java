@@ -2,6 +2,7 @@ package com.github.juliusd.ueberboeseapi.spotify;
 
 import com.github.juliusd.ueberboeseapi.generated.dtos.OAuthTokenRequestApiDto;
 import java.io.IOException;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.core5.http.ParseException;
@@ -14,6 +15,19 @@ import se.michaelthelin.spotify.model_objects.credentials.AuthorizationCodeCrede
 @Slf4j
 @RequiredArgsConstructor
 public class SpotifyTokenService {
+
+  private static final Set<String> REQUIRED_SCOPES =
+      Set.of(
+          "playlist-read-private",
+          "playlist-read-collaborative",
+          "streaming",
+          "user-library-read",
+          "user-library-modify",
+          "playlist-modify-private",
+          "playlist-modify-public",
+          "user-read-email",
+          "user-read-private",
+          "user-top-read");
 
   private final SpotifyAuthProperties spotifyAuthProperties;
 
@@ -30,9 +44,13 @@ public class SpotifyTokenService {
 
       var authorizationCodeRefreshRequest = spotifyApi.authorizationCodeRefresh().build();
       var authorizationCodeCredentials = authorizationCodeRefreshRequest.execute();
-      log.info(
-          "Spotify auth refresh request successful with scope {}",
-          authorizationCodeCredentials.getScope());
+
+      String actualScope = authorizationCodeCredentials.getScope();
+      log.info("Spotify auth refresh request successful with scope {}", actualScope);
+
+      // Validate that all required scopes are present
+      validateScopes(actualScope);
+
       return authorizationCodeCredentials;
     } catch (IOException | SpotifyWebApiException | ParseException e) {
       log.warn("Spotify auth failed: {}", e.getMessage());
@@ -77,5 +95,28 @@ public class SpotifyTokenService {
     String first2 = token.substring(0, 2);
     String last2 = token.substring(token.length() - 2);
     return first2 + "..." + last2;
+  }
+
+  private void validateScopes(String actualScope) {
+    if (actualScope == null || actualScope.isBlank()) {
+      log.warn("Spotify token has no scopes");
+      return;
+    }
+
+    // Split the actual scopes (space-separated)
+    String[] actualScopes = actualScope.split("\\s+");
+    Set<String> actualScopeSet = Set.of(actualScopes);
+
+    // Check for missing scopes
+    java.util.List<String> missingScopes = new java.util.ArrayList<>();
+    for (String requiredScope : REQUIRED_SCOPES) {
+      if (!actualScopeSet.contains(requiredScope)) {
+        missingScopes.add(requiredScope);
+      }
+    }
+
+    if (!missingScopes.isEmpty()) {
+      log.warn("Spotify token is missing required scopes: {}", String.join(", ", missingScopes));
+    }
   }
 }
