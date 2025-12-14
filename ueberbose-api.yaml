@@ -23,22 +23,6 @@ paths:
               schema:
                 type: string
                 example: "1762017390476"
-            Access-Control-Allow-Origin:
-              schema:
-                type: string
-                example: "*"
-            Access-Control-Allow-Methods:
-              schema:
-                type: string
-                example: "GET, POST, OPTIONS"
-            Access-Control-Allow-Headers:
-              schema:
-                type: string
-                example: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization"
-            Access-Control-Expose-Headers:
-              schema:
-                type: string
-                example: "Authorization"
           content:
             application/vnd.bose.streaming-v1.2+xml:
               schema:
@@ -113,22 +97,6 @@ paths:
               schema:
                 type: string
                 example: http://streamingqa.bose.com/account/6921042/device/587A628A4042/recent/2244536342
-            Access-Control-Allow-Origin:
-              schema:
-                type: string
-                example: "*"
-            Access-Control-Allow-Methods:
-              schema:
-                type: string
-                example: "GET, POST, OPTIONS"
-            Access-Control-Allow-Headers:
-              schema:
-                type: string
-                example: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization"
-            Access-Control-Expose-Headers:
-              schema:
-                type: string
-                example: "Credentials"
           content:
             application/vnd.bose.streaming-v1.2+xml:
               schema:
@@ -192,22 +160,6 @@ paths:
               schema:
                 type: string
                 example: getFullAccount
-            Access-Control-Allow-Origin:
-              schema:
-                type: string
-                example: "*"
-            Access-Control-Allow-Methods:
-              schema:
-                type: string
-                example: "GET, POST, OPTIONS"
-            Access-Control-Allow-Headers:
-              schema:
-                type: string
-                example: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization"
-            Access-Control-Expose-Headers:
-              schema:
-                type: string
-                example: "Authorization"
           content:
             application/vnd.bose.streaming-v1.2+xml:
               schema:
