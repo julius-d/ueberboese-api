@@ -445,7 +445,7 @@ components:
 
     Source:
       type: object
-      description: Source information for a recent item
+      description: Source information for accounts, devices, presets, and recent items
       xml:
         name: source
       required:
@@ -526,69 +526,6 @@ components:
           description: Credential value/token
           x-isXmlText: true
           example: "eyDu="
-
-    DeviceSource:
-      type: object
-      description: Source information for device presets and recents
-      xml:
-        name: source
-      required:
-        - id
-        - type
-        - createdOn
-        - credential
-        - name
-        - sourceproviderid
-        - sourcename
-        - sourceSettings
-        - updatedOn
-        - username
-      properties:
-        id:
-          type: string
-          description: Unique identifier for the source
-          xml:
-            attribute: true
-          example: "19989313"
-        type:
-          type: string
-          description: Type of the source
-          xml:
-            attribute: true
-          example: "Audio"
-        createdOn:
-          type: string
-          format: date-time
-          description: ISO 8601 timestamp when the source was created
-          example: "2018-08-11T08:55:41.000+00:00"
-        credential:
-          $ref: '#/components/schemas/Credential'
-        name:
-          type: string
-          description: Name of the source
-          example: ""
-        sourceproviderid:
-          type: string
-          description: Identifier of the source provider
-          example: "25"
-        sourcename:
-          type: string
-          description: Name of the source
-          example: ""
-        sourceSettings:
-          type: object
-          description: Source settings (empty object)
-          xml:
-            name: sourceSettings
-        updatedOn:
-          type: string
-          format: date-time
-          description: ISO 8601 timestamp when the source was last updated
-          example: "2019-07-20T17:48:31.000+00:00"
-        username:
-          type: string
-          description: Username associated with the source
-          example: ""
 
     OAuthTokenRequest:
       type: object
@@ -832,7 +769,7 @@ components:
           description: Name of the preset
           example: "Radio Foobar"
         source:
-          $ref: '#/components/schemas/DeviceSource'
+          $ref: '#/components/schemas/Source'
         updatedOn:
           type: string
           format: date-time
@@ -900,7 +837,7 @@ components:
           description: Name of the recent item
           example: "A Name"
         source:
-          $ref: '#/components/schemas/DeviceSource'
+          $ref: '#/components/schemas/Source'
         sourceid:
           type: string
           description: Identifier of the source
@@ -920,69 +857,6 @@ components:
         source:
           type: array
           items:
-            $ref: '#/components/schemas/AccountSource'
+            $ref: '#/components/schemas/Source'
           xml:
             wrapped: false
-
-    AccountSource:
-      type: object
-      description: Source information at account level
-      xml:
-        name: source
-      required:
-        - id
-        - type
-        - createdOn
-        - credential
-        - name
-        - sourceproviderid
-        - sourcename
-        - sourceSettings
-        - updatedOn
-        - username
-      properties:
-        id:
-          type: string
-          description: Unique identifier for the source
-          xml:
-            attribute: true
-          example: "19989552"
-        type:
-          type: string
-          description: Type of the source
-          xml:
-            attribute: true
-          example: "Audio"
-        createdOn:
-          type: string
-          format: date-time
-          description: ISO 8601 timestamp when the source was created
-          example: "2018-08-11T08:55:28.000+00:00"
-        credential:
-          $ref: '#/components/schemas/Credential'
-        name:
-          type: string
-          description: Name of the source
-          example: ""
-        sourceproviderid:
-          type: string
-          description: Identifier of the source provider
-          example: "2"
-        sourcename:
-          type: string
-          description: Name of the source
-          example: ""
-        sourceSettings:
-          type: object
-          description: Source settings (empty object)
-          xml:
-            name: sourceSettings
-        updatedOn:
-          type: string
-          format: date-time
-          description: ISO 8601 timestamp when the source was last updated
-          example: "2018-08-11T08:55:28.000+00:00"
-        username:
-          type: string
-          description: Username associated with the source
-          example: ""
