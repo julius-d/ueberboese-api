@@ -24,8 +24,8 @@ The idea to achieve that is to reverse-engineer and rebuild the Bose streaming H
 
 ## Installation
 
-See[Quick Start Guide](https://julius-d.github.io/ueberboese-api/quick-start) - Step-by-step installation and configuration
- 
+See the [Quick Start Guide](https://julius-d.github.io/ueberboese-api/quick-start).
+
 ## Researching the API
 
 When running and using this Docker image, the log file folder will collect all requests that are made.
