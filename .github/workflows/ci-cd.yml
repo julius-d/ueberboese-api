@@ -142,7 +142,7 @@ jobs:
       with:
         subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
         subject-digest: ${{ steps.image-digest.outputs.digest }}
-        push-to-registry: true
+        push-to-registry: false
 
     - name: Generate SBOM attestations
       uses: actions/attest-sbom@v1
@@ -150,4 +150,4 @@ jobs:
         subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
         subject-digest: ${{ steps.image-digest.outputs.digest }}
         sbom-path: target/classes/META-INF/sbom/application.cdx.json
-        push-to-registry: true
+        push-to-registry: false
