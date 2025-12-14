@@ -262,6 +262,36 @@ paths:
         '500':
           description: Internal server error
 
+  /streaming/account/{accountId}/provider_settings:
+    get:
+      summary: Get provider settings
+      description: Unclear. Returns empty 200 ok response for me
+      operationId: getProviderSettings
+      tags:
+        - unclear
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          description: Account identifier
+          schema:
+            type: string
+            example: "6921042"
+      responses:
+        '200':
+          description: Unclear, empty response
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: application/vnd.bose.streaming-v1.2+xml
+            METHOD_NAME:
+              schema:
+                type: string
+                example: getProviderSettings
+
   /oauth/device/{deviceId}/music/musicprovider/{providerId}/token/{tokenType}:
     post:
       summary: Refresh OAuth token
