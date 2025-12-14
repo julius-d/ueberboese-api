@@ -95,6 +95,9 @@ jobs:
         distribution: 'temurin'
         cache: maven
 
+    - name: Set up crane (registry manipulation tool)
+      uses: imjasonh/setup-crane@v0.4
+
     - name: Log in to Container Registry
       uses: docker/login-action@v3
       with:
@@ -116,20 +119,20 @@ jobs:
       run: |
         IMAGE_BASE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
 
-        # Tag the locally built image with ALL tags upfront
+        # Tag and push ONLY the version tag first (single image creation)
         docker tag ueberboese-api:$VERSION $IMAGE_BASE:$VERSION
-        docker tag ueberboese-api:$VERSION $IMAGE_BASE:${{ github.sha }}
+        docker push $IMAGE_BASE:$VERSION
+
+        # Use crane to copy additional tags at registry level (no new image created)
+        crane tag $IMAGE_BASE:$VERSION ${{ github.sha }}
 
         if [[ "${{ github.ref_name }}" == "main" ]]; then
-          docker tag ueberboese-api:$VERSION $IMAGE_BASE:latest
+          crane tag $IMAGE_BASE:$VERSION latest
         fi
 
         if [[ "${{ github.ref_name }}" != "main" ]]; then
-          docker tag ueberboese-api:$VERSION $IMAGE_BASE:${{ github.ref_name }}
+          crane tag $IMAGE_BASE:$VERSION ${{ github.ref_name }}
         fi
-
-        # Push all tags at once (creates single image manifest with multiple tags)
-        docker push --all-tags $IMAGE_BASE
 
     - name: Get image digest
       id: image-digest
