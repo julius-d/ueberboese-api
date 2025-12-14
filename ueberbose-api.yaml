@@ -292,6 +292,70 @@ paths:
                 type: string
                 example: getProviderSettings
 
+  /streaming/support/power_on:
+    post:
+      summary: Power on support
+      description: Unclear. Returns 500 server error in testing
+      operationId: powerOnSupport
+      tags:
+        - unclear
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/vnd.bose.streaming-v1.2+xml:
+            schema:
+              $ref: '#/components/schemas/PowerOnRequest'
+            example: |
+              <?xml version="1.0" encoding="UTF-8" ?><device-data><device id="587A628A4042"><serialnumber>P123456789101123456789</serialnumber><firmware-version>27.0.6.46330.5043500 epdbuild.trunk.hepdswbld04.2022-08-04T11:20:29</firmware-version><product product_code="SoundTouch 10 sm2" type="5"><serialnumber>069236P81556160AE</serialnumber></product></device><diagnostic-data><device-landscape><rssi>Good</rssi><gateway-ip-address>192.168.178.1</gateway-ip-address><macaddresses><macaddress>587A628A4042</macaddress><macaddress>40BD32BAB0EB</macaddress></macaddresses><ip-address>192.168.178.50</ip-address><network-connection-type>Wireless</network-connection-type></device-landscape><network-landscape><network-data xmlns="http://www.Bose.com/Schemas/2012-12/NetworkMonitor/" /></network-landscape></diagnostic-data></device-data>
+      responses:
+        '500':
+          description: Server Error
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: application/vnd.bose.streaming-v1.2+xml
+            Transfer-Encoding:
+              schema:
+                type: string
+                example: chunked
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Date:
+              schema:
+                type: string
+                example: Sun, 14 Dec 2025 15:47:45 GMT
+            Server:
+              schema:
+                type: string
+                example: nginx/1.12.2
+            X-Cache:
+              schema:
+                type: string
+                example: Error from cloudfront
+            Via:
+              schema:
+                type: string
+                example: 1.1 25cc6d5f46d4eae9262198b05709a32e.cloudfront.net (CloudFront)
+            X-Amz-Cf-Pop:
+              schema:
+                type: string
+                example: TXL50-P5
+            X-Amz-Cf-Id:
+              schema:
+                type: string
+                example: Kl7KX4Qg9VsxbXorzrPIP2P2sOAciHNyhYfI_Q41aIITz-CUnwy9Tw==
+          content:
+            application/vnd.bose.streaming-v1.2+xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example: |
+                <?xml version="1.0" encoding="UTF-8" standalone="yes"?><status><message>Server Error: java.lang.RuntimeException: Failed : HTTP error code : 403</message><status-code>500</status-code></status>
+
   /streaming/account/{accountId}/device/{deviceId}/group/:
     get:
       summary: Get device group
@@ -986,3 +1050,149 @@ components:
       description: XML response containing group information (typically empty)
       xml:
         name: group
+
+    PowerOnRequest:
+      type: object
+      description: XML request body for power on support with device diagnostic data
+      xml:
+        name: device-data
+      properties:
+        device:
+          $ref: '#/components/schemas/PowerOnDevice'
+        diagnostic-data:
+          $ref: '#/components/schemas/DiagnosticData'
+
+    PowerOnProduct:
+      type: object
+      description: Product information for power on request
+      xml:
+        name: product
+      properties:
+        product_code:
+          type: string
+          description: Product code identifier
+          xml:
+            attribute: true
+          example: "SoundTouch 10 sm2"
+        type:
+          type: string
+          description: Product type identifier
+          xml:
+            attribute: true
+          example: "5"
+        serialnumber:
+          type: string
+          description: Product serial number
+          example: "069123456789010AE"
+
+    PowerOnDevice:
+      type: object
+      description: Device information for power on request
+      xml:
+        name: device
+      properties:
+        id:
+          type: string
+          description: Device identifier
+          xml:
+            attribute: true
+          example: "587A628A4042"
+        serialnumber:
+          type: string
+          description: Device serial number
+          example: "P123456789101123456789"
+        firmware-version:
+          type: string
+          description: Firmware version string
+          xml:
+            name: firmware-version
+          example: "27.0.6.46330.5043500 epdbuild.trunk.hepdswbld04.2022-08-04T11:20:29"
+        product:
+          $ref: '#/components/schemas/PowerOnProduct'
+
+    MacAddresses:
+      type: object
+      description: Container for MAC addresses
+      xml:
+        name: macaddresses
+      properties:
+        macaddress:
+          type: array
+          description: List of MAC addresses
+          items:
+            type: string
+            example: "587A628A4042"
+          xml:
+            name: macaddress
+            wrapped: false
+
+    DeviceLandscape:
+      type: object
+      description: Device network landscape information
+      xml:
+        name: device-landscape
+      properties:
+        rssi:
+          type: string
+          description: Signal strength indicator
+          example: "Good"
+        gateway-ip-address:
+          type: string
+          description: Gateway IP address
+          xml:
+            name: gateway-ip-address
+          example: "192.168.178.1"
+        macaddresses:
+          $ref: '#/components/schemas/MacAddresses'
+        ip-address:
+          type: string
+          description: Device IP address
+          xml:
+            name: ip-address
+          example: "192.168.178.50"
+        network-connection-type:
+          type: string
+          description: Type of network connection
+          xml:
+            name: network-connection-type
+          example: "Wireless"
+
+    NetworkLandscape:
+      type: object
+      description: Network landscape information
+      xml:
+        name: network-landscape
+      properties:
+        network-data:
+          type: object
+          description: Network data container
+          xml:
+            name: network-data
+
+    DiagnosticData:
+      type: object
+      description: Diagnostic data including device and network information
+      xml:
+        name: diagnostic-data
+      properties:
+        device-landscape:
+          $ref: '#/components/schemas/DeviceLandscape'
+        network-landscape:
+          $ref: '#/components/schemas/NetworkLandscape'
+
+    ErrorResponse:
+      type: object
+      description: XML response containing error status
+      xml:
+        name: status
+      properties:
+        message:
+          type: string
+          description: Error message
+          example: "Server Error: java.lang.RuntimeException: Failed : HTTP error code : 403"
+        status-code:
+          type: string
+          description: Status code
+          xml:
+            name: status-code
+          example: "500"
