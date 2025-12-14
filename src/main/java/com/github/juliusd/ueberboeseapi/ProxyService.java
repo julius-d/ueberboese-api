@@ -1,6 +1,7 @@
 package com.github.juliusd.ueberboeseapi;
 
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.concurrent.atomic.AtomicLong;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -21,6 +22,7 @@ public class ProxyService {
 
   private final WebClient webClient;
   private final ProxyProperties proxyProperties;
+  private final AtomicLong requestCounter = new AtomicLong(0);
 
   public ProxyService(ProxyProperties proxyProperties) {
     this.proxyProperties = proxyProperties;
@@ -40,12 +42,14 @@ public class ProxyService {
    * @return ResponseEntity with the proxied response
    */
   public ResponseEntity<byte[]> forwardRequest(HttpServletRequest request, String requestBody) {
+    var requestId = requestCounter.incrementAndGet();
     String targetUrl = buildTargetUrl(request);
     HttpMethod method = HttpMethod.valueOf(request.getMethod());
     boolean isSoftwareUpdate = isSoftwareUpdateRequest(request);
 
     // Build consolidated request log message
     StringBuilder requestLog = new StringBuilder("\n=== PROXY REQUEST START ===");
+    requestLog.append("\n  requestId: ").append(requestId);
     requestLog.append("\n  Original URL: ").append(request.getRequestURL());
     requestLog.append("\n  Target URL: ").append(targetUrl);
     requestLog.append("\n  Method: ").append(method);
@@ -89,6 +93,7 @@ public class ProxyService {
 
       // Build consolidated response log message
       StringBuilder responseLog = new StringBuilder("\n=== PROXY RESPONSE ===");
+      requestLog.append("\n  requestId: ").append(requestId);
       responseLog.append("\n  Status: ").append(clientResponse.statusCode().value());
       responseLog
           .append("\n  Response Headers:")
@@ -114,9 +119,13 @@ public class ProxyService {
     } catch (WebClientResponseException e) {
       String errorLog =
           String.format(
-              "\n=== PROXY ERROR ===\n  Error forwarding request to %s: %s %s\n  Error response"
+              "\n=== PROXY ERROR ===\n  Error forwarding request %s to %s: %s %s\n  Error response"
                   + " body: %s\n=== PROXY REQUEST END ===",
-              targetUrl, e.getStatusCode(), e.getStatusText(), e.getResponseBodyAsString());
+              requestId,
+              targetUrl,
+              e.getStatusCode(),
+              e.getStatusText(),
+              e.getResponseBodyAsString());
       log.error(errorLog);
 
       return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString().getBytes());
@@ -124,9 +133,9 @@ public class ProxyService {
     } catch (Exception e) {
       String errorLog =
           String.format(
-              "\n=== PROXY ERROR ===\n  Unexpected error forwarding request to %s\n=== PROXY REQUEST"
+              "\n=== PROXY ERROR ===\n  Unexpected error forwarding request %s to %s\n=== PROXY REQUEST"
                   + " END ===",
-              targetUrl);
+              requestId, targetUrl);
       log.error(errorLog, e);
 
       return ResponseEntity.status(502).body("Bad Gateway - Error forwarding request".getBytes());
