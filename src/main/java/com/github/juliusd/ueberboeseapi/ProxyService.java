@@ -44,27 +44,23 @@ public class ProxyService {
     HttpMethod method = HttpMethod.valueOf(request.getMethod());
     boolean isSoftwareUpdate = isSoftwareUpdateRequest(request);
 
-    log.info("=== PROXY REQUEST START ===");
-    log.info("Original URL: {}", request.getRequestURL());
-    log.info("Target URL: {}", targetUrl);
-    log.info("Method: {}", method);
-    if (isSoftwareUpdate) {
-      log.info("Software Update Request: Will return 404 after logging");
-    }
+    // Build consolidated request log message
+    StringBuilder requestLog = new StringBuilder("\n=== PROXY REQUEST START ===");
+    requestLog.append("\n  Original URL: ").append(request.getRequestURL());
+    requestLog.append("\n  Target URL: ").append(targetUrl);
+    requestLog.append("\n  Method: ").append(method);
     if (request.getQueryString() != null) {
-      log.info("Content-Type: {}", request.getContentType());
+      requestLog.append("\n  Content-Type: ").append(request.getContentType());
     }
     if (request.getContentLength() != -1) {
-      log.info("Content-Length: {}", request.getContentLength());
+      requestLog.append("\n  Content-Length: ").append(request.getContentLength());
     }
-
-    // Log request headers
-    logRequestHeaders(request);
-
-    // Log request body if present
+    requestLog.append("\n  Request Headers:").append(buildHeadersString(request));
     if (requestBody != null && !requestBody.isEmpty()) {
-      log.info("Request Body: {}", requestBody);
+      requestLog.append("\n  Request Body: ").append(requestBody);
     }
+
+    log.info(requestLog.toString());
 
     try {
       // Build the WebClient request
@@ -91,19 +87,18 @@ public class ProxyService {
       byte[] responseBodyBytes = clientResponse.bodyToMono(byte[].class).block();
       String responseBodyString = responseBodyBytes != null ? new String(responseBodyBytes) : null;
 
-      // Log response details
-      log.info("=== PROXY RESPONSE ===");
-      log.info("Status: {}", clientResponse.statusCode().value());
-      log.info("Response Headers:");
-      clientResponse
-          .headers()
-          .asHttpHeaders()
-          .forEach((name, values) -> log.info("  {}: {}", name, String.join(", ", values)));
-
+      // Build consolidated response log message
+      StringBuilder responseLog = new StringBuilder("\n=== PROXY RESPONSE ===");
+      responseLog.append("\n  Status: ").append(clientResponse.statusCode().value());
+      responseLog
+          .append("\n  Response Headers:")
+          .append(buildResponseHeadersString(clientResponse.headers().asHttpHeaders()));
       if (responseBodyString != null) {
-        log.info("Response Body: {}", responseBodyString);
+        responseLog.append("\n  Response Body: ").append(responseBodyString);
       }
-      log.info("=== PROXY REQUEST END ===");
+      responseLog.append("\n=== PROXY REQUEST END ===");
+
+      log.info(responseLog.toString());
 
       // For software update requests, return 404 instead of forwarding the response
       if (isSoftwareUpdate) {
@@ -117,18 +112,22 @@ public class ProxyService {
           .body(responseBodyBytes);
 
     } catch (WebClientResponseException e) {
-      log.error("=== PROXY ERROR ===");
-      log.error(
-          "Error forwarding request to {}: {} {}", targetUrl, e.getStatusCode(), e.getStatusText());
-      log.error("Error response body: {}", e.getResponseBodyAsString());
-      log.error("=== PROXY REQUEST END ===");
+      String errorLog =
+          String.format(
+              "\n=== PROXY ERROR ===\n  Error forwarding request to %s: %s %s\n  Error response"
+                  + " body: %s\n=== PROXY REQUEST END ===",
+              targetUrl, e.getStatusCode(), e.getStatusText(), e.getResponseBodyAsString());
+      log.error(errorLog);
 
       return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString().getBytes());
 
     } catch (Exception e) {
-      log.error("=== PROXY ERROR ===");
-      log.error("Unexpected error forwarding request to {}", targetUrl, e);
-      log.error("=== PROXY REQUEST END ===");
+      String errorLog =
+          String.format(
+              "\n=== PROXY ERROR ===\n  Unexpected error forwarding request to %s\n=== PROXY REQUEST"
+                  + " END ===",
+              targetUrl);
+      log.error(errorLog, e);
 
       return ResponseEntity.status(502).body("Bad Gateway - Error forwarding request".getBytes());
     }
@@ -188,18 +187,6 @@ public class ProxyService {
     return hostHeader.toLowerCase().contains("downloads");
   }
 
-  private void logRequestHeaders(HttpServletRequest request) {
-    log.info("Request Headers:");
-    request
-        .getHeaderNames()
-        .asIterator()
-        .forEachRemaining(
-            headerName -> {
-              String headerValue = request.getHeader(headerName);
-              log.info("  {}: {}", headerName, headerValue);
-            });
-  }
-
   private void copyHeaders(HttpServletRequest request, HttpHeaders targetHeaders) {
     request
         .getHeaderNames()
@@ -223,5 +210,26 @@ public class ProxyService {
         && !lowerHeaderName.equals("connection")
         && !lowerHeaderName.equals("content-length")
         && !lowerHeaderName.equals("transfer-encoding");
+  }
+
+  private static String buildHeadersString(HttpServletRequest request) {
+    StringBuilder headers = new StringBuilder();
+    request
+        .getHeaderNames()
+        .asIterator()
+        .forEachRemaining(
+            headerName -> {
+              String headerValue = request.getHeader(headerName);
+              headers.append("\n    ").append(headerName).append(": ").append(headerValue);
+            });
+    return headers.toString();
+  }
+
+  private static String buildResponseHeadersString(HttpHeaders headers) {
+    StringBuilder result = new StringBuilder();
+    headers.forEach(
+        (name, values) ->
+            result.append("\n    ").append(name).append(": ").append(String.join(", ", values)));
+    return result.toString();
   }
 }
