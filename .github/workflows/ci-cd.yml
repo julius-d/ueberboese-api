@@ -64,7 +64,7 @@ jobs:
         cache: maven
 
     - name: Build with Maven
-      run: mvn -B package --file pom.xml -Drevision=${{ needs.version.outputs.version || '0.0.0' }}
+      run: mvn -B test --file pom.xml -Drevision=${{ needs.version.outputs.version || '0.0.0' }}
 
     - name: Upload test results
       uses: actions/upload-artifact@v4
@@ -95,9 +95,6 @@ jobs:
         distribution: 'temurin'
         cache: maven
 
-    - name: Set up crane (registry manipulation tool)
-      uses: imjasonh/setup-crane@v0.4
-
     - name: Log in to Container Registry
       uses: docker/login-action@v3
       with:
@@ -119,20 +116,20 @@ jobs:
       run: |
         IMAGE_BASE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
 
-        # Tag and push ONLY the version tag first (single image creation)
+        # Tag the locally built image with ALL tags upfront
         docker tag ueberboese-api:$VERSION $IMAGE_BASE:$VERSION
-        docker push $IMAGE_BASE:$VERSION
-
-        # Use crane to copy additional tags at registry level (no new image created)
-        crane tag $IMAGE_BASE:$VERSION ${{ github.sha }}
+        docker tag ueberboese-api:$VERSION $IMAGE_BASE:${{ github.sha }}
 
         if [[ "${{ github.ref_name }}" == "main" ]]; then
-          crane tag $IMAGE_BASE:$VERSION latest
+          docker tag ueberboese-api:$VERSION $IMAGE_BASE:latest
         fi
 
         if [[ "${{ github.ref_name }}" != "main" ]]; then
-          crane tag $IMAGE_BASE:$VERSION ${{ github.ref_name }}
+          docker tag ueberboese-api:$VERSION $IMAGE_BASE:${{ github.ref_name }}
         fi
+
+        # Push all tags at once (creates single image manifest with multiple tags)
+        docker push --all-tags $IMAGE_BASE
 
     - name: Get image digest
       id: image-digest
