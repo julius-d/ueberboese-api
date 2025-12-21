@@ -35,12 +35,6 @@ services:
       # Persist application logs on the host system
       - ~/ueberboese-logs:/workspace/logs
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 ```
 
 ### Create Required Directories
