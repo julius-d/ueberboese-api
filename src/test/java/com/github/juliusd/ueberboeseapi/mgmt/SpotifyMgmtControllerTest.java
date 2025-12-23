@@ -6,8 +6,12 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import com.github.juliusd.ueberboeseapi.TestBase;
+import com.github.juliusd.ueberboeseapi.spotify.SpotifyAccountService;
 import com.github.juliusd.ueberboeseapi.spotify.SpotifyManagementService;
 import io.restassured.http.ContentType;
+import java.io.IOException;
+import java.time.OffsetDateTime;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -16,6 +20,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 class SpotifyMgmtControllerTest extends TestBase {
 
   @MockitoBean private SpotifyManagementService spotifyManagementService;
+  @MockitoBean private SpotifyAccountService spotifyAccountService;
 
   @Test
   void initSpotifyAuth_shouldReturnRedirectUrl() {
@@ -173,4 +178,76 @@ class SpotifyMgmtControllerTest extends TestBase {
         .body("accountId", matchesPattern("^[a-zA-Z0-9_]+$")); // Simple alphanumeric validation
   }
 
+  @Test
+  void listSpotifyAccounts_shouldReturnAccounts() throws IOException {
+    // Given
+    List<SpotifyAccountService.SpotifyAccount> mockAccounts =
+        List.of(
+            new SpotifyAccountService.SpotifyAccount(
+                "user1",
+                "John Doe",
+                "refresh_token_1",
+                OffsetDateTime.parse("2025-12-23T10:30:00Z")),
+            new SpotifyAccountService.SpotifyAccount(
+                "user2",
+                "Jane Smith",
+                "refresh_token_2",
+                OffsetDateTime.parse("2025-12-22T14:15:00Z")));
+
+    when(spotifyAccountService.listAllAccounts()).thenReturn(mockAccounts);
+
+    // When / Then
+    given()
+        .header("Content-Type", "application/json")
+        .when()
+        .get("/mgmt/spotify/accounts")
+        .then()
+        .statusCode(200)
+        .contentType("application/json")
+        .body("accounts", hasSize(2))
+        .body("accounts[0].displayName", equalTo("John Doe"))
+        .body("accounts[0].createdAt", equalTo("2025-12-23T10:30:00Z"))
+        .body("accounts[1].displayName", equalTo("Jane Smith"))
+        .body("accounts[1].createdAt", equalTo("2025-12-22T14:15:00Z"))
+        // Verify that sensitive fields are not exposed
+        .body("accounts[0].spotifyUserId", nullValue())
+        .body("accounts[0].refreshToken", nullValue())
+        .body("accounts[1].spotifyUserId", nullValue())
+        .body("accounts[1].refreshToken", nullValue());
+  }
+
+  @Test
+  void listSpotifyAccounts_shouldReturnEmptyList() throws IOException {
+    // Given
+    when(spotifyAccountService.listAllAccounts()).thenReturn(List.of());
+
+    // When / Then
+    given()
+        .header("Content-Type", "application/json")
+        .when()
+        .get("/mgmt/spotify/accounts")
+        .then()
+        .statusCode(200)
+        .contentType("application/json")
+        .body("accounts", hasSize(0))
+        .body("accounts", empty());
+  }
+
+  @Test
+  void listSpotifyAccounts_shouldHandleServiceException() throws IOException {
+    // Given
+    when(spotifyAccountService.listAllAccounts())
+        .thenThrow(new IOException("Failed to read accounts directory"));
+
+    // When / Then
+    given()
+        .header("Content-Type", "application/json")
+        .when()
+        .get("/mgmt/spotify/accounts")
+        .then()
+        .statusCode(500)
+        .contentType("application/json")
+        .body("error", equalTo("Internal server error"))
+        .body("message", notNullValue());
+  }
 }

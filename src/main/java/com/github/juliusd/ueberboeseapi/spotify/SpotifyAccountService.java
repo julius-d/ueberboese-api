@@ -7,7 +7,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -118,6 +121,54 @@ public class SpotifyAccountService {
   public boolean accountExists(String spotifyUserId) {
     Path filePath = getAccountFilePath(spotifyUserId);
     return Files.exists(filePath);
+  }
+
+  /**
+   * Lists all stored Spotify accounts.
+   *
+   * @return List of all Spotify accounts, sorted by createdAt descending (newest first)
+   * @throws IOException if the directory cannot be read
+   */
+  public List<SpotifyAccount> listAllAccounts() throws IOException {
+    Path directory = Paths.get(dataDirectory);
+
+    if (!Files.exists(directory)) {
+      log.debug("Data directory does not exist: {}", directory);
+      return List.of();
+    }
+
+    log.debug("Listing all Spotify accounts from directory: {}", directory);
+
+    try (Stream<Path> files = Files.list(directory)) {
+      List<SpotifyAccount> accounts =
+          files
+              .filter(path -> path.getFileName().toString().matches("spotify-account-.*\\.json"))
+              .map(this::parseAccountFile)
+              .filter(Optional::isPresent)
+              .map(Optional::get)
+              .sorted(Comparator.comparing(SpotifyAccount::createdAt).reversed())
+              .toList();
+
+      log.info("Found {} Spotify account(s)", accounts.size());
+      return accounts;
+    }
+  }
+
+  /**
+   * Parses a Spotify account file.
+   *
+   * @param filePath The path to the account file
+   * @return Optional containing the account if successfully parsed, empty otherwise
+   */
+  private Optional<SpotifyAccount> parseAccountFile(Path filePath) {
+    try {
+      String jsonContent = Files.readString(filePath);
+      SpotifyAccount account = objectMapper.readValue(jsonContent, SpotifyAccount.class);
+      return Optional.of(account);
+    } catch (Exception e) {
+      log.error("Failed to parse Spotify account file {}: {}", filePath, e.getMessage());
+      return Optional.empty();
+    }
   }
 
   /**

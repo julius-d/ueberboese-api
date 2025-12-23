@@ -4,8 +4,13 @@ import com.github.juliusd.ueberboeseapi.generated.mgmt.SpotifyManagementApi;
 import com.github.juliusd.ueberboeseapi.generated.mgmt.dtos.ConfirmSpotifyAuth200ResponseApiDto;
 import com.github.juliusd.ueberboeseapi.generated.mgmt.dtos.ErrorApiDto;
 import com.github.juliusd.ueberboeseapi.generated.mgmt.dtos.InitSpotifyAuth200ResponseApiDto;
+import com.github.juliusd.ueberboeseapi.generated.mgmt.dtos.ListSpotifyAccounts200ResponseApiDto;
+import com.github.juliusd.ueberboeseapi.generated.mgmt.dtos.SpotifyAccountListItemApiDto;
+import com.github.juliusd.ueberboeseapi.spotify.SpotifyAccountService;
 import com.github.juliusd.ueberboeseapi.spotify.SpotifyManagementService;
+import java.io.IOException;
 import java.net.URI;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class SpotifyMgmtController implements SpotifyManagementApi {
 
   private final SpotifyManagementService spotifyManagementService;
+  private final SpotifyAccountService spotifyAccountService;
   private final SpotifyMgmtProperties spotifyMgmtProperties;
 
   @Override
@@ -67,6 +73,36 @@ public class SpotifyMgmtController implements SpotifyManagementApi {
     } catch (Exception e) {
       log.error("Failed to confirm Spotify authentication: {}", e.getMessage());
       throw new RuntimeException("Failed to confirm Spotify authentication", e);
+    }
+  }
+
+  @Override
+  public ResponseEntity<ListSpotifyAccounts200ResponseApiDto> listSpotifyAccounts() {
+    log.info("Listing Spotify accounts");
+
+    try {
+      List<SpotifyAccountService.SpotifyAccount> accounts = spotifyAccountService.listAllAccounts();
+
+      List<SpotifyAccountListItemApiDto> accountDtos =
+          accounts.stream()
+              .map(
+                  account -> {
+                    SpotifyAccountListItemApiDto dto = new SpotifyAccountListItemApiDto();
+                    dto.setDisplayName(account.displayName());
+                    dto.setCreatedAt(account.createdAt());
+                    return dto;
+                  })
+              .toList();
+
+      ListSpotifyAccounts200ResponseApiDto response = new ListSpotifyAccounts200ResponseApiDto();
+      response.setAccounts(accountDtos);
+
+      log.info("Successfully listed {} Spotify account(s)", accountDtos.size());
+      return ResponseEntity.ok().header("Content-Type", "application/json").body(response);
+
+    } catch (IOException e) {
+      log.error("Failed to list Spotify accounts: {}", e.getMessage());
+      throw new RuntimeException("Failed to list Spotify accounts", e);
     }
   }
 

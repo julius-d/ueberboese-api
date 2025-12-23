@@ -145,6 +145,48 @@ paths:
                     error: "Internal server error"
                     message: "Failed to confirm Spotify authentication"
 
+  /mgmt/spotify/accounts:
+    get:
+      summary: List all Spotify accounts
+      description: |
+        Retrieves a list of all connected Spotify accounts.
+        Returns only the display name and creation date for each account.
+      operationId: listSpotifyAccounts
+      tags:
+        - Spotify Management
+      responses:
+        '200':
+          description: Successfully retrieved list of Spotify accounts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListSpotifyAccounts200Response'
+              examples:
+                withAccounts:
+                  summary: Response with multiple accounts
+                  value:
+                    accounts:
+                      - displayName: "John Doe"
+                        createdAt: "2025-12-23T10:30:00Z"
+                      - displayName: "Jane Smith"
+                        createdAt: "2025-12-22T14:15:00Z"
+                emptyList:
+                  summary: Response with no accounts
+                  value:
+                    accounts: []
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                serverError:
+                  summary: Server error
+                  value:
+                    error: "Internal server error"
+                    message: "Failed to retrieve Spotify accounts"
+
 components:
   schemas:
     Error:
@@ -165,6 +207,33 @@ components:
           type: object
           description: Additional error details (optional)
           additionalProperties: true
+
+    SpotifyAccountListItem:
+      type: object
+      required:
+        - displayName
+        - createdAt
+      properties:
+        displayName:
+          type: string
+          description: The display name of the Spotify user
+          example: "John Doe"
+        createdAt:
+          type: string
+          format: date-time
+          description: The timestamp when the account was connected
+          example: "2025-12-23T10:30:00Z"
+
+    ListSpotifyAccounts200Response:
+      type: object
+      required:
+        - accounts
+      properties:
+        accounts:
+          type: array
+          description: List of connected Spotify accounts
+          items:
+            $ref: '#/components/schemas/SpotifyAccountListItem'
 
 tags:
   - name: Spotify Management
