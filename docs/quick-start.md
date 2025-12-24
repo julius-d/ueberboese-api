@@ -24,7 +24,7 @@ services:
       - "8081:8081"      # Management/Actuator endpoints
     environment:
       # OAuth is disabled by default
-      - UEBERBOESE_OAUTH_ENABLED=false
+      - UEBERBOESE_OAUTH_ENABLED=true
       # Spotify API authentication (required for OAuth token refresh)
       - SPOTIFY_AUTH_CLIENT_ID=your-spotify-client-id
       - SPOTIFY_AUTH_CLIENT_SECRET=your-spotify-client-secret
@@ -129,6 +129,16 @@ If you want to use Spotify with your SoundTouch devices, follow these additional
 
 1. Go to the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
 2. Create a new app
+   - App name: as you like. E.g.: ueberboese-api
+   - App description: as you like. E.g.: Replacement for bose api, that will be shut down soon.
+   - Website: blank, not needed
+   - **Redirect URIs**: `ueberboese-login://spotify`
+   - Bundle IDs: blank, not needed
+   - Android packages: blank, not needed
+   - **APIs used**: 
+     - Web API
+     - Web Playback SDK
+
 3. Note down your **Client ID** and **Client Secret**
 
 ### Configure Environment Variables
@@ -140,8 +150,14 @@ environment:
   - UEBERBOESE_OAUTH_ENABLED=true
   - SPOTIFY_AUTH_CLIENT_ID=your-actual-client-id
   - SPOTIFY_AUTH_CLIENT_SECRET=your-actual-client-secret
-  - SPOTIFY_AUTH_REFRESH_TOKEN=your-refresh-token
 ```
+
+### Connect your Spotify account
+
+The easiest way is to install and use the [Überböse companion App](https://github.com/julius-d/ueberboese-app)
+[<img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="80">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/julius-d/ueberboese-app)
+
+
 
 ### Restart the Container
 
