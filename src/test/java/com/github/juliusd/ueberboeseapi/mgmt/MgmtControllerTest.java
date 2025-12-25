@@ -239,7 +239,7 @@ class MgmtControllerTest extends TestBase {
     return accountData;
   }
 
-  private DeviceApiDto createDevice(String deviceId, String ipAddress) {
+  private static DeviceApiDto createDevice(String deviceId, String ipAddress) {
     DeviceApiDto device = new DeviceApiDto();
     device.setDeviceid(deviceId);
     device.setIpaddress(ipAddress);
