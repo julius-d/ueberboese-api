@@ -30,14 +30,31 @@ public class SpotifyTokenService {
           "user-top-read");
 
   private final SpotifyAuthProperties spotifyAuthProperties;
+  private final SpotifyAccountService spotifyAccountService;
 
   public AuthorizationCodeCredentials loadSpotifyAuth(
       OAuthTokenRequestApiDto oauthTokenRequestApiDto) {
     try {
       checkProperties(oauthTokenRequestApiDto);
+
+      // Get the oldest connected Spotify account
+      var accounts = spotifyAccountService.listAllAccounts();
+      if (accounts.isEmpty()) {
+        log.error("No Spotify accounts connected");
+        throw new NoSpotifyAccountException(
+            "No Spotify accounts connected. Please connect a Spotify account via the management API.");
+      }
+
+      // Use the oldest account (last in the list sorted by createdAt descending)
+      var oldestAccount = accounts.get(accounts.size() - 1);
+      log.info(
+          "Using Spotify account: {} ({})",
+          oldestAccount.displayName(),
+          oldestAccount.spotifyUserId());
+
       SpotifyApi spotifyApi =
           new SpotifyApi.Builder()
-              .setRefreshToken(spotifyAuthProperties.refreshToken())
+              .setRefreshToken(oldestAccount.refreshToken())
               .setClientId(spotifyAuthProperties.clientId())
               .setClientSecret(spotifyAuthProperties.clientSecret())
               .build();
@@ -66,35 +83,6 @@ public class SpotifyTokenService {
         || spotifyAuthProperties.clientSecret().isBlank()) {
       log.warn("Spotify client secret is empty or not configured");
     }
-    if (spotifyAuthProperties.refreshToken() == null
-        || spotifyAuthProperties.refreshToken().isBlank()) {
-      log.warn("Spotify refresh token is empty or not configured");
-    }
-
-    // Check if request refresh token differs from configured token
-    String requestRefreshToken = oauthTokenRequestApiDto.getRefreshToken();
-    String configuredRefreshToken = spotifyAuthProperties.refreshToken();
-
-    if (requestRefreshToken != null
-        && configuredRefreshToken != null
-        && !requestRefreshToken.equals(configuredRefreshToken)) {
-      String requestTokenPreview = maskToken(requestRefreshToken);
-      String configuredTokenPreview = maskToken(configuredRefreshToken);
-
-      log.info(
-          "Refresh token mismatch - Request token: {}, Configured token: {}",
-          requestTokenPreview,
-          configuredTokenPreview);
-    }
-  }
-
-  private static String maskToken(String token) {
-    if (token == null || token.length() < 4) {
-      return "****";
-    }
-    String first2 = token.substring(0, 2);
-    String last2 = token.substring(token.length() - 2);
-    return first2 + "..." + last2;
   }
 
   private void validateScopes(String actualScope) {

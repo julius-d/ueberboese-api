@@ -9,6 +9,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.github.juliusd.ueberboeseapi.spotify.NoSpotifyAccountException;
 import com.github.juliusd.ueberboeseapi.spotify.SpotifyTokenService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -324,5 +325,38 @@ class UeberboeseOauthControllerTest extends TestBase {
         .post("/oauth/device/587A628A4042/music/musicprovider/15/token/different")
         .then()
         .statusCode(200);
+  }
+
+  @Test
+  void refreshOAuthToken_shouldThrowErrorWhenNoAccountsConnected() {
+    // Mock SpotifyTokenService to throw NoSpotifyAccountException
+    when(spotifyTokenService.loadSpotifyAuth(any()))
+        .thenThrow(
+            new NoSpotifyAccountException(
+                "No Spotify accounts connected. Please connect a Spotify account via the management API."));
+
+    // language=JSON
+    String requestJson =
+        """
+       {
+         "code": "",
+         "grant_type": "refresh_token",
+         "redirect_uri": "",
+         "refresh_token": "some-refresh-token"
+       }""";
+
+    given()
+        .header("Accept", "*/*")
+        .header("User-agent", "Bose_Lisa/27.0.6")
+        .header("Authorization", "test-token")
+        .header("Content-type", "application/json")
+        .body(requestJson)
+        .when()
+        .post("/oauth/device/587A628A4042/music/musicprovider/15/token/cs3")
+        .then()
+        .statusCode(500); // SpotifyException results in 500 error
+
+    // Verify Spotify service was called
+    verify(spotifyTokenService).loadSpotifyAuth(any());
   }
 }

@@ -15,6 +15,5 @@ class SpotifyAuthPropertiesTest extends TestBase {
     assertThat(spotifyAuthProperties).isNotNull();
     assertThat(spotifyAuthProperties.clientId()).isEqualTo("test-client-id");
     assertThat(spotifyAuthProperties.clientSecret()).isEqualTo("test-client-secret");
-    assertThat(spotifyAuthProperties.refreshToken()).isEqualTo("test-refresh-token");
   }
 }

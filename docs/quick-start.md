@@ -28,7 +28,6 @@ services:
       # Spotify API authentication (required for OAuth token refresh)
       - SPOTIFY_AUTH_CLIENT_ID=your-spotify-client-id
       - SPOTIFY_AUTH_CLIENT_SECRET=your-spotify-client-secret
-      - SPOTIFY_AUTH_REFRESH_TOKEN=your-spotify-refresh-token
       # Management API Basic Auth credentials (change these!)
       - UEBERBOESE_MGMT_USERNAME=admin
       - UEBERBOESE_MGMT_PASSWORD=your-secure-password
@@ -157,10 +156,69 @@ environment:
 
 ### Connect your Spotify account
 
+#### Option 1: Using the Überböse Companion App (Recommended)
+
 The easiest way is to install and use the [Überböse companion App](https://github.com/julius-d/ueberboese-app)
 [<img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="80">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/julius-d/ueberboese-app)
 
+#### Option 2: Using curl Commands
 
+If you prefer to connect your Spotify account manually without the companion app, follow these steps:
+
+**Step 1: Initialize the OAuth flow**
+
+```bash
+curl -u admin:your-secure-password \
+  http://localhost:8080/mgmt/spotify/auth/init
+```
+
+This will return a JSON response with a redirect URL:
+
+```json
+{
+  "redirectUrl": "https://accounts.spotify.com/authorize?client_id=...&response_type=code&redirect_uri=ueberboese-login://spotify&scope=..."
+}
+```
+
+**Step 2: Open the authorization URL in your browser**
+
+Copy the `redirectUrl` from the response and open it in your browser. You'll be prompted to log in to Spotify and authorize the application.
+
+**Step 3: Extract the authorization code**
+
+After authorizing, Spotify will redirect to `ueberboese-login://spotify?code=AUTHORIZATION_CODE`. Your browser will show an error (since this is a custom URL scheme), but you can copy the authorization code from the URL bar.
+
+For example, from `ueberboese-login://spotify?code=AQBx7y...xyz`, copy the value after `code=`.
+
+**Step 4: Complete the authentication**
+
+Use the authorization code to complete the connection:
+
+```bash
+curl -u admin:your-secure-password \
+  "http://localhost:8080/mgmt/spotify/auth/confirm?code=YOUR_AUTHORIZATION_CODE"
+```
+
+If successful, you'll receive a confirmation:
+
+```json
+{
+  "success": true,
+  "message": "Spotify account connected successfully",
+  "accountId": "your_spotify_user_id"
+}
+```
+
+**Verify the connection:**
+
+```bash
+curl -u admin:your-secure-password \
+  http://localhost:8080/mgmt/spotify/accounts
+```
+
+This will list all connected Spotify accounts.
+
+**Important:** You must connect at least one Spotify account via the management API or companion app before your SoundTouch devices can use Spotify. The API will automatically use the first connected account.
 
 ### Restart the Container
 
@@ -168,8 +226,6 @@ The easiest way is to install and use the [Überböse companion App](https://git
 docker compose down
 docker compose up -d
 ```
-
-**Note:** The creation of `SPOTIFY_AUTH_REFRESH_TOKEN` is currently manual and requires some technical steps. This is experimental functionality.
 
 ## Troubleshooting
 
@@ -237,7 +293,6 @@ docker compose logs -f
 | `UEBERBOESE_MGMT_PASSWORD`          | `change_me!`                      | Password for Basic Auth on `/mgmt/**` endpoints (change this!)                   |
 | `SPOTIFY_AUTH_CLIENT_ID`            | -                                 | Spotify API client ID from developer dashboard (required for OAuth)              |
 | `SPOTIFY_AUTH_CLIENT_SECRET`        | -                                 | Spotify API client secret from developer dashboard (required for OAuth)          |
-| `SPOTIFY_AUTH_REFRESH_TOKEN`        | -                                 | Spotify refresh token                                                            |
 | `SERVER_PORT`                       | `8080`                            | Port the main application runs on                                                |
 | `MANAGEMENT_SERVER_PORT`            | `8081`                            | Port for actuator/management endpoints                                           |
 
