@@ -29,6 +29,7 @@ public class SpotifyTokenService {
           "user-read-private",
           "user-top-read");
 
+  private final SpotifyApiUrlProperties spotifyHostProperties;
   private final SpotifyAuthProperties spotifyAuthProperties;
   private final SpotifyAccountService spotifyAccountService;
 
@@ -54,6 +55,9 @@ public class SpotifyTokenService {
 
       SpotifyApi spotifyApi =
           new SpotifyApi.Builder()
+              .setHost(spotifyHostProperties.host())
+              .setScheme(spotifyHostProperties.schema())
+              .setPort(spotifyHostProperties.port())
               .setRefreshToken(oldestAccount.refreshToken())
               .setClientId(spotifyAuthProperties.clientId())
               .setClientSecret(spotifyAuthProperties.clientSecret())

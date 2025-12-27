@@ -3,10 +3,15 @@ package com.github.juliusd.ueberboeseapi.mgmt;
 import com.github.juliusd.ueberboeseapi.generated.mgmt.SpotifyManagementApi;
 import com.github.juliusd.ueberboeseapi.generated.mgmt.dtos.ConfirmSpotifyAuth200ResponseApiDto;
 import com.github.juliusd.ueberboeseapi.generated.mgmt.dtos.ErrorApiDto;
+import com.github.juliusd.ueberboeseapi.generated.mgmt.dtos.GetSpotifyEntity200ResponseApiDto;
+import com.github.juliusd.ueberboeseapi.generated.mgmt.dtos.GetSpotifyEntityRequestApiDto;
 import com.github.juliusd.ueberboeseapi.generated.mgmt.dtos.InitSpotifyAuth200ResponseApiDto;
 import com.github.juliusd.ueberboeseapi.generated.mgmt.dtos.ListSpotifyAccounts200ResponseApiDto;
 import com.github.juliusd.ueberboeseapi.generated.mgmt.dtos.SpotifyAccountListItemApiDto;
+import com.github.juliusd.ueberboeseapi.spotify.InvalidSpotifyUriException;
 import com.github.juliusd.ueberboeseapi.spotify.SpotifyAccountService;
+import com.github.juliusd.ueberboeseapi.spotify.SpotifyEntityNotFoundException;
+import com.github.juliusd.ueberboeseapi.spotify.SpotifyEntityService;
 import com.github.juliusd.ueberboeseapi.spotify.SpotifyManagementService;
 import java.io.IOException;
 import java.net.URI;
@@ -25,6 +30,7 @@ public class SpotifyMgmtController implements SpotifyManagementApi {
   private final SpotifyManagementService spotifyManagementService;
   private final SpotifyAccountService spotifyAccountService;
   private final SpotifyMgmtProperties spotifyMgmtProperties;
+  private final SpotifyEntityService spotifyEntityService;
 
   @Override
   public ResponseEntity<InitSpotifyAuth200ResponseApiDto> initSpotifyAuth() {
@@ -106,6 +112,34 @@ public class SpotifyMgmtController implements SpotifyManagementApi {
     }
   }
 
+  @Override
+  public ResponseEntity<GetSpotifyEntity200ResponseApiDto> getSpotifyEntity(
+      GetSpotifyEntityRequestApiDto getSpotifyEntityRequestApiDto) {
+    try {
+      String uri = getSpotifyEntityRequestApiDto.getUri();
+      log.info("Getting Spotify entity info for URI: {}", uri);
+
+      var entityInfo = spotifyEntityService.getEntityInfo(uri);
+
+      var response = new GetSpotifyEntity200ResponseApiDto();
+      response.setName(entityInfo.name());
+      response.setImageUrl(entityInfo.imageUrl());
+
+      log.info(
+          "Successfully retrieved entity info - name: {}, imageUrl: {}",
+          entityInfo.name(),
+          entityInfo.imageUrl());
+      return ResponseEntity.ok().header("Content-Type", "application/json").body(response);
+
+    } catch (InvalidSpotifyUriException | SpotifyEntityNotFoundException e) {
+      log.warn("Failed to get entity info: {}", e.getMessage());
+      throw e;
+    } catch (Exception e) {
+      log.error("Failed to get Spotify entity info: {}", e.getMessage(), e);
+      throw new RuntimeException("Failed to retrieve Spotify entity information", e);
+    }
+  }
+
   /** Exception handler for IllegalArgumentException - returns 400 Bad Request. */
   @ExceptionHandler(IllegalArgumentException.class)
   public ResponseEntity<ErrorApiDto> handleIllegalArgumentException(IllegalArgumentException e) {
@@ -116,6 +150,32 @@ public class SpotifyMgmtController implements SpotifyManagementApi {
     error.setMessage(e.getMessage());
 
     return ResponseEntity.badRequest().header("Content-Type", "application/json").body(error);
+  }
+
+  /** Exception handler for InvalidSpotifyUriException - returns 400 Bad Request. */
+  @ExceptionHandler(InvalidSpotifyUriException.class)
+  public ResponseEntity<ErrorApiDto> handleInvalidSpotifyUriException(
+      InvalidSpotifyUriException e) {
+    log.warn("Invalid Spotify URI: {}", e.getMessage());
+
+    ErrorApiDto error = new ErrorApiDto();
+    error.setError("Invalid URI");
+    error.setMessage(e.getMessage());
+
+    return ResponseEntity.badRequest().header("Content-Type", "application/json").body(error);
+  }
+
+  /** Exception handler for SpotifyEntityNotFoundException - returns 404 Not Found. */
+  @ExceptionHandler(SpotifyEntityNotFoundException.class)
+  public ResponseEntity<ErrorApiDto> handleSpotifyEntityNotFoundException(
+      SpotifyEntityNotFoundException e) {
+    log.warn("Spotify entity not found: {}", e.getMessage());
+
+    ErrorApiDto error = new ErrorApiDto();
+    error.setError("Not found");
+    error.setMessage(e.getMessage());
+
+    return ResponseEntity.status(404).header("Content-Type", "application/json").body(error);
   }
 
   /** Exception handler for SpotifyManagementException - returns 401 Unauthorized. */

@@ -6,7 +6,10 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import com.github.juliusd.ueberboeseapi.TestBase;
+import com.github.juliusd.ueberboeseapi.spotify.InvalidSpotifyUriException;
 import com.github.juliusd.ueberboeseapi.spotify.SpotifyAccountService;
+import com.github.juliusd.ueberboeseapi.spotify.SpotifyEntityNotFoundException;
+import com.github.juliusd.ueberboeseapi.spotify.SpotifyEntityService;
 import com.github.juliusd.ueberboeseapi.spotify.SpotifyManagementService;
 import io.restassured.http.ContentType;
 import java.io.IOException;
@@ -21,6 +24,7 @@ class SpotifyMgmtControllerTest extends TestBase {
 
   @MockitoBean private SpotifyManagementService spotifyManagementService;
   @MockitoBean private SpotifyAccountService spotifyAccountService;
+  @MockitoBean private SpotifyEntityService spotifyEntityService;
 
   @Test
   void initSpotifyAuth_shouldReturnRedirectUrl() {
@@ -295,5 +299,248 @@ class SpotifyMgmtControllerTest extends TestBase {
         .post("/mgmt/spotify/init")
         .then()
         .statusCode(401);
+  }
+
+  @Test
+  void getSpotifyEntity_shouldReturnEntityInfoForTrack() {
+    // Given
+    String uri = "spotify:track:6rqhFgbbKwnb9MLmUQDhG6";
+    SpotifyEntityService.SpotifyEntityInfo mockInfo =
+        new SpotifyEntityService.SpotifyEntityInfo(
+            "Bohemian Rhapsody", "https://i.scdn.co/image/test.jpg");
+
+    when(spotifyEntityService.getEntityInfo(uri)).thenReturn(mockInfo);
+
+    // When / Then
+    given()
+        .auth()
+        .basic("admin", "test-password-123")
+        .header("Content-Type", "application/json")
+        .body("{\"uri\": \"" + uri + "\"}")
+        .when()
+        .post("/mgmt/spotify/entity")
+        .then()
+        .statusCode(200)
+        .contentType("application/json")
+        .body("name", equalTo("Bohemian Rhapsody"))
+        .body("imageUrl", equalTo("https://i.scdn.co/image/test.jpg"));
+  }
+
+  @Test
+  void getSpotifyEntity_shouldReturnEntityInfoForAlbum() {
+    // Given
+    String uri = "spotify:album:4LH4d3cOWNNsVw41Gqt2kv";
+    SpotifyEntityService.SpotifyEntityInfo mockInfo =
+        new SpotifyEntityService.SpotifyEntityInfo(
+            "The Dark Side of the Moon", "https://i.scdn.co/image/album.jpg");
+
+    when(spotifyEntityService.getEntityInfo(uri)).thenReturn(mockInfo);
+
+    // When / Then
+    given()
+        .auth()
+        .basic("admin", "test-password-123")
+        .header("Content-Type", "application/json")
+        .body("{\"uri\": \"" + uri + "\"}")
+        .when()
+        .post("/mgmt/spotify/entity")
+        .then()
+        .statusCode(200)
+        .contentType("application/json")
+        .body("name", equalTo("The Dark Side of the Moon"))
+        .body("imageUrl", equalTo("https://i.scdn.co/image/album.jpg"));
+  }
+
+  @Test
+  void getSpotifyEntity_shouldReturnEntityInfoForArtist() {
+    // Given
+    String uri = "spotify:artist:0OdUWJ0sBjDrqHygGUXeCF";
+    SpotifyEntityService.SpotifyEntityInfo mockInfo =
+        new SpotifyEntityService.SpotifyEntityInfo("Queen", "https://i.scdn.co/image/artist.jpg");
+
+    when(spotifyEntityService.getEntityInfo(uri)).thenReturn(mockInfo);
+
+    // When / Then
+    given()
+        .auth()
+        .basic("admin", "test-password-123")
+        .header("Content-Type", "application/json")
+        .body("{\"uri\": \"" + uri + "\"}")
+        .when()
+        .post("/mgmt/spotify/entity")
+        .then()
+        .statusCode(200)
+        .contentType("application/json")
+        .body("name", equalTo("Queen"))
+        .body("imageUrl", equalTo("https://i.scdn.co/image/artist.jpg"));
+  }
+
+  @Test
+  void getSpotifyEntity_shouldReturnEntityInfoForPlaylist() {
+    // Given
+    String uri = "spotify:playlist:37i9dQZF1DXcBWIGoYBM5M";
+    SpotifyEntityService.SpotifyEntityInfo mockInfo =
+        new SpotifyEntityService.SpotifyEntityInfo(
+            "Today's Top Hits", "https://i.scdn.co/image/playlist.jpg");
+
+    when(spotifyEntityService.getEntityInfo(uri)).thenReturn(mockInfo);
+
+    // When / Then
+    given()
+        .auth()
+        .basic("admin", "test-password-123")
+        .header("Content-Type", "application/json")
+        .body("{\"uri\": \"" + uri + "\"}")
+        .when()
+        .post("/mgmt/spotify/entity")
+        .then()
+        .statusCode(200)
+        .contentType("application/json")
+        .body("name", equalTo("Today's Top Hits"))
+        .body("imageUrl", equalTo("https://i.scdn.co/image/playlist.jpg"));
+  }
+
+  @Test
+  void getSpotifyEntity_shouldReturnNullImageUrlWhenNoImageAvailable() {
+    // Given
+    String uri = "spotify:playlist:37i9dQZF1DXcBWIGoYBM5M";
+    SpotifyEntityService.SpotifyEntityInfo mockInfo =
+        new SpotifyEntityService.SpotifyEntityInfo("My Private Playlist", null);
+
+    when(spotifyEntityService.getEntityInfo(uri)).thenReturn(mockInfo);
+
+    // When / Then
+    given()
+        .auth()
+        .basic("admin", "test-password-123")
+        .header("Content-Type", "application/json")
+        .body("{\"uri\": \"" + uri + "\"}")
+        .when()
+        .post("/mgmt/spotify/entity")
+        .then()
+        .statusCode(200)
+        .contentType("application/json")
+        .body("name", equalTo("My Private Playlist"))
+        .body("imageUrl", nullValue());
+  }
+
+  @Test
+  void getSpotifyEntity_shouldReturn400ForInvalidUri() {
+    // Given
+    String invalidUri = "invalid:uri:format";
+
+    when(spotifyEntityService.getEntityInfo(invalidUri))
+        .thenThrow(new InvalidSpotifyUriException("Invalid Spotify URI format"));
+
+    // When / Then
+    given()
+        .auth()
+        .basic("admin", "test-password-123")
+        .header("Content-Type", "application/json")
+        .body("{\"uri\": \"" + invalidUri + "\"}")
+        .when()
+        .post("/mgmt/spotify/entity")
+        .then()
+        .statusCode(400)
+        .contentType("application/json")
+        .body("error", equalTo("Invalid URI"))
+        .body("message", containsString("Invalid Spotify URI format"));
+  }
+
+  @Test
+  void getSpotifyEntity_shouldReturn400ForUnsupportedEntityType() {
+    // Given
+    String unsupportedUri = "spotify:show:12345";
+
+    when(spotifyEntityService.getEntityInfo(unsupportedUri))
+        .thenThrow(
+            new InvalidSpotifyUriException(
+                "Unsupported entity type: show. Supported types: track, album, artist, playlist"));
+
+    // When / Then
+    given()
+        .auth()
+        .basic("admin", "test-password-123")
+        .header("Content-Type", "application/json")
+        .body("{\"uri\": \"" + unsupportedUri + "\"}")
+        .when()
+        .post("/mgmt/spotify/entity")
+        .then()
+        .statusCode(400)
+        .contentType("application/json")
+        .body("error", equalTo("Invalid URI"))
+        .body("message", containsString("Unsupported entity type"));
+  }
+
+  @Test
+  void getSpotifyEntity_shouldReturn404ForEntityNotFound() {
+    // Given
+    String notFoundUri = "spotify:track:nonexistent123";
+
+    when(spotifyEntityService.getEntityInfo(notFoundUri))
+        .thenThrow(new SpotifyEntityNotFoundException("Spotify entity not found: " + notFoundUri));
+
+    // When / Then
+    given()
+        .auth()
+        .basic("admin", "test-password-123")
+        .header("Content-Type", "application/json")
+        .body("{\"uri\": \"" + notFoundUri + "\"}")
+        .when()
+        .post("/mgmt/spotify/entity")
+        .then()
+        .statusCode(404)
+        .contentType("application/json")
+        .body("error", equalTo("Not found"))
+        .body("message", containsString("not found"));
+  }
+
+  @Test
+  void getSpotifyEntity_shouldReturn401WithoutAuthentication() {
+    // When / Then
+    given()
+        .header("Content-Type", "application/json")
+        .body("{\"uri\": \"spotify:track:12345\"}")
+        .when()
+        .post("/mgmt/spotify/entity")
+        .then()
+        .statusCode(401);
+  }
+
+  @Test
+  void getSpotifyEntity_shouldReturn401WithWrongCredentials() {
+    // When / Then
+    given()
+        .auth()
+        .basic("wrong", "credentials")
+        .header("Content-Type", "application/json")
+        .body("{\"uri\": \"spotify:track:12345\"}")
+        .when()
+        .post("/mgmt/spotify/entity")
+        .then()
+        .statusCode(401);
+  }
+
+  @Test
+  void getSpotifyEntity_shouldReturn500ForSpotifyApiError() {
+    // Given
+    String uri = "spotify:track:12345";
+
+    when(spotifyEntityService.getEntityInfo(uri))
+        .thenThrow(new RuntimeException("Spotify API error"));
+
+    // When / Then
+    given()
+        .auth()
+        .basic("admin", "test-password-123")
+        .header("Content-Type", "application/json")
+        .body("{\"uri\": \"" + uri + "\"}")
+        .when()
+        .post("/mgmt/spotify/entity")
+        .then()
+        .statusCode(500)
+        .contentType("application/json")
+        .body("error", equalTo("Internal server error"))
+        .body("message", notNullValue());
   }
 }

@@ -21,13 +21,14 @@ class SpotifyTokenServiceTest {
 
   private SpotifyTokenService spotifyTokenService;
   private SpotifyAccountService mockAccountService;
-  private SpotifyAuthProperties spotifyAuthProperties;
 
   @BeforeEach
   void setUp() {
     mockAccountService = mock(SpotifyAccountService.class);
-    spotifyAuthProperties = new SpotifyAuthProperties("test-client-id", "test-client-secret");
-    spotifyTokenService = new SpotifyTokenService(spotifyAuthProperties, mockAccountService);
+    var spotifyAuthProperties = new SpotifyAuthProperties("test-client-id", "test-client-secret");
+    var spotifyHostProperties = new SpotifyApiUrlProperties("http", "localhost", 8099);
+    spotifyTokenService =
+        new SpotifyTokenService(spotifyHostProperties, spotifyAuthProperties, mockAccountService);
   }
 
   @Test

@@ -16,6 +16,9 @@ import org.springframework.test.context.TestPropertySource;
       "spotify.auth.client-id=test-client-id",
       "spotify.auth.client-secret=test-client-secret",
       "spotify.mgmt.redirect-uri=ueberboese-login://spotify",
+      "spotify.api.url.schema=http",
+      "spotify.api.url.host=localhost",
+      "spotify.api.url.port=8099",
       "ueberboese.mgmt.password=test-password-123"
     })
 public class TestBase {

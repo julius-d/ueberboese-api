@@ -145,6 +145,116 @@ paths:
                     error: "Internal server error"
                     message: "Failed to confirm Spotify authentication"
 
+  /mgmt/spotify/entity:
+    post:
+      summary: Get Spotify entity information
+      description: |
+        Retrieves name and image URL for a Spotify entity (track, album, artist, or playlist).
+        Accepts a Spotify URI and returns the entity's display name and a medium-sized image URL.
+      operationId: getSpotifyEntity
+      tags:
+        - Spotify Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - uri
+              properties:
+                uri:
+                  type: string
+                  description: Spotify URI (e.g., spotify:track:xxx, spotify:album:xxx, spotify:artist:xxx, spotify:playlist:xxx)
+                  example: "spotify:track:6rqhFgbbKwnb9MLmUQDhG6"
+            examples:
+              track:
+                summary: Track URI
+                value:
+                  uri: "spotify:track:6rqhFgbbKwnb9MLmUQDhG6"
+              album:
+                summary: Album URI
+                value:
+                  uri: "spotify:album:4LH4d3cOWNNsVw41Gqt2kv"
+              artist:
+                summary: Artist URI
+                value:
+                  uri: "spotify:artist:0OdUWJ0sBjDrqHygGUXeCF"
+              playlist:
+                summary: Playlist URI
+                value:
+                  uri: "spotify:playlist:37i9dQZF1DXcBWIGoYBM5M"
+      responses:
+        '200':
+          description: Successfully retrieved entity information
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - name
+                properties:
+                  name:
+                    type: string
+                    description: Display name of the entity
+                    example: "Bohemian Rhapsody"
+                  imageUrl:
+                    type: string
+                    description: URL to medium-sized image (null if no image available)
+                    example: "https://i.scdn.co/image/ab67616d00001e02e319baafd16e84f0408af2a0"
+              examples:
+                withImage:
+                  summary: Entity with image
+                  value:
+                    name: "Bohemian Rhapsody"
+                    imageUrl: "https://i.scdn.co/image/ab67616d00001e02e319baafd16e84f0408af2a0"
+                withoutImage:
+                  summary: Entity without image
+                  value:
+                    name: "My Private Playlist"
+                    imageUrl: null
+        '400':
+          description: Invalid URI format or unsupported entity type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                invalidFormat:
+                  summary: Invalid URI format
+                  value:
+                    error: "Invalid URI"
+                    message: "The provided URI is not a valid Spotify URI"
+                unsupportedType:
+                  summary: Unsupported entity type
+                  value:
+                    error: "Unsupported entity type"
+                    message: "Only track, album, artist, and playlist URIs are supported"
+        '404':
+          description: Entity not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                notFound:
+                  summary: Entity not found
+                  value:
+                    error: "Not found"
+                    message: "The specified Spotify entity could not be found"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                serverError:
+                  summary: Server error
+                  value:
+                    error: "Internal server error"
+                    message: "Failed to retrieve Spotify entity information"
+
   /mgmt/spotify/accounts:
     get:
       summary: List all Spotify accounts

@@ -24,6 +24,7 @@ public class SpotifyManagementService {
   private static final String REQUIRED_SCOPES =
       "playlist-read-private playlist-read-collaborative streaming user-library-read user-library-modify playlist-modify-private playlist-modify-public user-read-email user-read-private user-top-read";
 
+  private final SpotifyApiUrlProperties spotifyHostProperties;
   private final SpotifyAuthProperties spotifyAuthProperties;
   private final SpotifyAccountService spotifyAccountService;
 
@@ -39,6 +40,9 @@ public class SpotifyManagementService {
     try {
       SpotifyApi spotifyApi =
           new SpotifyApi.Builder()
+              .setHost(spotifyHostProperties.host())
+              .setScheme(spotifyHostProperties.schema())
+              .setPort(spotifyHostProperties.port())
               .setClientId(spotifyAuthProperties.clientId())
               .setClientSecret(spotifyAuthProperties.clientSecret())
               .setRedirectUri(SpotifyHttpManager.makeUri(redirectUri))
@@ -75,6 +79,9 @@ public class SpotifyManagementService {
     try {
       SpotifyApi spotifyApi =
           new SpotifyApi.Builder()
+              .setHost(spotifyHostProperties.host())
+              .setScheme(spotifyHostProperties.schema())
+              .setPort(spotifyHostProperties.port())
               .setClientId(spotifyAuthProperties.clientId())
               .setClientSecret(spotifyAuthProperties.clientSecret())
               .setRedirectUri(SpotifyHttpManager.makeUri(redirectUri))
