@@ -227,14 +227,14 @@ class SpotifyMgmtControllerTest extends TestBase {
         .statusCode(200)
         .contentType("application/json")
         .body("accounts", hasSize(2))
+        .body("accounts[0].spotifyUserId", equalTo("user1"))
         .body("accounts[0].displayName", equalTo("John Doe"))
         .body("accounts[0].createdAt", equalTo("2025-12-23T10:30:00Z"))
+        .body("accounts[1].spotifyUserId", equalTo("user2"))
         .body("accounts[1].displayName", equalTo("Jane Smith"))
         .body("accounts[1].createdAt", equalTo("2025-12-22T14:15:00Z"))
         // Verify that sensitive fields are not exposed
-        .body("accounts[0].spotifyUserId", nullValue())
         .body("accounts[0].refreshToken", nullValue())
-        .body("accounts[1].spotifyUserId", nullValue())
         .body("accounts[1].refreshToken", nullValue());
   }
 

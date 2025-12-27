@@ -94,6 +94,7 @@ public class SpotifyMgmtController implements SpotifyManagementApi {
               .map(
                   account -> {
                     SpotifyAccountListItemApiDto dto = new SpotifyAccountListItemApiDto();
+                    dto.setSpotifyUserId(account.spotifyUserId());
                     dto.setDisplayName(account.displayName());
                     dto.setCreatedAt(account.createdAt());
                     return dto;
