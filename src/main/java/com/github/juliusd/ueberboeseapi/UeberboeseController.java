@@ -114,7 +114,7 @@ public class UeberboeseController implements DefaultApi {
 
   @Override
   public ResponseEntity<FullAccountResponseApiDto> getFullAccount(String accountId) {
-    log.debug("Getting full account data for accountId: {}", accountId);
+    log.info("Getting full account data for accountId: {}", accountId);
 
     // Check if cached data exists
     if (accountDataService.hasAccountData(accountId)) {

@@ -44,7 +44,7 @@ public class UeberboeseOauthController implements OauthApi {
     }
 
     // For all other providers, proxy to auth target
-    log.debug("Routing to proxy service for providerId: {}", providerId);
+    log.info("Routing to proxy service for providerId: {}", providerId);
     return handleProxyAuth(oauthTokenRequestApiDto);
   }
 
