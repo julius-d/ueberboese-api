@@ -739,6 +739,49 @@ paths:
         '500':
           description: Internal server error
 
+  /streaming/software/update/account/{accountId}:
+    get:
+      summary: Get software update information
+      description: Retrieves software update information for an account
+      operationId: getSoftwareUpdate
+      tags:
+        - experimental
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          description: Account identifier
+          schema:
+            type: string
+            example: "6921042"
+      responses:
+        '200':
+          description: Successful response with software update information
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: application/vnd.bose.streaming-v1.2+xml
+          content:
+            application/vnd.bose.streaming-v1.2+xml:
+              schema:
+                $ref: '#/components/schemas/SoftwareUpdateResponse'
+              example: |
+                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                <software_update>
+                  <softwareUpdateLocation></softwareUpdateLocation>
+                </software_update>
+        '401':
+          description: Unauthorized - Invalid or missing Bearer token
+        '403':
+          description: Forbidden - Valid token but insufficient permissions
+        '404':
+          description: Not found - Account not found
+        '500':
+          description: Internal server error
+
 components:
   securitySchemes:
     BearerAuth:
@@ -1552,3 +1595,14 @@ components:
           xml:
             name: status-code
           example: "500"
+
+    SoftwareUpdateResponse:
+      type: object
+      description: XML response containing software update information
+      xml:
+        name: software_update
+      properties:
+        softwareUpdateLocation:
+          type: string
+          description: Location URL for software update (empty if no update available)
+          example: ""

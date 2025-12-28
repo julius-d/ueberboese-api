@@ -4,6 +4,7 @@ import com.github.juliusd.ueberboeseapi.generated.ExperimentalApi;
 import com.github.juliusd.ueberboeseapi.generated.dtos.CredentialApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.PresetUpdateRequestApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.PresetUpdateResponseApiDto;
+import com.github.juliusd.ueberboeseapi.generated.dtos.SoftwareUpdateResponseApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.SourceApiDto;
 import java.time.OffsetDateTime;
 import lombok.RequiredArgsConstructor;
@@ -63,5 +64,15 @@ public class UeberboeseExperimentalController implements ExperimentalApi {
                 "http://streamingqa.bose.com/account/%s/device/%s/preset/%d",
                 accountId, deviceId, presetNumber))
         .body(response);
+  }
+
+  @Override
+  public ResponseEntity<SoftwareUpdateResponseApiDto> getSoftwareUpdate(String accountId) {
+    log.info("Getting software update for account {}", accountId);
+
+    SoftwareUpdateResponseApiDto response = new SoftwareUpdateResponseApiDto();
+    response.setSoftwareUpdateLocation("");
+
+    return ResponseEntity.ok(response);
   }
 }

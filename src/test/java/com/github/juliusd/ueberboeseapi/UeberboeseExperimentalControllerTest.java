@@ -16,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.xmlunit.placeholder.PlaceholderDifferenceEvaluator;
 
+@SuppressWarnings("CheckTagEmptyBody")
 class UeberboeseExperimentalControllerTest extends TestBase {
 
   private WireMockServer wireMockServer;
@@ -683,6 +684,38 @@ class UeberboeseExperimentalControllerTest extends TestBase {
           <updatedOn>2025-12-28T16:38:41.000+00:00</updatedOn>
           <username>Radio Mix</username>
         </preset>""";
+
+    assertThat(
+        actualXml,
+        isSimilarTo(expectedXml)
+            .ignoreWhitespace()
+            .withDifferenceEvaluator(new PlaceholderDifferenceEvaluator()));
+  }
+
+  @Test
+  void getSoftwareUpdate_shouldReturnEmptyUpdateLocation() {
+    // language=XML
+    String expectedXml =
+        """
+        <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <software_update>
+          <softwareUpdateLocation></softwareUpdateLocation>
+        </software_update>
+        """;
+
+    String actualXml =
+        given()
+            .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+            .header("User-agent", "Bose_Lisa/27.0.6")
+            .header("Authorization", "Bearer mockToken123")
+            .when()
+            .get("/streaming/software/update/account/6921042")
+            .then()
+            .statusCode(200)
+            .contentType("application/vnd.bose.streaming-v1.2+xml")
+            .extract()
+            .body()
+            .asString();
 
     assertThat(
         actualXml,
