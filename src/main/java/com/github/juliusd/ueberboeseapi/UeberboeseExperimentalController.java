@@ -60,8 +60,7 @@ public class UeberboeseExperimentalController implements ExperimentalApi {
     return ResponseEntity.ok()
         .header(
             "Location",
-            String.format(
-                "http://streamingqa.bose.com/account/%s/device/%s/preset/%d",
+            "http://streamingqa.bose.com/account/%s/device/%s/preset/%d".formatted(
                 accountId, deviceId, presetNumber))
         .body(response);
   }
