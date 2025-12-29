@@ -1,5 +1,6 @@
 package com.github.juliusd.ueberboeseapi;
 
+import com.github.juliusd.ueberboeseapi.device.DeviceRepository;
 import com.github.juliusd.ueberboeseapi.spotify.SpotifyAccountRepository;
 import io.restassured.RestAssured;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,11 +37,13 @@ public class TestBase {
 
   @LocalServerPort private int port;
   @Autowired private SpotifyAccountRepository spotifyAccountRepository;
+  @Autowired private DeviceRepository deviceRepository;
 
   @BeforeEach
   void setUp() {
     RestAssured.port = port;
     RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
     spotifyAccountRepository.deleteAll();
+    deviceRepository.deleteAll();
   }
 }

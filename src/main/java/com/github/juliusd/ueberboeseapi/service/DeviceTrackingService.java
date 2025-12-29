@@ -1,22 +1,25 @@
 package com.github.juliusd.ueberboeseapi.service;
 
+import com.github.juliusd.ueberboeseapi.device.Device;
+import com.github.juliusd.ueberboeseapi.device.DeviceRepository;
 import java.time.OffsetDateTime;
 import java.util.Collection;
-import java.util.concurrent.ConcurrentHashMap;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 /**
- * Service for tracking devices that report to the /streaming/support/power_on endpoint. Maintains a
- * HashMap of device IDs to device information including IP address and timestamps.
+ * Service for tracking devices that report to the /streaming/support/power_on endpoint. Stores
+ * device information in the H2 database including IP address and timestamps.
  */
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class DeviceTrackingService {
 
-  private final ConcurrentHashMap<String, DeviceInfo> devices = new ConcurrentHashMap<>();
+  private final DeviceRepository deviceRepository;
 
   /**
    * Records a device power-on event. If this is the first time the device is seen, creates a new
@@ -28,27 +31,35 @@ public class DeviceTrackingService {
   public void recordDevicePowerOn(String deviceId, String ipAddress) {
     log.debug("Recording power_on for device: {} at IP: {}", deviceId, ipAddress);
 
-    devices.compute(
-        deviceId,
-        (key, existingDevice) -> {
-          if (existingDevice == null) {
-            // First time seeing this device
-            OffsetDateTime now = OffsetDateTime.now();
-            log.info(
-                "New device registered: {} at IP: {} (first seen: {})", deviceId, ipAddress, now);
-            return new DeviceInfo(deviceId, ipAddress, now, now);
-          } else {
-            // Update existing device
-            OffsetDateTime now = OffsetDateTime.now();
-            log.debug(
-                "Updating device: {} at IP: {} (last seen: {}, previous IP: {})",
-                deviceId,
-                ipAddress,
-                now,
-                existingDevice.getIpAddress());
-            return new DeviceInfo(deviceId, ipAddress, existingDevice.getFirstSeen(), now);
-          }
-        });
+    deviceRepository
+        .findById(deviceId)
+        .ifPresentOrElse(
+            existingDevice -> {
+              // Update existing device
+              OffsetDateTime now = OffsetDateTime.now();
+              log.debug(
+                  "Updating device: {} at IP: {} (last seen: {}, previous IP: {})",
+                  deviceId,
+                  ipAddress,
+                  now,
+                  existingDevice.ipAddress());
+              Device updatedDevice =
+                  new Device(
+                      deviceId,
+                      ipAddress,
+                      existingDevice.firstSeen(),
+                      now,
+                      existingDevice.version());
+              deviceRepository.save(updatedDevice);
+            },
+            () -> {
+              // First time seeing this device
+              OffsetDateTime now = OffsetDateTime.now();
+              log.info(
+                  "New device registered: {} at IP: {} (first seen: {})", deviceId, ipAddress, now);
+              Device newDevice = new Device(deviceId, ipAddress, now, now, null);
+              deviceRepository.save(newDevice);
+            });
   }
 
   /**
@@ -57,8 +68,14 @@ public class DeviceTrackingService {
    * @return Collection of DeviceInfo objects for all devices that have reported to power_on
    */
   public Collection<DeviceInfo> getAllDevices() {
+    var devices = deviceRepository.findAllByOrderByLastSeenDesc();
     log.debug("Retrieving all tracked devices (count: {})", devices.size());
-    return devices.values();
+    return devices.stream()
+        .map(
+            device ->
+                new DeviceInfo(
+                    device.deviceId(), device.ipAddress(), device.firstSeen(), device.lastSeen()))
+        .toList();
   }
 
   /** Data class representing information about a tracked device. */

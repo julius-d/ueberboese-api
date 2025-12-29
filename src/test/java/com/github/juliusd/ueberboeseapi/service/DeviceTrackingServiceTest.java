@@ -2,19 +2,15 @@ package com.github.juliusd.ueberboeseapi.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.github.juliusd.ueberboeseapi.TestBase;
 import java.time.OffsetDateTime;
 import java.util.Collection;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
-class DeviceTrackingServiceTest {
+class DeviceTrackingServiceTest extends TestBase {
 
-  private DeviceTrackingService deviceTrackingService;
-
-  @BeforeEach
-  void setUp() {
-    deviceTrackingService = new DeviceTrackingService();
-  }
+  @Autowired private DeviceTrackingService deviceTrackingService;
 
   @Test
   void recordDevicePowerOn_shouldRegisterNewDevice() {
