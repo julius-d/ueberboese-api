@@ -64,13 +64,6 @@ docker logs ueberboese-api
 tail -f ~/ueberboese-logs/proxy-requests.log
 ```
 
-### Update to Latest Version
-
-```bash
-# Pull latest image and restart
-docker compose pull && docker compose up -d
-```
-
 ## Step 2: Domain Setup
 
 You need to configure three domains that point to your deployment server:
@@ -96,6 +89,8 @@ Now you need to configure each SoundTouch device to use your Überböse API depl
 
 Find the local IP addresses of your SoundTouch devices (e.g., `192.168.178.2`).
 You can usually find these in your router's admin interface.
+When you are already in the router's admin interface, make sure to select that you speaker always
+get the same IP address assigned.
 
 ### Configure Each Device
 
@@ -119,11 +114,19 @@ envswitch boseurls set https://ueberboese.your-example-host.org https://ueberboe
 
 Replace `your-example-host.org` with your actual domain.
 
-#### 3. Verify Configuration
+Than type `exit` to leave the speaker
+```bash
+exit
+```
+
+### 3. Restart your speaker
+After executing the configuration commands, unplug each speaker to restart the speaker.
+
+#### 4. Verify Configuration
 
 The device should acknowledge the configuration change. You can verify by checking the logs in `~/ueberboese-logs/proxy-requests.log` - you should see requests coming from your SoundTouch device.
 
-## Step 4: Spotify OAuth (Optional)
+## Step 5: Spotify OAuth (Optional)
 
 If you want to use Spotify with your SoundTouch devices, follow these additional steps:
 
@@ -220,6 +223,15 @@ This will list all connected Spotify accounts.
 
 **Important:** You must connect at least one Spotify account via the management API or companion app before your SoundTouch devices can use Spotify. The API will automatically use the first connected account.
 
+## Troubleshooting
+
+### Update to Latest Version
+
+```bash
+# Pull latest image and restart
+docker compose pull && docker compose up -d
+```
+
 ### Restart the Container
 
 ```bash
@@ -227,32 +239,23 @@ docker compose down
 docker compose up -d
 ```
 
-## Troubleshooting
-
-### Check Container Health
-
-```bash
-# Check if container is running
-docker ps
-
-# Check health status
-docker inspect ueberboese-api | grep -A 10 Health
-
-# Access health check endpoint directly
-curl http://localhost:8081/actuator/health
-```
-
 ### View Logs
 
 ```bash
 # View Docker container logs
-docker logs ueberboese-api
+docker logs ueberboese-api -f
 
 # View persistent application logs
 tail -f ~/ueberboese-logs/proxy-requests.log
+```
 
-# View all logs in real-time
-docker compose logs -f
+### Check Container Health
+```bash
+# Check if container is running
+docker ps
+
+# Access health check endpoint directly
+curl http://localhost:8081/actuator/health
 ```
 
 ### Common Issues
