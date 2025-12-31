@@ -1,5 +1,6 @@
 package com.github.juliusd.ueberboeseapi.service;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
@@ -340,5 +341,138 @@ class AccountDataServiceTest {
 
     assertTrue(savedContent.contains("SECOND"));
     assertFalse(savedContent.contains("FIRST"));
+  }
+
+  // ========== Account ID Validation Tests ==========
+
+  @Test
+  void loadFullAccountData_shouldRejectNullAccountId() {
+    assertThatThrownBy(() -> accountDataService.loadFullAccountData(null))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("must not be null or empty");
+  }
+
+  @Test
+  void loadFullAccountData_shouldRejectEmptyAccountId() {
+    assertThatThrownBy(() -> accountDataService.loadFullAccountData(""))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("must not be null or empty");
+  }
+
+  @Test
+  void loadFullAccountData_shouldRejectAccountIdWithSlash() {
+    assertThatThrownBy(() -> accountDataService.loadFullAccountData("../../../etc/passwd"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("invalid characters");
+  }
+
+  @Test
+  void loadFullAccountData_shouldRejectAccountIdWithBackslash() {
+    assertThatThrownBy(() -> accountDataService.loadFullAccountData("..\\..\\windows\\system32"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("invalid characters");
+  }
+
+  @Test
+  void loadFullAccountData_shouldRejectAccountIdWithDot() {
+    assertThatThrownBy(() -> accountDataService.loadFullAccountData("account.id"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("invalid characters");
+  }
+
+  @Test
+  void loadFullAccountData_shouldRejectAccountIdWithPercent() {
+    assertThatThrownBy(() -> accountDataService.loadFullAccountData("account%20id"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("invalid characters");
+  }
+
+  @Test
+  void loadFullAccountData_shouldRejectAccountIdWithSpecialChars() {
+    assertThatThrownBy(() -> accountDataService.loadFullAccountData("acc@ount!"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("invalid characters");
+  }
+
+  @Test
+  void loadFullAccountData_shouldAcceptValidAccountIdWithHyphen() {
+    String accountId = "valid-account-123";
+    // This should not throw IllegalArgumentException - will fail with file not found instead
+    assertThatThrownBy(() -> accountDataService.loadFullAccountData(accountId))
+        .isInstanceOf(IOException.class)
+        .hasMessageContaining("Account data file not found");
+  }
+
+  @Test
+  void hasAccountData_shouldRejectNullAccountId() {
+    assertThatThrownBy(() -> accountDataService.hasAccountData(null))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("must not be null or empty");
+  }
+
+  @Test
+  void hasAccountData_shouldRejectEmptyAccountId() {
+    assertThatThrownBy(() -> accountDataService.hasAccountData(""))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("must not be null or empty");
+  }
+
+  @Test
+  void hasAccountData_shouldRejectInvalidAccountId() {
+    assertThatThrownBy(() -> accountDataService.hasAccountData("../invalid"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("invalid characters");
+  }
+
+  @Test
+  void hasAccountData_shouldAcceptValidAccountId() {
+    // Should not throw exception for valid account ID even if file doesn't exist
+    boolean result = accountDataService.hasAccountData("validAccount123");
+    assertThat(result).isFalse();
+  }
+
+  @Test
+  void saveFullAccountData_shouldRejectNullAccountId() {
+    FullAccountResponseApiDto data = new FullAccountResponseApiDto();
+    assertThatThrownBy(() -> accountDataService.saveFullAccountData(null, data))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("must not be null or empty");
+  }
+
+  @Test
+  void saveFullAccountData_shouldRejectEmptyAccountId() {
+    FullAccountResponseApiDto data = new FullAccountResponseApiDto();
+    assertThatThrownBy(() -> accountDataService.saveFullAccountData("", data))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("must not be null or empty");
+  }
+
+  @Test
+  void saveFullAccountData_shouldRejectInvalidAccountId() {
+    FullAccountResponseApiDto data = new FullAccountResponseApiDto();
+    assertThatThrownBy(() -> accountDataService.saveFullAccountData("../invalid", data))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("invalid characters");
+  }
+
+  @Test
+  void saveFullAccountDataRaw_shouldRejectNullAccountId() {
+    assertThatThrownBy(() -> accountDataService.saveFullAccountDataRaw(null, "<xml/>"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("must not be null or empty");
+  }
+
+  @Test
+  void saveFullAccountDataRaw_shouldRejectEmptyAccountId() {
+    assertThatThrownBy(() -> accountDataService.saveFullAccountDataRaw("", "<xml/>"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("must not be null or empty");
+  }
+
+  @Test
+  void saveFullAccountDataRaw_shouldRejectInvalidAccountId() {
+    assertThatThrownBy(() -> accountDataService.saveFullAccountDataRaw("../invalid", "<xml/>"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("invalid characters");
   }
 }

@@ -24,6 +24,25 @@ public class AccountDataService {
   }
 
   /**
+   * Validates that an account ID contains only safe characters.
+   *
+   * @param accountId The account ID to validate
+   * @throws IllegalArgumentException if the account ID is null, empty, or contains invalid
+   *     characters
+   */
+  private static void validateAccountId(String accountId) {
+    if (accountId == null || accountId.isEmpty()) {
+      throw new IllegalArgumentException("Account ID must not be null or empty");
+    }
+
+    if (!accountId.matches("^[0-9a-zA-Z-]+$")) {
+      throw new IllegalArgumentException(
+          "Account ID contains invalid characters. Only alphanumeric characters and hyphens are allowed: "
+              + accountId);
+    }
+  }
+
+  /**
    * Constructs the file path for an account data file.
    *
    * @param accountId The account ID
@@ -56,6 +75,7 @@ public class AccountDataService {
    * @throws IOException if the file doesn't exist or cannot be parsed
    */
   public FullAccountResponseApiDto loadFullAccountData(String accountId) throws IOException {
+    validateAccountId(accountId);
     Path filePath = getAccountFilePath(accountId);
 
     log.debug("Attempting to load account data from: {}", filePath);
@@ -90,6 +110,7 @@ public class AccountDataService {
    * @return true if the file exists, false otherwise
    */
   public boolean hasAccountData(String accountId) {
+    validateAccountId(accountId);
     Path filePath = getAccountFilePath(accountId);
     return Files.exists(filePath);
   }
@@ -103,6 +124,7 @@ public class AccountDataService {
    */
   public void saveFullAccountData(String accountId, FullAccountResponseApiDto accountData)
       throws IOException {
+    validateAccountId(accountId);
     Path filePath = getAccountFilePath(accountId);
     ensureDirectoryExists(filePath);
 
@@ -126,6 +148,7 @@ public class AccountDataService {
    * @throws IOException if the file cannot be written
    */
   public void saveFullAccountDataRaw(String accountId, String xmlContent) throws IOException {
+    validateAccountId(accountId);
     Path filePath = getAccountFilePath(accountId);
     ensureDirectoryExists(filePath);
 

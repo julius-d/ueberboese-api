@@ -689,6 +689,7 @@ components:
       description: Account identifier
       schema:
         type: string
+        pattern: '^[0-9a-zA-Z-]+$'
         example: "6921042"
 
     deviceId:
