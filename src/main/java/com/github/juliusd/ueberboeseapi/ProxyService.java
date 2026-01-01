@@ -253,6 +253,10 @@ public class ProxyService {
     // Skip host and connection-related headers
     return !lowerHeaderName.equals("host")
         && !lowerHeaderName.equals("connection")
+        && !lowerHeaderName.equals("x-forwarded-scheme")
+        && !lowerHeaderName.equals("x-forwarded-proto")
+        && !lowerHeaderName.equals("x-forwarded-for")
+        && !lowerHeaderName.equals("x-real-ip")
         && !lowerHeaderName.equals("content-length")
         && !lowerHeaderName.equals("transfer-encoding");
   }
