@@ -103,30 +103,80 @@ public class FullAccountService {
     // Get all stored Spotify accounts
     List<SpotifyAccount> spotifyAccounts = spotifyAccountService.listAllAccounts();
 
-    // Create a map for efficient lookup: spotifyUserId -> refreshToken
-    Map<String, String> userIdToRefreshToken =
+    // Create a map for efficient lookup: spotifyUserId -> SpotifyAccount
+    Map<String, SpotifyAccount> userIdToAccount =
         spotifyAccounts.stream()
-            .collect(Collectors.toMap(SpotifyAccount::spotifyUserId, SpotifyAccount::refreshToken));
+            .collect(Collectors.toMap(SpotifyAccount::spotifyUserId, account -> account));
 
-    // Iterate through sources and update matching Spotify credentials
+    int patchedCount = 0;
+
+    // Patch top-level sources
     if (response.getSources() != null && response.getSources().getSource() != null) {
       for (SourceApiDto source : response.getSources().getSource()) {
-        // Check if this is a Spotify source (sourceproviderid == "15")
-        if ("15".equals(source.getSourceproviderid())) {
-          String username = source.getUsername();
+        if (patchSource(source, userIdToAccount)) {
+          patchedCount++;
+        }
+      }
+    }
 
-          // Check if we have a stored refresh token for this user
-          if (username != null && userIdToRefreshToken.containsKey(username)) {
-            String refreshToken = userIdToRefreshToken.get(username);
+    // Patch nested sources in device presets and recents
+    if (response.getDevices() != null && response.getDevices().getDevice() != null) {
+      for (var device : response.getDevices().getDevice()) {
+        // Patch preset sources
+        if (device.getPresets() != null && device.getPresets().getPreset() != null) {
+          for (var preset : device.getPresets().getPreset()) {
+            if (preset.getSource() != null && patchSource(preset.getSource(), userIdToAccount)) {
+              patchedCount++;
+            }
+          }
+        }
 
-            // Update the credential value
-            if (source.getCredential() != null) {
-              source.getCredential().setValue(refreshToken);
-              log.debug("Updated Spotify credential for username: {}", username);
+        // Patch recent sources
+        if (device.getRecents() != null && device.getRecents().getRecent() != null) {
+          for (var recent : device.getRecents().getRecent()) {
+            if (recent.getSource() != null && patchSource(recent.getSource(), userIdToAccount)) {
+              patchedCount++;
             }
           }
         }
       }
     }
+
+    if (patchedCount > 0) {
+      log.info("Patched {} Spotify sources with updated credentials and timestamps", patchedCount);
+    }
+  }
+
+  /**
+   * Patches a single Spotify source with updated credentials and timestamp from stored account.
+   *
+   * @param source The source to patch
+   * @param userIdToAccount Map of Spotify user IDs to accounts
+   * @return true if the source was patched, false otherwise
+   */
+  private boolean patchSource(SourceApiDto source, Map<String, SpotifyAccount> userIdToAccount) {
+    // Check if this is a Spotify source (sourceproviderid == "15")
+    if (!"15".equals(source.getSourceproviderid())) {
+      return false;
+    }
+
+    String username = source.getUsername();
+
+    // Check if we have a stored account for this user
+    if (username == null || !userIdToAccount.containsKey(username)) {
+      return false;
+    }
+
+    SpotifyAccount account = userIdToAccount.get(username);
+
+    // Update the credential value
+    if (source.getCredential() != null) {
+      source.getCredential().setValue(account.refreshToken());
+    }
+
+    // Update the updatedOn timestamp
+    source.setUpdatedOn(account.updatedAt());
+
+    return true;
   }
 }
