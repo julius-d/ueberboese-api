@@ -1,31 +1,23 @@
 package com.github.juliusd.ueberboeseapi.spotify;
 
-import java.io.IOException;
+import com.github.juliusd.ueberboeseapi.spotify.client.SpotifyEntitiesClient;
+import com.github.juliusd.ueberboeseapi.spotify.client.SpotifyOAuthClient;
+import com.github.juliusd.ueberboeseapi.spotify.dto.*;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hc.core5.http.ParseException;
 import org.springframework.stereotype.Service;
-import se.michaelthelin.spotify.SpotifyApi;
-import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
-import se.michaelthelin.spotify.model_objects.specification.Album;
-import se.michaelthelin.spotify.model_objects.specification.AlbumSimplified;
-import se.michaelthelin.spotify.model_objects.specification.Artist;
-import se.michaelthelin.spotify.model_objects.specification.Episode;
-import se.michaelthelin.spotify.model_objects.specification.Image;
-import se.michaelthelin.spotify.model_objects.specification.Playlist;
-import se.michaelthelin.spotify.model_objects.specification.Show;
-import se.michaelthelin.spotify.model_objects.specification.Track;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class SpotifyEntityService {
 
-  private final SpotifyApiUrlProperties spotifyHostProperties;
   private final SpotifyAuthProperties spotifyAuthProperties;
   private final SpotifyAccountService spotifyAccountService;
   private final SpotifyUriParser spotifyUriParser;
+  private final SpotifyEntitiesClient spotifyEntitiesClient;
+  private final SpotifyOAuthClient spotifyOAuthClient;
 
   public SpotifyEntityInfo getEntityInfo(String uri) {
     log.info("Getting entity info for URI: {}", uri);
@@ -34,40 +26,45 @@ public class SpotifyEntityService {
     SpotifyUriParser.SpotifyUri spotifyUri = spotifyUriParser.parseUri(uri);
     log.debug("Parsed URI - type: {}, id: {}", spotifyUri.type(), spotifyUri.id());
 
-    // Get authenticated Spotify API
-    SpotifyApi spotifyApi = createAuthenticatedSpotifyApi();
+    // Get access token
+    String accessToken = getAccessToken();
 
     try {
+      // Prepare authorization header
+      String authHeader = "Bearer " + accessToken;
+
       // Fetch entity based on type
       return switch (spotifyUri.type()) {
-        case "track" -> getTrackInfo(spotifyApi, spotifyUri.id());
-        case "album" -> getAlbumInfo(spotifyApi, spotifyUri.id());
-        case "artist" -> getArtistInfo(spotifyApi, spotifyUri.id());
-        case "playlist" -> getPlaylistInfo(spotifyApi, spotifyUri.id());
-        case "show" -> getShowInfo(spotifyApi, spotifyUri.id());
-        case "episode" -> getEpisodeInfo(spotifyApi, spotifyUri.id());
+        case "track" -> getTrackInfo(authHeader, spotifyUri.id());
+        case "album" -> getAlbumInfo(authHeader, spotifyUri.id());
+        case "artist" -> getArtistInfo(authHeader, spotifyUri.id());
+        case "playlist" -> getPlaylistInfo(authHeader, spotifyUri.id());
+        case "show" -> getShowInfo(authHeader, spotifyUri.id());
+        case "episode" -> getEpisodeInfo(authHeader, spotifyUri.id());
         default ->
             throw new InvalidSpotifyUriException(
                 "Unsupported entity type: "
                     + spotifyUri.type()
                     + ". Supported types: track, album, artist, playlist, show, episode");
       };
-    } catch (IOException | SpotifyWebApiException | ParseException e) {
+    } catch (InvalidSpotifyUriException | SpotifyEntityNotFoundException e) {
+      // Let these exceptions propagate unchanged to the controller
+      throw e;
+    } catch (Exception e) {
       log.error("Failed to fetch Spotify entity: {}", e.getMessage(), e);
 
-      // Check if it's a 404 Not Found error
-      if (e instanceof SpotifyWebApiException apiException) {
-        if (apiException.getMessage() != null && apiException.getMessage().contains("not found")) {
-          throw new SpotifyEntityNotFoundException(
-              "Spotify entity not found: " + uri, apiException);
-        }
+      // Check if it's a 404 Not Found error from Spotify API
+      String errorMsg = e.getMessage();
+      if (errorMsg != null
+          && (errorMsg.toLowerCase().contains("not found") || errorMsg.contains("404"))) {
+        throw new SpotifyEntityNotFoundException("Spotify entity not found: " + uri, e);
       }
 
       throw new RuntimeException("Failed to fetch Spotify entity information", e);
     }
   }
 
-  private SpotifyApi createAuthenticatedSpotifyApi() {
+  private String getAccessToken() {
     try {
       // Get the oldest connected Spotify account
       List<SpotifyAccount> accounts = spotifyAccountService.listAllAccounts();
@@ -84,134 +81,121 @@ public class SpotifyEntityService {
           oldestAccount.displayName(),
           oldestAccount.spotifyUserId());
 
-      // Build SpotifyApi with refresh token
-      SpotifyApi spotifyApi =
-          new SpotifyApi.Builder()
-              .setHost(spotifyHostProperties.host())
-              .setScheme(spotifyHostProperties.schema())
-              .setPort(spotifyHostProperties.port())
-              .setRefreshToken(oldestAccount.refreshToken())
-              .setClientId(spotifyAuthProperties.clientId())
-              .setClientSecret(spotifyAuthProperties.clientSecret())
-              .build();
+      // Prepare form data for token refresh
+      org.springframework.util.LinkedMultiValueMap<String, String> formData =
+          new org.springframework.util.LinkedMultiValueMap<>();
+      formData.add("grant_type", "refresh_token");
+      formData.add("refresh_token", oldestAccount.refreshToken());
+      formData.add("client_id", spotifyAuthProperties.clientId());
+      formData.add("client_secret", spotifyAuthProperties.clientSecret());
 
       // Refresh the access token
-      var authorizationCodeRefreshRequest = spotifyApi.authorizationCodeRefresh().build();
-      var authorizationCodeCredentials = authorizationCodeRefreshRequest.execute();
-
-      // Set the access token
-      spotifyApi.setAccessToken(authorizationCodeCredentials.getAccessToken());
+      var authorizationCodeCredentials = spotifyOAuthClient.refreshAccessToken(formData);
 
       log.debug("Successfully obtained Spotify access token");
-      return spotifyApi;
+      return authorizationCodeCredentials.accessToken();
 
-    } catch (IOException | SpotifyWebApiException | ParseException e) {
+    } catch (Exception e) {
       log.error("Failed to authenticate with Spotify: {}", e.getMessage());
       throw new SpotifyException(e);
     }
   }
 
-  private SpotifyEntityInfo getTrackInfo(SpotifyApi spotifyApi, String trackId)
-      throws IOException, SpotifyWebApiException, ParseException {
-    Track track = spotifyApi.getTrack(trackId).build().execute();
+  private SpotifyEntityInfo getTrackInfo(String authHeader, String trackId) {
+    TrackDto track = spotifyEntitiesClient.getTrack(authHeader, trackId);
 
-    String name = track.getName();
+    String name = track.name();
     String imageUrl = null;
 
     // Tracks get their images from the album
-    AlbumSimplified album = track.getAlbum();
-    if (album != null && album.getImages() != null && album.getImages().length > 0) {
-      imageUrl = selectMediumImage(album.getImages());
+    AlbumSimplifiedDto album = track.album();
+    if (album != null && album.images() != null && !album.images().isEmpty()) {
+      imageUrl = selectMediumImage(album.images());
     }
 
     log.info("Found track: {} with image: {}", name, imageUrl);
     return new SpotifyEntityInfo(name, imageUrl);
   }
 
-  private SpotifyEntityInfo getAlbumInfo(SpotifyApi spotifyApi, String albumId)
-      throws IOException, SpotifyWebApiException, ParseException {
-    Album album = spotifyApi.getAlbum(albumId).build().execute();
+  private SpotifyEntityInfo getAlbumInfo(String authHeader, String albumId) {
+    AlbumDto album = spotifyEntitiesClient.getAlbum(authHeader, albumId);
 
-    String name = album.getName();
+    String name = album.name();
     String imageUrl = null;
 
-    if (album.getImages() != null && album.getImages().length > 0) {
-      imageUrl = selectMediumImage(album.getImages());
+    if (album.images() != null && !album.images().isEmpty()) {
+      imageUrl = selectMediumImage(album.images());
     }
 
     log.info("Found album: {} with image: {}", name, imageUrl);
     return new SpotifyEntityInfo(name, imageUrl);
   }
 
-  private SpotifyEntityInfo getArtistInfo(SpotifyApi spotifyApi, String artistId)
-      throws IOException, SpotifyWebApiException, ParseException {
-    Artist artist = spotifyApi.getArtist(artistId).build().execute();
+  private SpotifyEntityInfo getArtistInfo(String authHeader, String artistId) {
+    ArtistDto artist = spotifyEntitiesClient.getArtist(authHeader, artistId);
 
-    String name = artist.getName();
+    String name = artist.name();
     String imageUrl = null;
 
-    if (artist.getImages() != null && artist.getImages().length > 0) {
-      imageUrl = selectMediumImage(artist.getImages());
+    if (artist.images() != null && !artist.images().isEmpty()) {
+      imageUrl = selectMediumImage(artist.images());
     }
 
     log.info("Found artist: {} with image: {}", name, imageUrl);
     return new SpotifyEntityInfo(name, imageUrl);
   }
 
-  private SpotifyEntityInfo getPlaylistInfo(SpotifyApi spotifyApi, String playlistId)
-      throws IOException, SpotifyWebApiException, ParseException {
-    Playlist playlist = spotifyApi.getPlaylist(playlistId).build().execute();
+  private SpotifyEntityInfo getPlaylistInfo(String authHeader, String playlistId) {
+    PlaylistDto playlist = spotifyEntitiesClient.getPlaylist(authHeader, playlistId);
 
-    String name = playlist.getName();
+    String name = playlist.name();
     String imageUrl = null;
 
-    if (playlist.getImages() != null && playlist.getImages().length > 0) {
-      imageUrl = selectMediumImage(playlist.getImages());
+    if (playlist.images() != null && !playlist.images().isEmpty()) {
+      imageUrl = selectMediumImage(playlist.images());
     }
 
     log.info("Found playlist: {} with image: {}", name, imageUrl);
     return new SpotifyEntityInfo(name, imageUrl);
   }
 
-  private SpotifyEntityInfo getShowInfo(SpotifyApi spotifyApi, String showId)
-      throws IOException, SpotifyWebApiException, ParseException {
-    Show show = spotifyApi.getShow(showId).build().execute();
+  private SpotifyEntityInfo getShowInfo(String authHeader, String showId) {
+    ShowDto show = spotifyEntitiesClient.getShow(authHeader, showId);
 
-    String name = show.getName();
+    String name = show.name();
     String imageUrl = null;
 
-    if (show.getImages() != null && show.getImages().length > 0) {
-      imageUrl = selectMediumImage(show.getImages());
+    if (show.images() != null && !show.images().isEmpty()) {
+      imageUrl = selectMediumImage(show.images());
     }
 
     log.info("Found show: {} with image: {}", name, imageUrl);
     return new SpotifyEntityInfo(name, imageUrl);
   }
 
-  private SpotifyEntityInfo getEpisodeInfo(SpotifyApi spotifyApi, String episodeId)
-      throws IOException, SpotifyWebApiException, ParseException {
-    Episode episode = spotifyApi.getEpisode(episodeId).build().execute();
+  private SpotifyEntityInfo getEpisodeInfo(String authHeader, String episodeId) {
+    EpisodeDto episode = spotifyEntitiesClient.getEpisode(authHeader, episodeId);
 
-    String name = episode.getName();
+    String name = episode.name();
     String imageUrl = null;
 
-    if (episode.getImages() != null && episode.getImages().length > 0) {
-      imageUrl = selectMediumImage(episode.getImages());
+    if (episode.images() != null && !episode.images().isEmpty()) {
+      imageUrl = selectMediumImage(episode.images());
     }
 
     log.info("Found episode: {} with image: {}", name, imageUrl);
     return new SpotifyEntityInfo(name, imageUrl);
   }
 
-  private String selectMediumImage(Image[] images) {
-    if (images == null || images.length == 0) {
+  private String selectMediumImage(List<ImageDto> images) {
+    if (images == null || images.isEmpty()) {
       return null;
     }
 
     // Select the middle image (medium size)
     // Spotify typically provides images in descending size order
-    int middleIndex = images.length / 2;
-    return images[middleIndex].getUrl();
+    int middleIndex = images.size() / 2;
+    return images.get(middleIndex).url();
   }
 
   public record SpotifyEntityInfo(String name, String imageUrl) {}

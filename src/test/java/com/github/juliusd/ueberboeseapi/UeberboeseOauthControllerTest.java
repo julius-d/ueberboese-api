@@ -11,12 +11,12 @@ import static org.mockito.Mockito.when;
 
 import com.github.juliusd.ueberboeseapi.spotify.NoSpotifyAccountException;
 import com.github.juliusd.ueberboeseapi.spotify.SpotifyTokenService;
+import com.github.juliusd.ueberboeseapi.spotify.dto.AuthorizationCodeCredentialsDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import se.michaelthelin.spotify.model_objects.credentials.AuthorizationCodeCredentials;
 
 @DirtiesContext
 class UeberboeseOauthControllerTest extends TestBase {
@@ -27,14 +27,13 @@ class UeberboeseOauthControllerTest extends TestBase {
   @BeforeEach
   void setUpMocks() {
     // Create a mock AuthorizationCodeCredentials response
-    AuthorizationCodeCredentials mockCredentials =
-        new AuthorizationCodeCredentials.Builder()
-            .setAccessToken("123fooAccessExampleToken")
-            .setTokenType("Bearer")
-            .setExpiresIn(3600)
-            .setScope(
-                "playlist-read-private playlist-read-collaborative streaming user-library-read user-library-modify playlist-modify-private playlist-modify-public user-read-email user-read-private user-top-read")
-            .build();
+    AuthorizationCodeCredentialsDto mockCredentials =
+        new AuthorizationCodeCredentialsDto(
+            "123fooAccessExampleToken",
+            "Bearer",
+            3600,
+            null,
+            "playlist-read-private playlist-read-collaborative streaming user-library-read user-library-modify playlist-modify-private playlist-modify-public user-read-email user-read-private user-top-read");
 
     // Mock the service to return our mock credentials
     when(spotifyTokenService.loadSpotifyAuth(any())).thenReturn(mockCredentials);

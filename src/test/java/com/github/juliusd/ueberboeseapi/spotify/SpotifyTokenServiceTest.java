@@ -24,9 +24,10 @@ class SpotifyTokenServiceTest {
   void setUp() {
     mockAccountService = mock(SpotifyAccountService.class);
     var spotifyAuthProperties = new SpotifyAuthProperties("test-client-id", "test-client-secret");
-    var spotifyHostProperties = new SpotifyApiUrlProperties("http", "localhost", 8099);
+    var mockOAuthClient =
+        mock(com.github.juliusd.ueberboeseapi.spotify.client.SpotifyOAuthClient.class);
     spotifyTokenService =
-        new SpotifyTokenService(spotifyHostProperties, spotifyAuthProperties, mockAccountService);
+        new SpotifyTokenService(spotifyAuthProperties, mockAccountService, mockOAuthClient);
   }
 
   @Test

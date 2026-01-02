@@ -1,19 +1,13 @@
 package com.github.juliusd.ueberboeseapi.spotify;
 
-import java.io.IOException;
-import java.net.URI;
+import com.github.juliusd.ueberboeseapi.spotify.client.SpotifyOAuthClient;
+import com.github.juliusd.ueberboeseapi.spotify.client.SpotifyUserClient;
+import com.github.juliusd.ueberboeseapi.spotify.dto.UserDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hc.core5.http.ParseException;
 import org.springframework.stereotype.Service;
-import se.michaelthelin.spotify.SpotifyApi;
-import se.michaelthelin.spotify.SpotifyHttpManager;
-import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
-import se.michaelthelin.spotify.model_objects.credentials.AuthorizationCodeCredentials;
-import se.michaelthelin.spotify.model_objects.specification.User;
-import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeRequest;
-import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeUriRequest;
-import se.michaelthelin.spotify.requests.data.users_profile.GetCurrentUsersProfileRequest;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Service
 @Slf4j
@@ -24,9 +18,10 @@ public class SpotifyManagementService {
   private static final String REQUIRED_SCOPES =
       "playlist-read-private playlist-read-collaborative streaming user-library-read user-library-modify playlist-modify-private playlist-modify-public user-read-email user-read-private user-top-read";
 
-  private final SpotifyApiUrlProperties spotifyHostProperties;
   private final SpotifyAuthProperties spotifyAuthProperties;
   private final SpotifyAccountService spotifyAccountService;
+  private final SpotifyOAuthClient spotifyOAuthClient;
+  private final SpotifyUserClient spotifyUserClient;
 
   /**
    * Generates the Spotify authorization URL for OAuth flow initialization.
@@ -38,21 +33,16 @@ public class SpotifyManagementService {
     log.info("Generating Spotify authorization URL with redirectUri: {}", redirectUri);
 
     try {
-      SpotifyApi spotifyApi =
-          new SpotifyApi.Builder()
-              .setHost(spotifyHostProperties.host())
-              .setScheme(spotifyHostProperties.schema())
-              .setPort(spotifyHostProperties.port())
-              .setClientId(spotifyAuthProperties.clientId())
-              .setClientSecret(spotifyAuthProperties.clientSecret())
-              .setRedirectUri(SpotifyHttpManager.makeUri(redirectUri))
-              .build();
-
-      AuthorizationCodeUriRequest authorizationCodeUriRequest =
-          spotifyApi.authorizationCodeUri().scope(REQUIRED_SCOPES).build();
-
-      URI uri = authorizationCodeUriRequest.execute();
-      String authUrl = uri.toString();
+      String authUrl =
+          UriComponentsBuilder.fromUriString("https://accounts.spotify.com")
+              .path("/authorize")
+              .queryParam("client_id", spotifyAuthProperties.clientId())
+              .queryParam("response_type", "code")
+              .queryParam("redirect_uri", redirectUri)
+              .queryParam("scope", REQUIRED_SCOPES)
+              .build()
+              .encode()
+              .toUriString();
 
       log.info("Successfully generated Spotify authorization URL");
       log.debug("Authorization URL: {}", authUrl);
@@ -77,43 +67,37 @@ public class SpotifyManagementService {
     log.info("Exchanging authorization code for tokens");
 
     try {
-      SpotifyApi spotifyApi =
-          new SpotifyApi.Builder()
-              .setHost(spotifyHostProperties.host())
-              .setScheme(spotifyHostProperties.schema())
-              .setPort(spotifyHostProperties.port())
-              .setClientId(spotifyAuthProperties.clientId())
-              .setClientSecret(spotifyAuthProperties.clientSecret())
-              .setRedirectUri(SpotifyHttpManager.makeUri(redirectUri))
-              .build();
+      // Prepare form data for token exchange
+      LinkedMultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+      formData.add("grant_type", "authorization_code");
+      formData.add("code", code);
+      formData.add("redirect_uri", redirectUri);
+      formData.add("client_id", spotifyAuthProperties.clientId());
+      formData.add("client_secret", spotifyAuthProperties.clientSecret());
 
       // Exchange code for tokens
-      AuthorizationCodeRequest authorizationCodeRequest =
-          spotifyApi.authorizationCode(code).build();
-      AuthorizationCodeCredentials credentials = authorizationCodeRequest.execute();
+      var credentials = spotifyOAuthClient.exchangeCodeForToken(formData);
 
       log.info(
           "Successfully exchanged code for tokens. Expires in: {} seconds",
-          credentials.getExpiresIn());
+          credentials.expiresIn());
 
       // Get user profile to extract user ID and display name
-      spotifyApi.setAccessToken(credentials.getAccessToken());
-      GetCurrentUsersProfileRequest profileRequest = spotifyApi.getCurrentUsersProfile().build();
-      User userProfile = profileRequest.execute();
+      String authHeader = "Bearer " + credentials.accessToken();
+      UserDto userProfile = spotifyUserClient.getCurrentUserProfile(authHeader);
 
-      String spotifyUserId = userProfile.getId();
-      String displayName = userProfile.getDisplayName();
+      String spotifyUserId = userProfile.id();
+      String displayName = userProfile.displayName();
       log.info("Retrieved Spotify user profile for user ID: {} ({})", spotifyUserId, displayName);
 
       // Save account
       String accountId =
-          spotifyAccountService.saveAccount(
-              spotifyUserId, displayName, credentials.getRefreshToken());
+          spotifyAccountService.saveAccount(spotifyUserId, displayName, credentials.refreshToken());
 
       log.info("Successfully saved Spotify account with accountId: {}", accountId);
       return accountId;
 
-    } catch (IOException | SpotifyWebApiException | ParseException e) {
+    } catch (Exception e) {
       log.error("Failed to exchange code for tokens: {}", e.getMessage());
       throw new SpotifyManagementException("Failed to authenticate with Spotify", e);
     }

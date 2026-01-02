@@ -1,40 +1,47 @@
 package com.github.juliusd.ueberboeseapi.mgmt;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.matching;
+import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
 
 import com.github.juliusd.ueberboeseapi.TestBase;
-import com.github.juliusd.ueberboeseapi.spotify.InvalidSpotifyUriException;
 import com.github.juliusd.ueberboeseapi.spotify.SpotifyAccount;
 import com.github.juliusd.ueberboeseapi.spotify.SpotifyAccountRepository;
-import com.github.juliusd.ueberboeseapi.spotify.SpotifyEntityNotFoundException;
-import com.github.juliusd.ueberboeseapi.spotify.SpotifyEntityService;
-import com.github.juliusd.ueberboeseapi.spotify.SpotifyManagementService;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
+import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import io.restassured.http.ContentType;
 import java.time.OffsetDateTime;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-@DirtiesContext
+@WireMockTest(httpPort = 8299)
 class SpotifyMgmtControllerTest extends TestBase {
 
-  @MockitoBean private SpotifyManagementService spotifyManagementService;
-  @MockitoBean private SpotifyEntityService spotifyEntityService;
   @Autowired private SpotifyAccountRepository spotifyAccountRepository;
+
+  private WireMock spotifyApiServer;
+
+  @BeforeEach
+  void setUp(WireMockRuntimeInfo wmRuntimeInfo) {
+    spotifyApiServer = wmRuntimeInfo.getWireMock();
+  }
+
+  @AfterEach
+  void tearDown() {
+    assertThat(spotifyApiServer.findAllUnmatchedRequests()).isEmpty();
+  }
 
   @Test
   void initSpotifyAuth_shouldReturnRedirectUrl() {
-    // Given
-    String mockAuthUrl =
-        "https://accounts.spotify.com/authorize?client_id=test&response_type=code&redirect_uri=ueberboese-login%3A%2F%2Fspotify&scope=playlist-read-private+user-read-private";
-
-    when(spotifyManagementService.generateAuthorizationUrl(anyString())).thenReturn(mockAuthUrl);
-
-    // When / Then
     given()
         .auth()
         .basic("admin", "test-password-123")
@@ -45,7 +52,13 @@ class SpotifyMgmtControllerTest extends TestBase {
         .then()
         .statusCode(200)
         .contentType("application/json")
-        .body("redirectUrl", equalTo(mockAuthUrl));
+        .body(
+            "redirectUrl",
+            equalTo(
+                "https://accounts.spotify.com/authorize?client_id=test-client-id"
+                    + "&response_type=code"
+                    + "&redirect_uri=ueberboese-login://spotify"
+                    + "&scope=playlist-read-private%20playlist-read-collaborative%20streaming%20user-library-read%20user-library-modify%20playlist-modify-private%20playlist-modify-public%20user-read-email%20user-read-private%20user-top-read"));
   }
 
   @Test
@@ -54,8 +67,42 @@ class SpotifyMgmtControllerTest extends TestBase {
     String authCode = "test_authorization_code_123";
     String mockAccountId = "spotify_user_abc123";
 
-    when(spotifyManagementService.exchangeCodeForTokens(anyString(), anyString()))
-        .thenReturn(mockAccountId);
+    // Stub Spotify API token exchange
+    // Form data is sent in request body as application/x-www-form-urlencoded
+    spotifyApiServer.register(
+        post(urlEqualTo("/api/token"))
+            .withHeader("Content-Type", matching("application/x-www-form-urlencoded.*"))
+            .withRequestBody(matching(".*grant_type=authorization_code.*"))
+            .withRequestBody(matching(".*code=" + authCode + ".*"))
+            .willReturn(
+                aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json")
+                    .withBody(
+                        """
+                        {
+                          "access_token": "test_access_token",
+                          "token_type": "Bearer",
+                          "expires_in": 3600,
+                          "refresh_token": "test_refresh_token",
+                          "scope": "playlist-read-private user-read-private"
+                        }
+                        """)));
+
+    // Stub Spotify API user profile request
+    spotifyApiServer.register(
+        get(urlEqualTo("/v1/me"))
+            .withHeader("Authorization", matching("Bearer .*"))
+            .willReturn(
+                okJson(
+                    """
+                    {
+                      "id": "%s",
+                      "display_name": "Test User",
+                      "email": "test@example.org"
+                    }
+                    """
+                        .formatted(mockAccountId))));
 
     // When / Then
     given()
@@ -110,10 +157,22 @@ class SpotifyMgmtControllerTest extends TestBase {
     // Given
     String invalidCode = "invalid_code_xyz";
 
-    when(spotifyManagementService.exchangeCodeForTokens(anyString(), anyString()))
-        .thenThrow(
-            new SpotifyManagementService.SpotifyManagementException(
-                "Failed to authenticate with Spotify", new RuntimeException("Invalid code")));
+    // Stub Spotify API to return error for invalid code
+    spotifyApiServer.register(
+        post(urlEqualTo("/api/token"))
+            .withHeader("Content-Type", matching("application/x-www-form-urlencoded.*"))
+            .withRequestBody(matching(".*code=" + invalidCode + ".*"))
+            .willReturn(
+                aResponse()
+                    .withStatus(400)
+                    .withHeader("Content-Type", "application/json")
+                    .withBody(
+                        """
+                        {
+                          "error": "invalid_grant",
+                          "error_description": "Invalid authorization code"
+                        }
+                        """)));
 
     // When / Then
     given()
@@ -135,10 +194,12 @@ class SpotifyMgmtControllerTest extends TestBase {
     // Given
     String authCode = "test_code";
 
-    when(spotifyManagementService.exchangeCodeForTokens(anyString(), anyString()))
-        .thenThrow(
-            new SpotifyManagementService.SpotifyManagementException(
-                "Failed to exchange code", new RuntimeException("API error")));
+    // Stub Spotify API to return server error
+    spotifyApiServer.register(
+        post(urlEqualTo("/api/token"))
+            .withHeader("Content-Type", matching("application/x-www-form-urlencoded.*"))
+            .withRequestBody(matching(".*code=" + authCode + ".*"))
+            .willReturn(aResponse().withStatus(500).withBody("Internal Server Error")));
 
     // When / Then
     given()
@@ -156,33 +217,46 @@ class SpotifyMgmtControllerTest extends TestBase {
   }
 
   @Test
-  void initSpotifyAuth_shouldHandleServiceException() {
-    // Given
-    when(spotifyManagementService.generateAuthorizationUrl(anyString()))
-        .thenThrow(new RuntimeException("Unexpected error"));
-
-    // When / Then
-    given()
-        .auth()
-        .basic("admin", "test-password-123")
-        .header("Content-Type", "application/json")
-        .when()
-        .post("/mgmt/spotify/init")
-        .then()
-        .statusCode(500)
-        .contentType("application/json")
-        .body("error", equalTo("Internal server error"))
-        .body("message", notNullValue());
-  }
-
-  @Test
   void confirmSpotifyAuth_shouldReturnValidAccountIdFormat() {
     // Given
     String authCode = "valid_code_456";
     String expectedAccountId = "user_valid_789";
 
-    when(spotifyManagementService.exchangeCodeForTokens(anyString(), anyString()))
-        .thenReturn(expectedAccountId);
+    // Stub Spotify API token exchange
+    spotifyApiServer.register(
+        post(urlEqualTo("/api/token"))
+            .withHeader("Content-Type", matching("application/x-www-form-urlencoded.*"))
+            .withRequestBody(matching(".*code=" + authCode + ".*"))
+            .willReturn(
+                aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json")
+                    .withBody(
+                        """
+                        {
+                          "access_token": "valid_access_token",
+                          "token_type": "Bearer",
+                          "expires_in": 3600,
+                          "refresh_token": "valid_refresh_token",
+                          "scope": "playlist-read-private"
+                        }
+                        """)));
+
+    // Stub user profile
+    spotifyApiServer.register(
+        get(urlEqualTo("/v1/me"))
+            .willReturn(
+                aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json")
+                    .withBody(
+                        """
+                        {
+                          "id": "%s",
+                          "display_name": "Valid User"
+                        }
+                        """
+                            .formatted(expectedAccountId))));
 
     // When / Then
     given()
@@ -195,7 +269,7 @@ class SpotifyMgmtControllerTest extends TestBase {
         .then()
         .statusCode(200)
         .contentType("application/json")
-        .body("accountId", matchesPattern("^[a-zA-Z0-9_]+$")); // Simple alphanumeric validation
+        .body("accountId", matchesPattern("^[a-zA-Z0-9_]+$"));
   }
 
   @Test
@@ -277,11 +351,31 @@ class SpotifyMgmtControllerTest extends TestBase {
   void getSpotifyEntity_shouldReturnEntityInfoForTrack() {
     // Given
     String uri = "spotify:track:6rqhFgbbKwnb9MLmUQDhG6";
-    SpotifyEntityService.SpotifyEntityInfo mockInfo =
-        new SpotifyEntityService.SpotifyEntityInfo(
-            "Bohemian Rhapsody", "https://i.scdn.co/image/test.jpg");
+    String trackId = "6rqhFgbbKwnb9MLmUQDhG6";
 
-    when(spotifyEntityService.getEntityInfo(uri)).thenReturn(mockInfo);
+    setupSpotifyAccountAndTokenRefresh();
+
+    // Stub Spotify API track endpoint
+    spotifyApiServer.register(
+        get(urlEqualTo("/v1/tracks/" + trackId))
+            .willReturn(
+                okJson(
+                    """
+                    {
+                      "id": "%s",
+                      "name": "Bohemian Rhapsody",
+                      "album": {
+                        "id": "album123",
+                        "name": "A Night at the Opera",
+                        "images": [
+                          {"url": "https://i.scdn.co/image/large.jpg", "height": 640, "width": 640},
+                          {"url": "https://i.scdn.co/image/test.jpg", "height": 300, "width": 300},
+                          {"url": "https://i.scdn.co/image/small.jpg", "height": 64, "width": 64}
+                        ]
+                      }
+                    }
+                    """
+                        .formatted(trackId))));
 
     // When / Then
     given()
@@ -302,11 +396,24 @@ class SpotifyMgmtControllerTest extends TestBase {
   void getSpotifyEntity_shouldReturnEntityInfoForAlbum() {
     // Given
     String uri = "spotify:album:4LH4d3cOWNNsVw41Gqt2kv";
-    SpotifyEntityService.SpotifyEntityInfo mockInfo =
-        new SpotifyEntityService.SpotifyEntityInfo(
-            "The Dark Side of the Moon", "https://i.scdn.co/image/album.jpg");
+    String albumId = "4LH4d3cOWNNsVw41Gqt2kv";
 
-    when(spotifyEntityService.getEntityInfo(uri)).thenReturn(mockInfo);
+    setupSpotifyAccountAndTokenRefresh();
+
+    spotifyApiServer.register(
+        get(urlEqualTo("/v1/albums/" + albumId))
+            .willReturn(
+                okJson(
+                    """
+                    {
+                      "id": "%s",
+                      "name": "The Dark Side of the Moon",
+                      "images": [
+                        {"url": "https://i.scdn.co/image/large.jpg", "height": 640, "width": 640},
+                        {"url": "https://i.scdn.co/image/album.jpg", "height": 300, "width": 300}
+                      ]
+                    }"""
+                        .formatted(albumId))));
 
     // When / Then
     given()
@@ -327,10 +434,25 @@ class SpotifyMgmtControllerTest extends TestBase {
   void getSpotifyEntity_shouldReturnEntityInfoForArtist() {
     // Given
     String uri = "spotify:artist:0OdUWJ0sBjDrqHygGUXeCF";
-    SpotifyEntityService.SpotifyEntityInfo mockInfo =
-        new SpotifyEntityService.SpotifyEntityInfo("Queen", "https://i.scdn.co/image/artist.jpg");
+    String artistId = "0OdUWJ0sBjDrqHygGUXeCF";
 
-    when(spotifyEntityService.getEntityInfo(uri)).thenReturn(mockInfo);
+    setupSpotifyAccountAndTokenRefresh();
+
+    spotifyApiServer.register(
+        get(urlEqualTo("/v1/artists/" + artistId))
+            .willReturn(
+                okJson(
+                    """
+                    {
+                      "id": "%s",
+                      "name": "Queen",
+                      "images": [
+                        {"url": "https://i.scdn.co/image/large.jpg", "height": 640, "width": 640},
+                        {"url": "https://i.scdn.co/image/artist.jpg", "height": 300, "width": 300}
+                      ]
+                    }
+                    """
+                        .formatted(artistId))));
 
     // When / Then
     given()
@@ -351,11 +473,25 @@ class SpotifyMgmtControllerTest extends TestBase {
   void getSpotifyEntity_shouldReturnEntityInfoForPlaylist() {
     // Given
     String uri = "spotify:playlist:37i9dQZF1DXcBWIGoYBM5M";
-    SpotifyEntityService.SpotifyEntityInfo mockInfo =
-        new SpotifyEntityService.SpotifyEntityInfo(
-            "Today's Top Hits", "https://i.scdn.co/image/playlist.jpg");
+    String playlistId = "37i9dQZF1DXcBWIGoYBM5M";
 
-    when(spotifyEntityService.getEntityInfo(uri)).thenReturn(mockInfo);
+    setupSpotifyAccountAndTokenRefresh();
+
+    spotifyApiServer.register(
+        get(urlEqualTo("/v1/playlists/" + playlistId))
+            .willReturn(
+                okJson(
+                    """
+                    {
+                      "id": "%s",
+                      "name": "Today's Top Hits",
+                      "images": [
+                        {"url": "https://i.scdn.co/image/large.jpg", "height": 640, "width": 640},
+                        {"url": "https://i.scdn.co/image/playlist.jpg", "height": 300, "width": 300}
+                      ]
+                    }
+                    """
+                        .formatted(playlistId))));
 
     // When / Then
     given()
@@ -376,11 +512,25 @@ class SpotifyMgmtControllerTest extends TestBase {
   void getSpotifyEntity_shouldReturnEntityInfoForShow() {
     // Given
     String uri = "spotify:show:123456rty0";
-    SpotifyEntityService.SpotifyEntityInfo mockInfo =
-        new SpotifyEntityService.SpotifyEntityInfo(
-            "A nice podcast", "https://i.scdn.co/image/show.jpg");
+    String showId = "123456rty0";
 
-    when(spotifyEntityService.getEntityInfo(uri)).thenReturn(mockInfo);
+    setupSpotifyAccountAndTokenRefresh();
+
+    spotifyApiServer.register(
+        get(urlEqualTo("/v1/shows/" + showId))
+            .willReturn(
+                okJson(
+                    """
+                    {
+                      "id": "%s",
+                      "name": "A nice podcast",
+                      "images": [
+                        {"url": "https://i.scdn.co/image/large.jpg", "height": 640, "width": 640},
+                        {"url": "https://i.scdn.co/image/show.jpg", "height": 300, "width": 300}
+                      ]
+                    }
+                    """
+                        .formatted(showId))));
 
     // When / Then
     given()
@@ -407,11 +557,25 @@ class SpotifyMgmtControllerTest extends TestBase {
   void getSpotifyEntity_shouldReturnEntityInfoForEpisode() {
     // Given
     String uri = "spotify:episode:512ojhOuo1ktJprKbVcKyQ";
-    SpotifyEntityService.SpotifyEntityInfo mockInfo =
-        new SpotifyEntityService.SpotifyEntityInfo(
-            "Episode 42: The Answer", "https://i.scdn.co/image/episode.jpg");
+    String episodeId = "512ojhOuo1ktJprKbVcKyQ";
 
-    when(spotifyEntityService.getEntityInfo(uri)).thenReturn(mockInfo);
+    setupSpotifyAccountAndTokenRefresh();
+
+    spotifyApiServer.register(
+        get(urlEqualTo("/v1/episodes/" + episodeId))
+            .willReturn(
+                okJson(
+                    """
+                    {
+                      "id": "%s",
+                      "name": "Episode 42: The Answer",
+                      "images": [
+                        {"url": "https://i.scdn.co/image/large.jpg", "height": 640, "width": 640},
+                        {"url": "https://i.scdn.co/image/episode.jpg", "height": 300, "width": 300}
+                      ]
+                    }
+                    """
+                        .formatted(episodeId))));
 
     // When / Then
     given()
@@ -438,10 +602,22 @@ class SpotifyMgmtControllerTest extends TestBase {
   void getSpotifyEntity_shouldReturnNullImageUrlWhenNoImageAvailable() {
     // Given
     String uri = "spotify:playlist:37i9dQZF1DXcBWIGoYBM5M";
-    SpotifyEntityService.SpotifyEntityInfo mockInfo =
-        new SpotifyEntityService.SpotifyEntityInfo("My Private Playlist", null);
+    String playlistId = "37i9dQZF1DXcBWIGoYBM5M";
 
-    when(spotifyEntityService.getEntityInfo(uri)).thenReturn(mockInfo);
+    setupSpotifyAccountAndTokenRefresh();
+
+    spotifyApiServer.register(
+        get(urlEqualTo("/v1/playlists/" + playlistId))
+            .willReturn(
+                okJson(
+                    """
+                    {
+                      "id": "%s",
+                      "name": "My Private Playlist",
+                      "images": []
+                    }
+                    """
+                        .formatted(playlistId))));
 
     // When / Then
     given()
@@ -460,11 +636,8 @@ class SpotifyMgmtControllerTest extends TestBase {
 
   @Test
   void getSpotifyEntity_shouldReturn400ForInvalidUri() {
-    // Given
+    // Given - URI validation happens before API call
     String invalidUri = "invalid:uri:format";
-
-    when(spotifyEntityService.getEntityInfo(invalidUri))
-        .thenThrow(new InvalidSpotifyUriException("Invalid Spotify URI format"));
 
     // When / Then
     given()
@@ -483,13 +656,9 @@ class SpotifyMgmtControllerTest extends TestBase {
 
   @Test
   void getSpotifyEntity_shouldReturn400ForUnsupportedEntityType() {
-    // Given
+    // Given - Type validation happens before API call
     String unsupportedUri = "spotify:audiobook:12345";
-
-    when(spotifyEntityService.getEntityInfo(unsupportedUri))
-        .thenThrow(
-            new InvalidSpotifyUriException(
-                "Unsupported entity type: audiobook. Supported types: track, album, artist, playlist, show, episode"));
+    setupSpotifyAccountAndTokenRefresh();
 
     // When / Then
     given()
@@ -510,9 +679,26 @@ class SpotifyMgmtControllerTest extends TestBase {
   void getSpotifyEntity_shouldReturn404ForEntityNotFound() {
     // Given
     String notFoundUri = "spotify:track:nonexistent123";
+    String trackId = "nonexistent123";
 
-    when(spotifyEntityService.getEntityInfo(notFoundUri))
-        .thenThrow(new SpotifyEntityNotFoundException("Spotify entity not found: " + notFoundUri));
+    setupSpotifyAccountAndTokenRefresh();
+
+    // Stub Spotify API to return 404
+    spotifyApiServer.register(
+        get(urlEqualTo("/v1/tracks/" + trackId))
+            .willReturn(
+                aResponse()
+                    .withStatus(404)
+                    .withHeader("Content-Type", "application/json")
+                    .withBody(
+                        """
+                        {
+                          "error": {
+                            "status": 404,
+                            "message": "Not found"
+                          }
+                        }
+                        """)));
 
     // When / Then
     given()
@@ -559,9 +745,14 @@ class SpotifyMgmtControllerTest extends TestBase {
   void getSpotifyEntity_shouldReturn500ForSpotifyApiError() {
     // Given
     String uri = "spotify:track:12345";
+    String trackId = "12345";
 
-    when(spotifyEntityService.getEntityInfo(uri))
-        .thenThrow(new RuntimeException("Spotify API error"));
+    setupSpotifyAccountAndTokenRefresh();
+
+    // Stub Spotify API to return server error
+    spotifyApiServer.register(
+        get(urlEqualTo("/v1/tracks/" + trackId))
+            .willReturn(aResponse().withStatus(500).withBody("Internal Server Error")));
 
     // When / Then
     given()
@@ -576,5 +767,34 @@ class SpotifyMgmtControllerTest extends TestBase {
         .contentType("application/json")
         .body("error", equalTo("Internal server error"))
         .body("message", notNullValue());
+  }
+
+  private void setupSpotifyAccountAndTokenRefresh() {
+    // Create a Spotify account in DB
+    spotifyAccountRepository.save(
+        new SpotifyAccount(
+            "test_user",
+            "Test User",
+            "test_refresh_token",
+            OffsetDateTime.now(),
+            OffsetDateTime.now(),
+            null));
+
+    // Stub token refresh endpoint (used by SpotifyEntityService)
+    // Form data is sent in request body as application/x-www-form-urlencoded
+    spotifyApiServer.register(
+        post(urlEqualTo("/api/token"))
+            .withHeader("Content-Type", matching("application/x-www-form-urlencoded.*"))
+            .withRequestBody(matching(".*grant_type=refresh_token.*"))
+            .willReturn(
+                okJson(
+                    """
+                {
+                  "access_token": "refreshed_token",
+                  "token_type": "Bearer",
+                  "expires_in": 3600,
+                  "scope": "user-read-private"
+                }
+                """)));
   }
 }

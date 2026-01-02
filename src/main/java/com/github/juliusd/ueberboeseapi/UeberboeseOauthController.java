@@ -53,10 +53,10 @@ public class UeberboeseOauthController implements OauthApi {
     var authorizationCodeCredentials = spotifyTokenService.loadSpotifyAuth(oauthTokenRequestApiDto);
 
     OAuthTokenResponseApiDto response = new OAuthTokenResponseApiDto();
-    response.setAccessToken(authorizationCodeCredentials.getAccessToken());
-    response.setTokenType(authorizationCodeCredentials.getTokenType());
-    response.setExpiresIn(authorizationCodeCredentials.getExpiresIn());
-    response.setScope(authorizationCodeCredentials.getScope());
+    response.setAccessToken(authorizationCodeCredentials.accessToken());
+    response.setTokenType(authorizationCodeCredentials.tokenType());
+    response.setExpiresIn(authorizationCodeCredentials.expiresIn());
+    response.setScope(authorizationCodeCredentials.scope());
 
     return ResponseEntity.ok().header("Content-Type", "application/json").body(response);
   }

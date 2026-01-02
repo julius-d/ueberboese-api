@@ -1,15 +1,12 @@
 package com.github.juliusd.ueberboeseapi.spotify;
 
 import com.github.juliusd.ueberboeseapi.generated.dtos.OAuthTokenRequestApiDto;
-import java.io.IOException;
+import com.github.juliusd.ueberboeseapi.spotify.client.SpotifyOAuthClient;
+import com.github.juliusd.ueberboeseapi.spotify.dto.AuthorizationCodeCredentialsDto;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hc.core5.http.ParseException;
 import org.springframework.stereotype.Component;
-import se.michaelthelin.spotify.SpotifyApi;
-import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
-import se.michaelthelin.spotify.model_objects.credentials.AuthorizationCodeCredentials;
 
 @Component
 @Slf4j
@@ -29,55 +26,53 @@ public class SpotifyTokenService {
           "user-read-private",
           "user-top-read");
 
-  private final SpotifyApiUrlProperties spotifyHostProperties;
   private final SpotifyAuthProperties spotifyAuthProperties;
   private final SpotifyAccountService spotifyAccountService;
+  private final SpotifyOAuthClient spotifyOAuthClient;
 
-  public AuthorizationCodeCredentials loadSpotifyAuth(
+  public AuthorizationCodeCredentialsDto loadSpotifyAuth(
       OAuthTokenRequestApiDto oauthTokenRequestApiDto) {
+    checkProperties();
+
+    // Get the oldest connected Spotify account
+    var accounts = spotifyAccountService.listAllAccounts();
+    if (accounts.isEmpty()) {
+      log.error("No Spotify accounts connected");
+      throw new NoSpotifyAccountException(
+          "No Spotify accounts connected. Please connect a Spotify account via the management API.");
+    }
+
+    // Use the oldest account (last in the list sorted by createdAt descending)
+    var oldestAccount = accounts.getLast();
+    log.info(
+        "Using Spotify account: {} ({})",
+        oldestAccount.displayName(),
+        oldestAccount.spotifyUserId());
+
+    if (oldestAccount.refreshToken().equals(oauthTokenRequestApiDto.getRefreshToken())) {
+      log.info("Refresh token match!");
+    }
+
     try {
-      checkProperties();
+      // Prepare form data for token refresh
+      org.springframework.util.LinkedMultiValueMap<String, String> formData =
+          new org.springframework.util.LinkedMultiValueMap<>();
+      formData.add("grant_type", "refresh_token");
+      formData.add("refresh_token", oldestAccount.refreshToken());
+      formData.add("client_id", spotifyAuthProperties.clientId());
+      formData.add("client_secret", spotifyAuthProperties.clientSecret());
 
-      // Get the oldest connected Spotify account
-      var accounts = spotifyAccountService.listAllAccounts();
-      if (accounts.isEmpty()) {
-        log.error("No Spotify accounts connected");
-        throw new NoSpotifyAccountException(
-            "No Spotify accounts connected. Please connect a Spotify account via the management API.");
-      }
+      // Call Spotify API to refresh the access token
+      var authorizationCodeCredentials = spotifyOAuthClient.refreshAccessToken(formData);
 
-      // Use the oldest account (last in the list sorted by createdAt descending)
-      var oldestAccount = accounts.getLast();
-      log.info(
-          "Using Spotify account: {} ({})",
-          oldestAccount.displayName(),
-          oldestAccount.spotifyUserId());
-
-      SpotifyApi spotifyApi =
-          new SpotifyApi.Builder()
-              .setHost(spotifyHostProperties.host())
-              .setScheme(spotifyHostProperties.schema())
-              .setPort(spotifyHostProperties.port())
-              .setRefreshToken(oldestAccount.refreshToken())
-              .setClientId(spotifyAuthProperties.clientId())
-              .setClientSecret(spotifyAuthProperties.clientSecret())
-              .build();
-
-      if (oldestAccount.refreshToken().equals(oauthTokenRequestApiDto.getRefreshToken())) {
-        log.info("Refresh token match!");
-      }
-
-      var authorizationCodeRefreshRequest = spotifyApi.authorizationCodeRefresh().build();
-      var authorizationCodeCredentials = authorizationCodeRefreshRequest.execute();
-
-      String actualScope = authorizationCodeCredentials.getScope();
+      String actualScope = authorizationCodeCredentials.scope();
       log.info("Spotify auth refresh request successful with scope {}", actualScope);
 
       // Validate that all required scopes are present
       validateScopes(actualScope);
 
       return authorizationCodeCredentials;
-    } catch (IOException | SpotifyWebApiException | ParseException e) {
+    } catch (RuntimeException e) {
       log.warn("Spotify auth failed: {}", e.getMessage());
       throw new SpotifyException(e);
     }
