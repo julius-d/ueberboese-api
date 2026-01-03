@@ -3,14 +3,17 @@ package com.github.juliusd.ueberboeseapi;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.xmlunit.matchers.CompareMatcher.isSimilarTo;
 
+import com.github.juliusd.ueberboeseapi.device.Device;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.OffsetDateTime;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -562,7 +565,7 @@ class UeberboeseExperimentalControllerTest extends TestBase {
     // Clean up cache file if exists from previous test run
     Files.deleteIfExists(cacheFile);
 
-    // Setup WireMock stub for proxy response
+    // language=XML
     String mockXmlResponse =
         """
         <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -685,7 +688,7 @@ class UeberboeseExperimentalControllerTest extends TestBase {
           <username>Radio Mix</username>
         </preset>""";
 
-    assertThat(
+    org.hamcrest.MatcherAssert.assertThat(
         actualXml,
         isSimilarTo(expectedXml)
             .ignoreWhitespace()
@@ -722,5 +725,125 @@ class UeberboeseExperimentalControllerTest extends TestBase {
         isSimilarTo(expectedXml)
             .ignoreWhitespace()
             .withDifferenceEvaluator(new PlaceholderDifferenceEvaluator()));
+  }
+
+  @Test
+  void updateDevice_shouldUpdateDeviceNameSuccessfully() {
+    var existingDevice =
+        Device.builder()
+            .deviceId("587A628A4042")
+            .name("Old Name")
+            .ipAddress("192.168.178.33")
+            .firstSeen(OffsetDateTime.parse("2018-08-11T08:55:25.000+00:00"))
+            .lastSeen(OffsetDateTime.parse("2025-01-01T10:00:00.000+00:00"))
+            .version(null)
+            .build();
+    deviceRepository.save(existingDevice);
+
+    // language=XML
+    String requestXml =
+        """
+        <?xml version="1.0" encoding="UTF-8" ?>
+        <device deviceid="587A628A4042">
+          <name>Test Device</name>
+          <macaddress>587A628A4042</macaddress>
+        </device>""";
+
+    String actualXml =
+        given()
+            .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+            .header("User-agent", "Bose_Lisa/27.0.6")
+            .header("Authorization", "Bearer mockToken123")
+            .header("Content-type", "application/vnd.bose.streaming-v1.2+xml")
+            .body(requestXml)
+            .when()
+            .put("/streaming/account/6921042/device/587A628A4042")
+            .then()
+            .statusCode(200)
+            .contentType("application/vnd.bose.streaming-v1.2+xml")
+            .header(
+                "Location",
+                containsString("http://streamingqa.bose.com/account/6921042/device/587A628A4042"))
+            .header("METHOD_NAME", "updateDevice")
+            .extract()
+            .body()
+            .asString();
+
+    // language=XML
+    String expectedXml =
+        """
+        <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <device deviceid="587A628A4042">
+          <createdOn>2018-08-11T08:55:25.000+00:00</createdOn>
+          <ipaddress>192.168.178.33</ipaddress>
+          <name>Test Device</name>
+          <updatedOn>${xmlunit.isDateTime}</updatedOn>
+        </device>""";
+
+    org.hamcrest.MatcherAssert.assertThat(
+        actualXml,
+        isSimilarTo(expectedXml)
+            .ignoreWhitespace()
+            .withDifferenceEvaluator(new PlaceholderDifferenceEvaluator()));
+
+    // Verify database was updated
+    Device updatedDevice = deviceRepository.findById("587A628A4042").orElseThrow();
+    assertThat(updatedDevice.name()).isEqualTo("Test Device");
+  }
+
+  @Test
+  void updateDevice_shouldCreateNewDeviceWhenNotExists() {
+    // No existing device - will trigger the orElseGet branch
+
+    // language=XML
+    String requestXml =
+        """
+        <?xml version="1.0" encoding="UTF-8" ?>
+        <device deviceid="NEW_DEVICE_123">
+          <name>New Device</name>
+          <macaddress>NEW_DEVICE_123</macaddress>
+        </device>""";
+
+    String actualXml =
+        given()
+            .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+            .header("User-agent", "Bose_Lisa/27.0.6")
+            .header("Authorization", "Bearer mockToken123")
+            .header("Content-type", "application/vnd.bose.streaming-v1.2+xml")
+            .body(requestXml)
+            .when()
+            .put("/streaming/account/6921042/device/NEW_DEVICE_123")
+            .then()
+            .statusCode(200)
+            .contentType("application/vnd.bose.streaming-v1.2+xml")
+            .header(
+                "Location",
+                containsString("http://streamingqa.bose.com/account/6921042/device/NEW_DEVICE_123"))
+            .header("METHOD_NAME", "updateDevice")
+            .extract()
+            .body()
+            .asString();
+
+    // language=XML
+    String expectedXml =
+        """
+        <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <device deviceid="NEW_DEVICE_123">
+          <createdOn>${xmlunit.isDateTime}</createdOn>
+          <ipaddress>${xmlunit.ignore}</ipaddress>
+          <name>New Device</name>
+          <updatedOn>${xmlunit.isDateTime}</updatedOn>
+        </device>""";
+
+    assertThat(
+        actualXml,
+        isSimilarTo(expectedXml)
+            .ignoreWhitespace()
+            .withDifferenceEvaluator(new PlaceholderDifferenceEvaluator()));
+
+    // Verify database was updated
+    Device newDevice = deviceRepository.findById("NEW_DEVICE_123").orElseThrow();
+    assertThat(newDevice.name()).isEqualTo("New Device");
+    assertThat(newDevice.ipAddress()).isNull();
   }
 }

@@ -1,7 +1,11 @@
 package com.github.juliusd.ueberboeseapi;
 
+import com.github.juliusd.ueberboeseapi.device.Device;
+import com.github.juliusd.ueberboeseapi.device.DeviceRepository;
 import com.github.juliusd.ueberboeseapi.generated.ExperimentalApi;
 import com.github.juliusd.ueberboeseapi.generated.dtos.CredentialApiDto;
+import com.github.juliusd.ueberboeseapi.generated.dtos.DeviceUpdateRequestApiDto;
+import com.github.juliusd.ueberboeseapi.generated.dtos.DeviceUpdateResponseApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.PresetUpdateRequestApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.PresetUpdateResponseApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.SoftwareUpdateResponseApiDto;
@@ -18,6 +22,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "ueberboese.experimental.enabled", havingValue = "true")
 public class UeberboeseExperimentalController implements ExperimentalApi {
+
+  private final DeviceRepository deviceRepository;
 
   @Override
   public ResponseEntity<PresetUpdateResponseApiDto> updatePreset(
@@ -73,5 +79,50 @@ public class UeberboeseExperimentalController implements ExperimentalApi {
     response.setSoftwareUpdateLocation("");
 
     return ResponseEntity.ok(response);
+  }
+
+  @Override
+  public ResponseEntity<DeviceUpdateResponseApiDto> updateDevice(
+      String accountId, String deviceId, DeviceUpdateRequestApiDto deviceUpdateRequestApiDto) {
+    log.info("Updating device {} for account {}", deviceId, accountId);
+
+    // Get or create device using builder pattern
+    var now = OffsetDateTime.now();
+    Device device =
+        deviceRepository
+            .findById(deviceId)
+            .map(
+                existingDevice ->
+                    existingDevice.toBuilder()
+                        .name(deviceUpdateRequestApiDto.getName()) // Update name
+                        .lastSeen(now) // Update lastSeen
+                        .build())
+            .orElseGet(
+                () ->
+                    Device.builder()
+                        .deviceId(deviceId)
+                        .name(deviceUpdateRequestApiDto.getName())
+                        .ipAddress(null) // No IP address for new devices
+                        .firstSeen(now)
+                        .lastSeen(now)
+                        .version(null)
+                        .build());
+
+    device = deviceRepository.save(device);
+
+    // Build response
+    DeviceUpdateResponseApiDto response = new DeviceUpdateResponseApiDto();
+    response.setDeviceid(device.deviceId());
+    response.setCreatedOn(device.firstSeen());
+    response.setIpaddress(device.ipAddress());
+    response.setName(device.name());
+    response.setUpdatedOn(device.lastSeen());
+
+    return ResponseEntity.ok()
+        .header(
+            "Location",
+            "http://streamingqa.bose.com/account/%s/device/%s".formatted(accountId, deviceId))
+        .header("METHOD_NAME", "updateDevice")
+        .body(response);
   }
 }

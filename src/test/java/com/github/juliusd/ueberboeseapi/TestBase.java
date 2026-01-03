@@ -36,7 +36,7 @@ public class TestBase {
 
   @LocalServerPort private int port;
   @Autowired private SpotifyAccountRepository spotifyAccountRepository;
-  @Autowired private DeviceRepository deviceRepository;
+  @Autowired protected DeviceRepository deviceRepository;
 
   @BeforeEach
   void setUp() {

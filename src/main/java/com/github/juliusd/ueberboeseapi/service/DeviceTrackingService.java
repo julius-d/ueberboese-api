@@ -44,12 +44,7 @@ public class DeviceTrackingService {
                   now,
                   existingDevice.ipAddress());
               Device updatedDevice =
-                  new Device(
-                      deviceId,
-                      ipAddress,
-                      existingDevice.firstSeen(),
-                      now,
-                      existingDevice.version());
+                  existingDevice.toBuilder().ipAddress(ipAddress).lastSeen(now).build();
               deviceRepository.save(updatedDevice);
             },
             () -> {
@@ -57,7 +52,15 @@ public class DeviceTrackingService {
               OffsetDateTime now = OffsetDateTime.now();
               log.info(
                   "New device registered: {} at IP: {} (first seen: {})", deviceId, ipAddress, now);
-              Device newDevice = new Device(deviceId, ipAddress, now, now, null);
+              Device newDevice =
+                  Device.builder()
+                      .deviceId(deviceId)
+                      .name(null)
+                      .ipAddress(ipAddress)
+                      .firstSeen(now)
+                      .lastSeen(now)
+                      .version(null)
+                      .build();
               deviceRepository.save(newDevice);
             });
   }

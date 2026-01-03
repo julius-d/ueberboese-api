@@ -17,7 +17,14 @@ class DeviceRepositoryTest extends TestBase {
   void save_shouldSaveDevice() {
     // Given
     OffsetDateTime now = OffsetDateTime.now();
-    Device device = new Device("device123", "192.168.1.1", now, now, null);
+    Device device =
+        Device.builder()
+            .deviceId("device123")
+            .ipAddress("192.168.1.1")
+            .firstSeen(now)
+            .lastSeen(now)
+            .version(null)
+            .build();
 
     // When
     Device saved = repository.save(device);
@@ -31,7 +38,14 @@ class DeviceRepositoryTest extends TestBase {
   void findById_shouldReturnDeviceWhenExists() {
     // Given
     OffsetDateTime now = OffsetDateTime.now();
-    Device device = new Device("device456", "192.168.1.2", now, now, null);
+    Device device =
+        Device.builder()
+            .deviceId("device456")
+            .ipAddress("192.168.1.2")
+            .firstSeen(now)
+            .lastSeen(now)
+            .version(null)
+            .build();
     repository.save(device);
 
     // When
@@ -56,15 +70,36 @@ class DeviceRepositoryTest extends TestBase {
   void findAllByOrderByLastSeenDesc_shouldReturnDevicesInCorrectOrder() throws Exception {
     // Given
     OffsetDateTime now = OffsetDateTime.now();
-    Device device1 = new Device("device1", "192.168.1.1", now, now, null);
+    Device device1 =
+        Device.builder()
+            .deviceId("device1")
+            .ipAddress("192.168.1.1")
+            .firstSeen(now)
+            .lastSeen(now)
+            .version(null)
+            .build();
     repository.save(device1);
 
     OffsetDateTime now2 = now.plusSeconds(10);
-    Device device2 = new Device("device2", "192.168.1.2", now2, now2, null);
+    Device device2 =
+        Device.builder()
+            .deviceId("device2")
+            .ipAddress("192.168.1.2")
+            .firstSeen(now2)
+            .lastSeen(now2)
+            .version(null)
+            .build();
     repository.save(device2);
 
     OffsetDateTime now3 = now2.plusSeconds(10);
-    Device device3 = new Device("device3", "192.168.1.3", now3, now3, null);
+    Device device3 =
+        Device.builder()
+            .deviceId("device3")
+            .ipAddress("192.168.1.3")
+            .firstSeen(now3)
+            .lastSeen(now3)
+            .version(null)
+            .build();
     repository.save(device3);
 
     // When
@@ -82,12 +117,19 @@ class DeviceRepositoryTest extends TestBase {
   void save_shouldUpdateExistingDevice() {
     // Given
     OffsetDateTime now = OffsetDateTime.now();
-    Device original = new Device("device_update", "192.168.1.1", now, now, null);
+    Device original =
+        Device.builder()
+            .deviceId("device_update")
+            .ipAddress("192.168.1.1")
+            .firstSeen(now)
+            .lastSeen(now)
+            .version(null)
+            .build();
     Device saved = repository.save(original);
 
     // When - save with same ID but different data
     OffsetDateTime now2 = OffsetDateTime.now();
-    Device updated = new Device("device_update", "192.168.1.2", now, now2, saved.version());
+    Device updated = saved.toBuilder().ipAddress("192.168.1.2").lastSeen(now2).build();
     repository.save(updated);
 
     // Then
@@ -102,13 +144,19 @@ class DeviceRepositoryTest extends TestBase {
     // Given - use fixed timestamps to match DB precision (microseconds)
     OffsetDateTime firstSeen = OffsetDateTime.parse("2025-01-01T10:00:00.123456Z");
     OffsetDateTime lastSeen = OffsetDateTime.parse("2025-01-02T12:00:00.654321Z");
-    Device original = new Device("device_preserve", "192.168.1.1", firstSeen, lastSeen, null);
+    Device original =
+        Device.builder()
+            .deviceId("device_preserve")
+            .ipAddress("192.168.1.1")
+            .firstSeen(firstSeen)
+            .lastSeen(lastSeen)
+            .version(null)
+            .build();
     Device saved = repository.save(original);
 
     // When - update with new lastSeen
     OffsetDateTime newLastSeen = OffsetDateTime.parse("2025-01-03T14:00:00.999999Z");
-    Device updated =
-        new Device("device_preserve", "192.168.1.2", firstSeen, newLastSeen, saved.version());
+    Device updated = saved.toBuilder().ipAddress("192.168.1.2").lastSeen(newLastSeen).build();
     repository.save(updated);
 
     // Then

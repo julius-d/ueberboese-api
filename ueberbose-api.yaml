@@ -464,6 +464,69 @@ paths:
         '500':
           description: Internal server error
 
+  /streaming/account/{accountId}/device/{deviceId}:
+    put:
+      summary: Update device information
+      description: Updates device name and metadata
+      operationId: updateDevice
+      tags:
+        - experimental
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/accountId'
+        - $ref: '#/components/parameters/deviceId'
+      requestBody:
+        required: true
+        content:
+          application/vnd.bose.streaming-v1.2+xml:
+            schema:
+              $ref: '#/components/schemas/DeviceUpdateRequest'
+            example: |
+              <?xml version="1.0" encoding="UTF-8" ?>
+              <device deviceid="587A628A4042">
+                <name>Test Device</name>
+                <macaddress>587A628A4042</macaddress>
+              </device>
+      responses:
+        '200':
+          description: Device updated successfully
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: application/vnd.bose.streaming-v1.2+xml
+            Location:
+              schema:
+                type: string
+                example: http://streamingqa.bose.com/account/6921042/device/587A628A4042
+            METHOD_NAME:
+              schema:
+                type: string
+                example: updateDevice
+          content:
+            application/vnd.bose.streaming-v1.2+xml:
+              schema:
+                $ref: '#/components/schemas/DeviceUpdateResponse'
+              example: |
+                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                <device deviceid="587A628A4042">
+                  <createdOn>2018-08-11T08:55:25.000+00:00</createdOn>
+                  <ipaddress>192.168.178.33</ipaddress>
+                  <name>Test Device</name>
+                  <updatedOn>2026-01-02T11:12:09.074+00:00</updatedOn>
+                </device>
+        '400':
+          description: Bad request - Invalid request body or parameters
+        '401':
+          description: Unauthorized - Invalid or missing Bearer token
+        '403':
+          description: Forbidden - Valid token but insufficient permissions
+        '404':
+          description: Not found - Account or device not found
+        '500':
+          description: Internal server error
+
   /streaming/account/{accountId}/provider_settings:
     get:
       summary: Get provider settings
@@ -1517,3 +1580,65 @@ components:
           type: string
           description: Location URL for software update (empty if no update available)
           example: ""
+
+    DeviceUpdateRequest:
+      type: object
+      description: Request body for updating device information
+      xml:
+        name: device
+      required:
+        - deviceid
+        - name
+        - macaddress
+      properties:
+        deviceid:
+          type: string
+          description: Device identifier
+          xml:
+            attribute: true
+          example: "587A628A4042"
+        name:
+          type: string
+          description: Device name
+          example: "Test Device"
+        macaddress:
+          type: string
+          description: MAC address of the device
+          example: "587A628A4042"
+
+    DeviceUpdateResponse:
+      type: object
+      description: Response containing updated device information
+      xml:
+        name: device
+      required:
+        - deviceid
+        - createdOn
+        - ipaddress
+        - name
+        - updatedOn
+      properties:
+        deviceid:
+          type: string
+          description: Device identifier
+          xml:
+            attribute: true
+          example: "587A628A4042"
+        createdOn:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp when device was first seen
+          example: "2018-08-11T08:55:25.000+00:00"
+        ipaddress:
+          type: string
+          description: Device IP address
+          example: "192.168.178.33"
+        name:
+          type: string
+          description: Device name
+          example: "Test Device"
+        updatedOn:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp when device was last updated
+          example: "2026-01-02T11:12:09.074+00:00"

@@ -21,8 +21,24 @@ class MgmtControllerTest extends TestBase {
     // Given
     String accountId = "6921042";
     OffsetDateTime now = OffsetDateTime.now();
-    deviceRepository.save(new Device("device1", "192.168.1.100", now, now, null));
-    deviceRepository.save(new Device("device2", "192.168.1.101", now, now, null));
+    deviceRepository.save(
+        Device.builder()
+            .deviceId("device1")
+            .name(null)
+            .ipAddress("192.168.1.100")
+            .firstSeen(now)
+            .lastSeen(now)
+            .version(null)
+            .build());
+    deviceRepository.save(
+        Device.builder()
+            .deviceId("device2")
+            .name(null)
+            .ipAddress("192.168.1.101")
+            .firstSeen(now)
+            .lastSeen(now)
+            .version(null)
+            .build());
 
     // When
     Response response =
