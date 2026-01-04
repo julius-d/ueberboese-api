@@ -23,6 +23,7 @@ services:
       - "8080:8080"      # Main application
       - "8081:8081"      # Management/Actuator endpoints
     environment:
+      - TZ=Europe/Berlin
       # OAuth is disabled by default
       - UEBERBOESE_OAUTH_ENABLED=true
       # Spotify API authentication (required for OAuth token refresh)
