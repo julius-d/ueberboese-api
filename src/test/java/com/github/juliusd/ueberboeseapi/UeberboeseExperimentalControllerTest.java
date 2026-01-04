@@ -873,4 +873,49 @@ class UeberboeseExperimentalControllerTest extends TestBase {
         .contentType("application/vnd.bose.streaming-v1.2+xml")
         .header("METHOD_NAME", "getProviderSettings");
   }
+
+  @Test
+  void customerSupport_shouldAcceptDeviceDiagnosticData() {
+    // language=XML
+    String requestXml =
+        """
+        <?xml version="1.0" encoding="UTF-8" ?>
+        <device-data>
+          <device id="587A628A4042">
+            <serialnumber>P123456789101123456789</serialnumber>
+            <firmware-version>27.0.6.46330.5043500 epdbuild.trunk.hepdswbld04.2022-08-04T11:20:29</firmware-version>
+            <product product_code="SoundTouch 10 sm2" type="5">
+              <serialnumber>069236P81556160AE</serialnumber>
+            </product>
+          </device>
+          <diagnostic-data>
+            <device-landscape>
+              <rssi>Good</rssi>
+              <gateway-ip-address>192.168.1.1</gateway-ip-address>
+              <macaddresses>
+                <macaddress>587A628A4042</macaddress>
+                <macaddress>40BD32BAB0EB</macaddress>
+              </macaddresses>
+              <ip-address>192.168.1.100</ip-address>
+              <network-connection-type>Wireless</network-connection-type>
+            </device-landscape>
+            <network-landscape>
+              <network-data xmlns="http://www.Bose.com/Schemas/2012-12/NetworkMonitor/"/>
+            </network-landscape>
+          </diagnostic-data>
+        </device-data>
+        """;
+
+    given()
+        .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+        .header("User-agent", "Bose_Lisa/27.0.6")
+        .header("Authorization", "Bearer mockToken123")
+        .header("Content-type", "application/vnd.bose.streaming-v1.2+xml")
+        .body(requestXml)
+        .when()
+        .post("/streaming/support/customersupport")
+        .then()
+        .statusCode(200)
+        .contentType("application/vnd.bose.streaming-v1.2+xml");
+  }
 }

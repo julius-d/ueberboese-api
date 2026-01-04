@@ -4,6 +4,7 @@ import com.github.juliusd.ueberboeseapi.device.Device;
 import com.github.juliusd.ueberboeseapi.device.DeviceRepository;
 import com.github.juliusd.ueberboeseapi.generated.ExperimentalApi;
 import com.github.juliusd.ueberboeseapi.generated.dtos.CredentialApiDto;
+import com.github.juliusd.ueberboeseapi.generated.dtos.CustomerSupportRequestApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.DeviceUpdateRequestApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.DeviceUpdateResponseApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.PresetUpdateRequestApiDto;
@@ -143,5 +144,15 @@ public class UeberboeseExperimentalController implements ExperimentalApi {
     String mockToken = "mockRefreshedToken123xyz";
 
     return ResponseEntity.ok().header("Authorization", mockToken).build();
+  }
+
+  @Override
+  public ResponseEntity<Void> customerSupport(
+      CustomerSupportRequestApiDto customerSupportRequestApiDto) {
+    log.info("Received customer support data");
+
+    return ResponseEntity.ok()
+        .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
+        .build();
   }
 }

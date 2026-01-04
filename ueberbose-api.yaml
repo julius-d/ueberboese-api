@@ -736,6 +736,41 @@ paths:
         '500':
           description: Internal server error
 
+  /streaming/support/customersupport:
+    post:
+      summary: Submit customer support data
+      description: |
+        Endpoint called by Bose SoundTouch devices to submit customer support diagnostic data.
+        Reports device information, firmware version, product details, and network diagnostic data.
+        I believe the call is triggered when opening CS pages in the Bose Soundtuch app.
+      operationId: customerSupport
+      tags:
+        - experimental
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/vnd.bose.streaming-v1.2+xml:
+            schema:
+              $ref: '#/components/schemas/CustomerSupportRequest'
+            example: |
+              <?xml version="1.0" encoding="UTF-8" ?><device-data><device id="587A628A4042"><serialnumber>P123456789101123456789</serialnumber><firmware-version>27.0.6.46330.5043500 epdbuild.trunk.hepdswbld04.2022-08-04T11:20:29</firmware-version><product product_code="SoundTouch 10 sm2" type="5"><serialnumber>069236P81556160AE</serialnumber></product></device><diagnostic-data><device-landscape><rssi>Good</rssi><gateway-ip-address>192.168.1.1</gateway-ip-address><macaddresses><macaddress>587A628A4042</macaddress><macaddress>40BD32BAB0EB</macaddress></macaddresses><ip-address>192.168.1.100</ip-address><network-connection-type>Wireless</network-connection-type></device-landscape><network-landscape><network-data xmlns="http://www.Bose.com/Schemas/2012-12/NetworkMonitor/" /></network-landscape></diagnostic-data></device-data>
+      responses:
+        '200':
+          description: Successfully received customer support data
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: application/vnd.bose.streaming-v1.2+xml
+        '400':
+          description: Bad request - Invalid request body
+        '401':
+          description: Unauthorized - Invalid or missing Bearer token
+        '500':
+          description: Server Error
+
   /streaming/device/{deviceId}/streaming_token:
     get:
       summary: Get streaming token
@@ -1673,3 +1708,14 @@ components:
           format: date-time
           description: ISO 8601 timestamp when device was last updated
           example: "2026-01-02T11:12:09.074+00:00"
+
+    CustomerSupportRequest:
+      type: object
+      description: XML request body for customer support with device diagnostic data
+      xml:
+        name: device-data
+      properties:
+        device:
+          $ref: '#/components/schemas/PowerOnDevice'
+        diagnostic-data:
+          $ref: '#/components/schemas/DiagnosticData'
