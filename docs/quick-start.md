@@ -127,6 +127,12 @@ After executing the configuration commands, unplug each speaker to restart the s
 
 The device should acknowledge the configuration change. You can verify by checking the logs in `~/ueberboese-logs/proxy-requests.log` - you should see requests coming from your SoundTouch device.
 
+## Step 4: Install Überböse Android App (Optional)
+
+Vist [Überböse companion app](https://github.com/julius-d/ueberboese-app)
+
+[<img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="40">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/julius-d/ueberboese-app)
+
 ## Step 5: Spotify OAuth (Optional)
 
 If you want to use Spotify with your SoundTouch devices, follow these additional steps:
