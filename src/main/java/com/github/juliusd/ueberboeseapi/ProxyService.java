@@ -203,6 +203,20 @@ public class ProxyService {
       return proxyProperties.authTargetHost();
     }
 
+    boolean isStatsRequest = isStatsRequest(request);
+    if (isStatsRequest
+        && proxyProperties.statsTargetHost() != null
+        && !proxyProperties.statsTargetHost().isEmpty()) {
+      return proxyProperties.statsTargetHost();
+    }
+
+    boolean isBmxRegistryRequest = isBmxRegistryRequest(request);
+    if (isBmxRegistryRequest
+        && proxyProperties.bmxRegistryHost() != null
+        && !proxyProperties.bmxRegistryHost().isEmpty()) {
+      return proxyProperties.bmxRegistryHost();
+    }
+
     boolean isSoftwareUpdateRequest = isSoftwareUpdateRequest(request);
     if (isSoftwareUpdateRequest
         && proxyProperties.softwareUpdateTargetHost() != null
@@ -230,6 +244,24 @@ public class ProxyService {
     }
 
     return hostHeader.toLowerCase().contains("downloads");
+  }
+
+  private boolean isStatsRequest(HttpServletRequest request) {
+    String hostHeader = request.getHeader("Host");
+    if (hostHeader == null) {
+      return false;
+    }
+
+    return hostHeader.toLowerCase().contains("stats");
+  }
+
+  private boolean isBmxRegistryRequest(HttpServletRequest request) {
+    String hostHeader = request.getHeader("Host");
+    if (hostHeader == null) {
+      return false;
+    }
+
+    return hostHeader.toLowerCase().contains("bmx");
   }
 
   private void copyHeaders(HttpServletRequest request, HttpHeaders targetHeaders) {

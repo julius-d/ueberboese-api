@@ -25,4 +25,18 @@ public record ProxyProperties(
      * "downloads") should be forwarded. If not configured, software update requests will be
      * forwarded to the default target host. Example: https://downloads.example.org
      */
-    String softwareUpdateTargetHost) {}
+    String softwareUpdateTargetHost,
+
+    /**
+     * The stats target host URL where stats-related requests (Host header contains "stats") should
+     * be forwarded. If not configured, stats requests will be forwarded to the default target host.
+     * Example: https://events.api.bosecm.com
+     */
+    String statsTargetHost,
+
+    /**
+     * The BMX registry target host URL where BMX registry requests (Host header contains "bmx")
+     * should be forwarded. If not configured, BMX registry requests will be forwarded to the
+     * default target host. Example: https://content.api.bose.io
+     */
+    String bmxRegistryHost) {}

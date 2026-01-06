@@ -22,6 +22,8 @@ import org.springframework.test.context.TestPropertySource;
       "proxy.target-host=http://localhost:8089",
       "proxy.auth-target-host=http://localhost:8090",
       "proxy.software-update-target-host=http://localhost:8091",
+      "proxy.stats-target-host=http://localhost:8092",
+      "proxy.bmx-registry-host=http://localhost:8093",
       "spotify.auth.client-id=test-client-id",
       "spotify.auth.client-secret=test-client-secret",
       "spotify.mgmt.redirect-uri=ueberboese-login://spotify",

@@ -31,6 +31,8 @@ class ProxyControllerTest extends TestBase {
   private WireMockServer wireMockServer;
   private WireMockServer authWireMockServer;
   private WireMockServer softwareUpdateWireMockServer;
+  private WireMockServer statsWireMockServer;
+  private WireMockServer bmxRegistryWireMockServer;
 
   @BeforeEach
   void setUp() {
@@ -45,6 +47,14 @@ class ProxyControllerTest extends TestBase {
     // Set up software update target host mock server
     softwareUpdateWireMockServer = new WireMockServer(options().port(8091));
     softwareUpdateWireMockServer.start();
+
+    // Set up stats target host mock server
+    statsWireMockServer = new WireMockServer(options().port(8092));
+    statsWireMockServer.start();
+
+    // Set up BMX registry target host mock server
+    bmxRegistryWireMockServer = new WireMockServer(options().port(8093));
+    bmxRegistryWireMockServer.start();
   }
 
   @AfterEach
@@ -57,6 +67,12 @@ class ProxyControllerTest extends TestBase {
     }
     if (softwareUpdateWireMockServer != null) {
       softwareUpdateWireMockServer.stop();
+    }
+    if (statsWireMockServer != null) {
+      statsWireMockServer.stop();
+    }
+    if (bmxRegistryWireMockServer != null) {
+      bmxRegistryWireMockServer.stop();
     }
   }
 
@@ -511,5 +527,113 @@ class ProxyControllerTest extends TestBase {
 
     // Verify request was forwarded correctly
     wireMockServer.verify(postRequestedFor(urlEqualTo("/api/create")));
+  }
+
+  @Test
+  void shouldForwardRequestsToStatsTargetHost() throws Exception {
+    // Given
+    String statsRequestBody =
+        """
+                        {"event": "device_usage", "timestamp": "2024-01-01T12:00:00Z"}
+                        """;
+
+    statsWireMockServer.stubFor(
+        WireMock.post(urlEqualTo("/api/events"))
+            .willReturn(
+                aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json")
+                    .withBody("{\"status\": \"recorded\"}")));
+
+    // When & Then
+    mockMvc
+        .perform(
+            post("/api/events")
+                .header("Host", "stats.example.com")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(statsRequestBody))
+        .andExpect(status().isOk())
+        .andExpect(content().json("{\"status\": \"recorded\"}"));
+
+    // Verify request went to stats server
+    statsWireMockServer.verify(
+        postRequestedFor(urlEqualTo("/api/events")).withRequestBody(equalToJson(statsRequestBody)));
+
+    // Verify request did NOT go to other servers
+    wireMockServer.verify(0, postRequestedFor(urlEqualTo("/api/events")));
+    authWireMockServer.verify(0, postRequestedFor(urlEqualTo("/api/events")));
+    softwareUpdateWireMockServer.verify(0, postRequestedFor(urlEqualTo("/api/events")));
+    bmxRegistryWireMockServer.verify(0, postRequestedFor(urlEqualTo("/api/events")));
+  }
+
+  @Test
+  void shouldForwardRequestsToBmxRegistryTargetHost() throws Exception {
+    // Given
+    String bmxRequestBody =
+        """
+                        {"contentType": "playlist", "contentId": "abc123"}
+                        """;
+
+    bmxRegistryWireMockServer.stubFor(
+        WireMock.post(urlEqualTo("/api/content"))
+            .willReturn(
+                aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json")
+                    .withBody("{\"status\": \"success\"}")));
+
+    // When & Then
+    mockMvc
+        .perform(
+            post("/api/content")
+                .header("Host", "bmx.example.com")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(bmxRequestBody))
+        .andExpect(status().isOk())
+        .andExpect(content().json("{\"status\": \"success\"}"));
+
+    // Verify request went to BMX registry server
+    bmxRegistryWireMockServer.verify(
+        postRequestedFor(urlEqualTo("/api/content")).withRequestBody(equalToJson(bmxRequestBody)));
+
+    // Verify request did NOT go to other servers
+    wireMockServer.verify(0, postRequestedFor(urlEqualTo("/api/content")));
+    authWireMockServer.verify(0, postRequestedFor(urlEqualTo("/api/content")));
+    softwareUpdateWireMockServer.verify(0, postRequestedFor(urlEqualTo("/api/content")));
+    statsWireMockServer.verify(0, postRequestedFor(urlEqualTo("/api/content")));
+  }
+
+  @Test
+  void shouldNotForwardNonStatsNonBmxRequestsToNewTargets() throws Exception {
+    // Given
+    wireMockServer.stubFor(
+        WireMock.get(urlEqualTo("/api/other"))
+            .willReturn(
+                aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json")
+                    .withBody(
+                        """
+                              {"data": "regular"}""")));
+
+    // When & Then
+    mockMvc
+        .perform(
+            get("/api/other")
+                .header("Host", "api.example.com")
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(
+            content()
+                .json(
+                    """
+                                  {"data": "regular"}"""));
+
+    // Verify request went to default server
+    wireMockServer.verify(getRequestedFor(urlEqualTo("/api/other")));
+
+    // Verify request did NOT go to stats or BMX registry servers
+    statsWireMockServer.verify(0, getRequestedFor(urlEqualTo("/api/other")));
+    bmxRegistryWireMockServer.verify(0, getRequestedFor(urlEqualTo("/api/other")));
   }
 }
