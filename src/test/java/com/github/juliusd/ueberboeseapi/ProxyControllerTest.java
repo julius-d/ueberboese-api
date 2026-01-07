@@ -947,10 +947,7 @@ class ProxyControllerTest extends TestBase {
 
     wireMockServer.stubFor(
         WireMock.post(urlEqualTo("/api/submit"))
-            .willReturn(
-                aResponse()
-                    .withStatus(303)
-                    .withHeader("Location", redirectLocation)));
+            .willReturn(aResponse().withStatus(303).withHeader("Location", redirectLocation)));
 
     // When & Then
     mockMvc
@@ -974,24 +971,17 @@ class ProxyControllerTest extends TestBase {
     wireMockServer.stubFor(
         WireMock.post(urlEqualTo("/api/endpoint"))
             .withRequestBody(equalToJson(requestBody))
-            .willReturn(
-                aResponse()
-                    .withStatus(307)
-                    .withHeader("Location", redirectLocation)));
+            .willReturn(aResponse().withStatus(307).withHeader("Location", redirectLocation)));
 
     // When & Then
     mockMvc
-        .perform(
-            post("/api/endpoint")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(requestBody))
+        .perform(post("/api/endpoint").contentType(MediaType.APPLICATION_JSON).content(requestBody))
         .andExpect(status().isTemporaryRedirect())
         .andExpect(header().string("Location", redirectLocation));
 
     // Verify request was forwarded with correct body
     wireMockServer.verify(
-        postRequestedFor(urlEqualTo("/api/endpoint"))
-            .withRequestBody(equalToJson(requestBody)));
+        postRequestedFor(urlEqualTo("/api/endpoint")).withRequestBody(equalToJson(requestBody)));
   }
 
   @Test
@@ -1001,10 +991,7 @@ class ProxyControllerTest extends TestBase {
 
     wireMockServer.stubFor(
         WireMock.put(urlEqualTo("/api/legacy"))
-            .willReturn(
-                aResponse()
-                    .withStatus(308)
-                    .withHeader("Location", redirectLocation)));
+            .willReturn(aResponse().withStatus(308).withHeader("Location", redirectLocation)));
 
     // When & Then
     mockMvc
@@ -1028,16 +1015,11 @@ class ProxyControllerTest extends TestBase {
     wireMockServer.stubFor(
         WireMock.get(urlEqualTo("/api/secure-redirect"))
             .withHeader("Authorization", equalTo(authToken))
-            .willReturn(
-                aResponse()
-                    .withStatus(302)
-                    .withHeader("Location", redirectLocation)));
+            .willReturn(aResponse().withStatus(302).withHeader("Location", redirectLocation)));
 
     // When & Then
     mockMvc
-        .perform(
-            get("/api/secure-redirect")
-                .header("Authorization", authToken))
+        .perform(get("/api/secure-redirect").header("Authorization", authToken))
         .andExpect(status().isFound())
         .andExpect(header().string("Location", redirectLocation));
 
