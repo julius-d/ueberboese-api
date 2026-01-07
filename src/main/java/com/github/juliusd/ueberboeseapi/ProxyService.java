@@ -119,7 +119,13 @@ public class ProxyService {
 
       // Build consolidated response log message
       StringBuilder responseLog = new StringBuilder("\n=== PROXY RESPONSE ===");
-      responseLog.append("\n  requestId: ").append(requestId);
+      responseLog
+          .append("\n  requestId: ")
+          .append(requestId)
+          .append(" ")
+          .append(method)
+          .append(" ")
+          .append(targetUrl);
       responseLog.append("\n  Status: ").append(responseData.statusCode().value());
       responseLog
           .append("\n  Response Headers:")
