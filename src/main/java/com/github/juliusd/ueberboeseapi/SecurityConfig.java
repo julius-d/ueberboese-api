@@ -34,9 +34,8 @@ public class SecurityConfig {
 
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    http.authorizeHttpRequests(
-            authorize ->
-                authorize.requestMatchers("/mgmt/**").authenticated().anyRequest().permitAll())
+    http.securityMatcher("/mgmt/**")
+        .authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated())
         .httpBasic(Customizer.withDefaults())
         .csrf(AbstractHttpConfigurer::disable)
         .sessionManagement(

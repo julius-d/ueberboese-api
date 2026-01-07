@@ -698,12 +698,8 @@ class ProxyControllerTest extends TestBase {
   }
 
   @Test
-  void shouldForwardBasicAuthorizationHeaderButSpringSecurityIntercepts() throws Exception {
+  void shouldForwardBasicAuthorizationHeader() throws Exception {
     // Given
-    // Note: This test demonstrates that Spring Security intercepts requests with Authorization
-    // headers
-    // even for non-/mgmt/** endpoints when httpBasic is enabled in SecurityConfig.
-    // The header would be forwarded IF Spring Security didn't intercept first.
     String basicAuth = "Basic dXNlcm5hbWU6cGFzc3dvcmQ=";
 
     wireMockServer.stubFor(
@@ -716,18 +712,19 @@ class ProxyControllerTest extends TestBase {
                     .withBody("{\"status\": \"success\"}")));
 
     // When & Then
-    // Spring Security intercepts the request and returns 401 because the credentials
-    // don't match the configured user (ueberboese.mgmt.username/password)
     mockMvc
         .perform(
             post("/api/authenticate")
                 .header("Authorization", basicAuth)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{}"))
-        .andExpect(status().isUnauthorized()); // Spring Security returns 401
+        .andExpect(status().isOk())
+        .andExpect(content().json("{\"status\": \"success\"}"));
 
-    // Verify the request never reached WireMock because Spring Security blocked it
-    wireMockServer.verify(0, postRequestedFor(urlEqualTo("/api/authenticate")));
+    // Verify Basic Auth header was forwarded
+    wireMockServer.verify(
+        postRequestedFor(urlEqualTo("/api/authenticate"))
+            .withHeader("Authorization", equalTo(basicAuth)));
   }
 
   @Test
