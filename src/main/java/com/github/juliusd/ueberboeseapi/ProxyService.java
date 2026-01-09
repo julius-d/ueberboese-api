@@ -22,10 +22,13 @@ public class ProxyService {
 
   private final WebClient webClient;
   private final ProxyProperties proxyProperties;
+  private final LocationHeaderRewriter locationHeaderRewriter;
   private final AtomicLong requestCounter = new AtomicLong(0);
 
-  public ProxyService(ProxyProperties proxyProperties) {
+  public ProxyService(
+      ProxyProperties proxyProperties, LocationHeaderRewriter locationHeaderRewriter) {
     this.proxyProperties = proxyProperties;
+    this.locationHeaderRewriter = locationHeaderRewriter;
     this.webClient =
         WebClient.builder()
             .codecs(
@@ -143,9 +146,14 @@ public class ProxyService {
         return ResponseEntity.notFound().build();
       }
 
+      // Rewrite Location header for redirect responses
+      HttpHeaders headers =
+          locationHeaderRewriter.rewriteIfRedirect(
+              responseData.headers(), request, responseData.statusCode());
+
       // Build response entity
       return ResponseEntity.status(responseData.statusCode())
-          .headers(responseData.headers())
+          .headers(headers)
           .body(responseBodyBytes);
 
     } catch (WebClientResponseException e) {

@@ -905,11 +905,11 @@ class ProxyControllerTest extends TestBase {
                     .withHeader("Location", redirectLocation)
                     .withHeader("Cache-Control", "max-age=3600")));
 
-    // When & Then
+    // When & Then - Location should be rewritten to use request host
     mockMvc
         .perform(get("/api/old-endpoint"))
         .andExpect(status().isMovedPermanently())
-        .andExpect(header().string("Location", redirectLocation))
+        .andExpect(header().string("Location", "http://localhost/api/new-location"))
         .andExpect(header().string("Cache-Control", "max-age=3600"));
 
     // Verify request was forwarded
@@ -929,15 +929,39 @@ class ProxyControllerTest extends TestBase {
                     .withHeader("Location", redirectLocation)
                     .withHeader("Cache-Control", "no-cache")));
 
-    // When & Then
+    // When & Then - Location should be rewritten to use request host
     mockMvc
         .perform(get("/api/redirect-me"))
         .andExpect(status().isFound())
-        .andExpect(header().string("Location", redirectLocation))
+        .andExpect(header().string("Location", "http://localhost/api/temporary-location"))
         .andExpect(header().string("Cache-Control", "no-cache"));
 
     // Verify request was forwarded
     wireMockServer.verify(getRequestedFor(urlEqualTo("/api/redirect-me")));
+  }
+
+  @Test
+  void shouldRewriteLocationHeaderFor302RedirectWithQueryParams() throws Exception {
+    // Given
+    String backendLocation =
+        "http://localhost:8089/api/redirect-target?param1=value1&param2=value2";
+
+    wireMockServer.stubFor(
+        WireMock.get(urlEqualTo("/api/start"))
+            .willReturn(aResponse().withStatus(302).withHeader("Location", backendLocation)));
+
+    // When & Then - Location should be rewritten to use request host but preserve path and query
+    mockMvc
+        .perform(get("/api/start"))
+        .andExpect(status().isFound())
+        .andExpect(
+            header()
+                .string(
+                    "Location",
+                    "http://localhost/api/redirect-target?param1=value1&param2=value2"));
+
+    // Verify request was forwarded
+    wireMockServer.verify(getRequestedFor(urlEqualTo("/api/start")));
   }
 
   @Test
@@ -949,14 +973,14 @@ class ProxyControllerTest extends TestBase {
         WireMock.post(urlEqualTo("/api/submit"))
             .willReturn(aResponse().withStatus(303).withHeader("Location", redirectLocation)));
 
-    // When & Then
+    // When & Then - Location should be rewritten to use request host
     mockMvc
         .perform(
             post("/api/submit")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"data\": \"test\"}"))
         .andExpect(status().isSeeOther())
-        .andExpect(header().string("Location", redirectLocation));
+        .andExpect(header().string("Location", "http://localhost/api/result"));
 
     // Verify request was forwarded
     wireMockServer.verify(postRequestedFor(urlEqualTo("/api/submit")));
@@ -973,11 +997,11 @@ class ProxyControllerTest extends TestBase {
             .withRequestBody(equalToJson(requestBody))
             .willReturn(aResponse().withStatus(307).withHeader("Location", redirectLocation)));
 
-    // When & Then
+    // When & Then - Location should be rewritten to use request host
     mockMvc
         .perform(post("/api/endpoint").contentType(MediaType.APPLICATION_JSON).content(requestBody))
         .andExpect(status().isTemporaryRedirect())
-        .andExpect(header().string("Location", redirectLocation));
+        .andExpect(header().string("Location", "http://localhost/api/alternative-endpoint"));
 
     // Verify request was forwarded with correct body
     wireMockServer.verify(
@@ -993,14 +1017,14 @@ class ProxyControllerTest extends TestBase {
         WireMock.put(urlEqualTo("/api/legacy"))
             .willReturn(aResponse().withStatus(308).withHeader("Location", redirectLocation)));
 
-    // When & Then
+    // When & Then - Location should be rewritten to use request host
     mockMvc
         .perform(
             put("/api/legacy")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"update\": \"data\"}"))
         .andExpect(status().isPermanentRedirect())
-        .andExpect(header().string("Location", redirectLocation));
+        .andExpect(header().string("Location", "http://localhost/api/permanent-new-location"));
 
     // Verify request was forwarded
     wireMockServer.verify(putRequestedFor(urlEqualTo("/api/legacy")));
@@ -1021,11 +1045,86 @@ class ProxyControllerTest extends TestBase {
     mockMvc
         .perform(get("/api/secure-redirect").header("Authorization", authToken))
         .andExpect(status().isFound())
-        .andExpect(header().string("Location", redirectLocation));
+        .andExpect(header().string("Location", "http://localhost/api/redirected"));
 
     // Verify Authorization header was forwarded
     wireMockServer.verify(
         getRequestedFor(urlEqualTo("/api/secure-redirect"))
             .withHeader("Authorization", equalTo(authToken)));
+  }
+
+  @Test
+  void shouldPreserveRelativeLocationUrls() throws Exception {
+    // Given - Backend returns a relative Location URL (no host)
+    String relativeLocation = "/api/relative-redirect";
+
+    wireMockServer.stubFor(
+        WireMock.get(urlEqualTo("/api/start-relative"))
+            .willReturn(aResponse().withStatus(302).withHeader("Location", relativeLocation)));
+
+    // When & Then - Relative Location should remain unchanged
+    mockMvc
+        .perform(get("/api/start-relative"))
+        .andExpect(status().isFound())
+        .andExpect(header().string("Location", relativeLocation));
+
+    // Verify request was forwarded
+    wireMockServer.verify(getRequestedFor(urlEqualTo("/api/start-relative")));
+  }
+
+  @Test
+  void shouldRewriteLocationWithComplexUrl() throws Exception {
+    // Given - Location with query params, fragment, and special characters
+    String backendLocation =
+        "http://localhost:8089/api/redirect?param1=value%201&param2=value2#section";
+
+    wireMockServer.stubFor(
+        WireMock.get(urlEqualTo("/api/complex"))
+            .willReturn(aResponse().withStatus(302).withHeader("Location", backendLocation)));
+
+    // When & Then - All URL components should be preserved except host
+    mockMvc
+        .perform(get("/api/complex"))
+        .andExpect(status().isFound())
+        .andExpect(
+            header()
+                .string(
+                    "Location",
+                    "http://localhost/api/redirect?param1=value%201&param2=value2#section"));
+
+    // Verify request was forwarded
+    wireMockServer.verify(getRequestedFor(urlEqualTo("/api/complex")));
+  }
+
+  @Test
+  void shouldHandleRedirectWithoutLocationHeader() throws Exception {
+    // Given - 302 response without Location header (edge case)
+    wireMockServer.stubFor(
+        WireMock.get(urlEqualTo("/api/no-location")).willReturn(aResponse().withStatus(302)));
+
+    // When & Then - Should handle gracefully
+    mockMvc.perform(get("/api/no-location")).andExpect(status().isFound());
+
+    // Verify request was forwarded
+    wireMockServer.verify(getRequestedFor(urlEqualTo("/api/no-location")));
+  }
+
+  @Test
+  void shouldRewriteLocationWhenProxyingToAuthTarget() throws Exception {
+    // Given - Request goes to auth target host
+    String authRedirectLocation = "http://localhost:8090/oauth/callback";
+
+    authWireMockServer.stubFor(
+        WireMock.get(urlEqualTo("/oauth/authorize"))
+            .willReturn(aResponse().withStatus(302).withHeader("Location", authRedirectLocation)));
+
+    // When & Then - Location should be rewritten to use request Host header value
+    mockMvc
+        .perform(get("/oauth/authorize").header("Host", "auth.example.com"))
+        .andExpect(status().isFound())
+        .andExpect(header().string("Location", "http://auth.example.com/oauth/callback"));
+
+    // Verify request went to auth server
+    authWireMockServer.verify(getRequestedFor(urlEqualTo("/oauth/authorize")));
   }
 }
