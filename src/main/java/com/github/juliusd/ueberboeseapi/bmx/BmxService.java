@@ -73,9 +73,11 @@ public class BmxService {
     BmxServiceIdApiDto id = new BmxServiceIdApiDto("TUNEIN", 25);
     BmxServiceAssetsApiDto assets = extractTuneInAssets();
     Map<String, Object> authModel = createAuthModel();
+
     BmxLinksApiDto serviceLinks = new BmxLinksApiDto();
     serviceLinks.setBmxNavigate(new BmxLinkApiDto("/v1/navigate"));
     serviceLinks.setBmxToken(new BmxLinkApiDto("/v1/token"));
+    serviceLinks.setSelf(new BmxLinkApiDto("/"));
 
     BmxServiceApiDto service =
         new BmxServiceApiDto(
@@ -87,6 +89,7 @@ public class BmxService {
                 BmxServiceApiDto.StreamTypesEnum.LIVE_RADIO,
                 BmxServiceApiDto.StreamTypesEnum.ON_DEMAND));
     service.setLinks(serviceLinks);
+    service.setAskAdapter(false);
 
     return service;
   }
@@ -100,7 +103,7 @@ public class BmxService {
     return authModel;
   }
 
-  private static @NonNull BmxServiceAssetsApiDto extractTuneInAssets() {
+  private @NonNull BmxServiceAssetsApiDto extractTuneInAssets() {
     BmxServiceIconsApiDto icons =
         new BmxServiceIconsApiDto(
             "https://donpvpd81xeci.cloudfront.net/icons/large.svg",
@@ -111,7 +114,7 @@ public class BmxService {
 
     return new BmxServiceAssetsApiDto(
         "#000000",
-        "With TuneIn on SoundTouch, listen to more than 100,000 stations worldwide.",
+        "With TuneIn on SoundTouch, listen to more than 100,000 stations and the hottest podcasts, plus live games, concerts and shows from around the world. However, you cannot access your Favorites and Premium content on your existing TuneIn account at this time.",
         icons,
         "TuneIn");
   }
@@ -130,19 +133,25 @@ public class BmxService {
 
     BmxServiceAssetsApiDto assets =
         new BmxServiceAssetsApiDto(
-            "#282828",
-            "Custom radio stations that you've added through the SoundTouch app.",
-            icons,
-            "Custom Stations");
+            "#000000", "Custom radio stations with BMX.", icons, "Custom Stations");
 
     Map<String, Object> authModel = createAuthModel();
 
-    return new BmxServiceApiDto(
-        assets,
-        authModel,
-        urlProperties.baseUrl() + "/core02/svc-bmx-adapter-orion/prod/orion",
-        id,
-        List.of(BmxServiceApiDto.StreamTypesEnum.LIVE_RADIO));
+    BmxLinksApiDto serviceLinks = new BmxLinksApiDto();
+    serviceLinks.setBmxToken(new BmxLinkApiDto("/token"));
+    serviceLinks.setSelf(new BmxLinkApiDto("/"));
+
+    BmxServiceApiDto service =
+        new BmxServiceApiDto(
+            assets,
+            authModel,
+            urlProperties.baseUrl() + "/core02/svc-bmx-adapter-orion/prod/orion",
+            id,
+            List.of(BmxServiceApiDto.StreamTypesEnum.LIVE_RADIO));
+    service.setLinks(serviceLinks);
+    service.setAskAdapter(false);
+
+    return service;
   }
 
   /** Creates the SiriusXM service definition. */
@@ -155,25 +164,31 @@ public class BmxService {
     authModel.put("loginPageProvider", "BOSE");
 
     BmxLinksApiDto serviceLinks = new BmxLinksApiDto();
-    serviceLinks.setBmxNavigate(new BmxLinkApiDto("/v1/navigate"));
-    serviceLinks.setBmxToken(new BmxLinkApiDto("/v1/token"));
+    serviceLinks.setBmxAvailability(new BmxLinkApiDto("/availability"));
+    serviceLinks.setBmxLogout(new BmxLinkApiDto("/logout"));
+    serviceLinks.setBmxNavigate(new BmxLinkApiDto("/navigate/"));
+    serviceLinks.setBmxToken(new BmxLinkApiDto("/token"));
+    serviceLinks.setSelf(new BmxLinkApiDto("/"));
 
     BmxServiceApiDto service =
         new BmxServiceApiDto(
             assets,
             authModel,
-            "https://everestapi.us.siriusxm.com",
+            urlProperties.baseUrl()
+                + "/core02/svc-bmx-adapter-siriusxm-everest-eco1/prod/live-adapter",
             id,
             List.of(
                 BmxServiceApiDto.StreamTypesEnum.LIVE_RADIO,
                 BmxServiceApiDto.StreamTypesEnum.ON_DEMAND));
     service.setLinks(serviceLinks);
-    service.setSignupUrl("https://care.siriusxm.com/subscribe_link.action?sourceCode=SXMZ44");
+    service.setSignupUrl(
+        "https://streaming.siriusxm.com/?/flepz=true&campaign=bose30#_frmAccountLookup");
+    service.setAskAdapter(false);
 
     return service;
   }
 
-  private static @NonNull BmxServiceAssetsApiDto createSiriusAssets() {
+  private @NonNull BmxServiceAssetsApiDto createSiriusAssets() {
     BmxServiceIconsApiDto icons =
         new BmxServiceIconsApiDto(
             "https://d3h9hdqyx8kz3e.cloudfront.net/icons/large.svg",
@@ -181,11 +196,16 @@ public class BmxService {
             "https://d3h9hdqyx8kz3e.cloudfront.net/icons/monochrome.svg",
             "https://d3h9hdqyx8kz3e.cloudfront.net/icons/small.svg");
 
-    return new BmxServiceAssetsApiDto(
-        "#004b85",
-        "SiriusXM brings over 150 channels of commercial-free music, plus talk, sports, news, and comedy.",
-        icons,
-        "SiriusXM");
+    BmxServiceAssetsApiDto assets =
+        new BmxServiceAssetsApiDto(
+            "#004b85",
+            "Over 200 channels including commercial-free music, plus play-by-play and sports talk, world class news, comedy, exclusive entertainment and more.",
+            icons,
+            "SiriusXM");
+    assets.setShortDescription(
+        "Over 200 channels including commercial-free music, plus play-by-play and sports talk, world class news, comedy, exclusive entertainment and more.");
+
+    return assets;
   }
 
   /** Creates the Radioplayer service definition. */
@@ -201,8 +221,13 @@ public class BmxService {
     authModel.put("anonymousAccount", anonymousAccount);
 
     BmxLinksApiDto serviceLinks = new BmxLinksApiDto();
-    serviceLinks.setBmxNavigate(new BmxLinkApiDto("/v1/navigate"));
-    serviceLinks.setBmxToken(new BmxLinkApiDto("/v1/token"));
+    serviceLinks.setBmxAvailability(new BmxLinkApiDto("/availability"));
+    serviceLinks.setBmxNavigate(new BmxLinkApiDto("/navigate"));
+    // Special token URL pattern for Radioplayer
+    serviceLinks.setBmxToken(
+        new BmxLinkApiDto(
+            urlProperties.baseUrl() + "/soundtouch-msp-token-proxy/RADIOPLAYER/token"));
+    serviceLinks.setSelf(new BmxLinkApiDto("/"));
 
     BmxServiceApiDto service =
         new BmxServiceApiDto(
@@ -214,21 +239,23 @@ public class BmxService {
                 BmxServiceApiDto.StreamTypesEnum.LIVE_RADIO,
                 BmxServiceApiDto.StreamTypesEnum.ON_DEMAND));
     service.setLinks(serviceLinks);
+    service.setAskAdapter(false);
 
     return service;
   }
 
   private static @NonNull BmxServiceAssetsApiDto createRadioplayerAssets() {
+    // Radioplayer keeps hardcoded Bose CDN URLs (as per expected output)
     BmxServiceIconsApiDto icons =
         new BmxServiceIconsApiDto(
-            "https://d2lrvc01fwh9p2.cloudfront.net/icons/large.svg",
-            "https://d2lrvc01fwh9p2.cloudfront.net/icons/monochrome.png",
-            "https://d2lrvc01fwh9p2.cloudfront.net/icons/monochrome.svg",
-            "https://d2lrvc01fwh9p2.cloudfront.net/icons/small.svg");
+            "https://donpvpd81xeci.cloudfront.net/icons/small.svg",
+            "https://donpvpd81xeci.cloudfront.net/icons/monochrome.png",
+            "https://donpvpd81xeci.cloudfront.net/icons/monochrome.svg",
+            "https://donpvpd81xeci.cloudfront.net/icons/small.svg");
 
     return new BmxServiceAssetsApiDto(
         "#cc0033",
-        "Radioplayer brings thousands of live and on-demand radio stations from around the world.",
+        "Radio for you, from your country. Radioplayer is a unique broadcaster owned service, with higher quality streams, full content (including all live sport), and thousands of catch-up programs and podcasts. Radioplayer is available in UK, Germany, Canada, Austria, Belgium, Denmark, Ireland, Italy, Norway, Spain and Switzerland.",
         icons,
         "Radioplayer");
   }

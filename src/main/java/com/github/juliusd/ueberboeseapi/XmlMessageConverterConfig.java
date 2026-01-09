@@ -1,5 +1,6 @@
 package com.github.juliusd.ueberboeseapi;
 
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -24,6 +25,8 @@ import org.springframework.http.converter.HttpMessageConverters;
 import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
 import org.springframework.http.converter.xml.MappingJackson2XmlHttpMessageConverter;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.json.JsonMapper;
 
 @Configuration
 public class XmlMessageConverterConfig implements WebMvcConfigurer {
@@ -39,8 +42,14 @@ public class XmlMessageConverterConfig implements WebMvcConfigurer {
     xmlMediaTypes.add(MediaType.parseMediaType("application/vnd.bose.streaming-v1.2+xml"));
     xmlConverter.setSupportedMediaTypes(xmlMediaTypes);
 
+    JsonMapper jsonMapper =
+        JsonMapper.builderWithJackson2Defaults()
+            .changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(Include.NON_NULL))
+            .changeDefaultPropertyInclusion(incl -> incl.withContentInclusion(Include.NON_NULL))
+            .disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
+            .build();
+    var jsonConverter = new JacksonJsonHttpMessageConverter(jsonMapper);
     // Configure JSON converter to also handle text/json media type (used by Bose devices)
-    var jsonConverter = new JacksonJsonHttpMessageConverter();
     List<MediaType> jsonMediaTypes = new ArrayList<>();
     jsonMediaTypes.add(MediaType.APPLICATION_JSON);
     jsonMediaTypes.add(MediaType.parseMediaType("text/json"));
