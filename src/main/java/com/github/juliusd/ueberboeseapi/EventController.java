@@ -18,9 +18,6 @@ public class EventController implements EventsApi {
   @Override
   public ResponseEntity<Void> submitDeviceEvents(
       String deviceId, DeviceEventsRequestApiDto deviceEventsRequestApiDto) {
-    log.info("Received event submission for device: {}", deviceId);
-
-    // Store the event
     eventStorageService.storeEvent(deviceId, deviceEventsRequestApiDto);
 
     log.info(
