@@ -169,6 +169,7 @@ environment:
 #### Option 1: Using the Überböse Companion App (Recommended)
 
 The easiest way is to install and use the [Überböse companion App](https://github.com/julius-d/ueberboese-app)
+
 [<img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="80">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/julius-d/ueberboese-app)
 
 #### Option 2: Using curl Commands
