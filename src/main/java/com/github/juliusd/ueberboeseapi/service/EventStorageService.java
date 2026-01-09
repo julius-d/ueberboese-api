@@ -88,17 +88,6 @@ public class EventStorageService {
 
   /** Clear all stored events. Used for testing. */
   public void clearAllEvents() {
-    log.debug("Clearing all stored events");
     eventsByDevice.clear();
-  }
-
-  /**
-   * Clear events for a specific device.
-   *
-   * @param deviceId The device ID
-   */
-  public void clearEventsForDevice(String deviceId) {
-    log.debug("Clearing events for device: {}", deviceId);
-    eventsByDevice.remove(deviceId);
   }
 }
