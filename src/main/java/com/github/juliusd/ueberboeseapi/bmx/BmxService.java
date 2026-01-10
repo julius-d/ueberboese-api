@@ -107,7 +107,7 @@ public class BmxService {
     BmxServiceIconsApiDto icons =
         new BmxServiceIconsApiDto(
             "https://donpvpd81xeci.cloudfront.net/icons/large.svg",
-            "https://donpvpd81xeci.cloudfront.net/icons/monochrome.png",
+            urlProperties.baseUrl() + "/icons/radio-logo-monochrome-small.png",
             "https://donpvpd81xeci.cloudfront.net/icons/monochrome.svg",
             "https://donpvpd81xeci.cloudfront.net/icons/small.svg");
     icons.setDefaultAlbumArt("https://donpvpd81xeci.cloudfront.net/defaultAlbumArt.png");
@@ -126,7 +126,7 @@ public class BmxService {
     BmxServiceIconsApiDto icons =
         new BmxServiceIconsApiDto(
             "https://d11hhn06c3zsgm.cloudfront.net/icons/large.svg",
-            "https://d11hhn06c3zsgm.cloudfront.net/icons/monochrome.png",
+            urlProperties.baseUrl() + "/icons/radio-logo-monochrome-small.png",
             "https://d11hhn06c3zsgm.cloudfront.net/icons/monochrome.svg",
             "https://d11hhn06c3zsgm.cloudfront.net/icons/small.svg");
     icons.setDefaultAlbumArt("https://d11hhn06c3zsgm.cloudfront.net/defaultAlbumArt.png");
@@ -192,7 +192,7 @@ public class BmxService {
     BmxServiceIconsApiDto icons =
         new BmxServiceIconsApiDto(
             "https://d3h9hdqyx8kz3e.cloudfront.net/icons/large.svg",
-            "https://d3h9hdqyx8kz3e.cloudfront.net/icons/monochrome.png",
+            urlProperties.baseUrl() + "/icons/radio-logo-monochrome-small.png",
             "https://d3h9hdqyx8kz3e.cloudfront.net/icons/monochrome.svg",
             "https://d3h9hdqyx8kz3e.cloudfront.net/icons/small.svg");
 
@@ -244,12 +244,11 @@ public class BmxService {
     return service;
   }
 
-  private static @NonNull BmxServiceAssetsApiDto createRadioplayerAssets() {
-    // Radioplayer keeps hardcoded Bose CDN URLs (as per expected output)
+  private @NonNull BmxServiceAssetsApiDto createRadioplayerAssets() {
     BmxServiceIconsApiDto icons =
         new BmxServiceIconsApiDto(
             "https://donpvpd81xeci.cloudfront.net/icons/small.svg",
-            "https://donpvpd81xeci.cloudfront.net/icons/monochrome.png",
+            urlProperties.baseUrl() + "/icons/radio-logo-monochrome-small.png",
             "https://donpvpd81xeci.cloudfront.net/icons/monochrome.svg",
             "https://donpvpd81xeci.cloudfront.net/icons/small.svg");
 
