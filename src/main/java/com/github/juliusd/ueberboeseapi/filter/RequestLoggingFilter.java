@@ -48,7 +48,7 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
       byte[] content = wrappedRequest.getContentAsByteArray();
       if (content.length > 0) {
         String rawBody = new String(content, StandardCharsets.UTF_8);
-        log.info("Raw request body for {}: {}", request.getRequestURI(), rawBody);
+        log.info("Raw request body for {}: {}", request.getRequestURI(), rawBody.trim());
       }
     } else {
       // For non-event endpoints, proceed normally without wrapping
