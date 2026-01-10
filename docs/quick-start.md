@@ -24,7 +24,7 @@ services:
       - "8081:8081"      # Management/Actuator endpoints
     environment:
       - TZ=Europe/Berlin
-      # OAuth is disabled by default
+      # Spotify OAuth is disabled by default, you need it only for Spotify presets
       - UEBERBOESE_OAUTH_ENABLED=true
       # Spotify API authentication (required for OAuth token refresh)
       - SPOTIFY_AUTH_CLIENT_ID=your-spotify-client-id
@@ -125,11 +125,12 @@ After executing the configuration commands, unplug each speaker to restart the s
 
 #### 4. Verify Configuration
 
-The device should acknowledge the configuration change. You can verify by checking the logs in `~/ueberboese-logs/proxy-requests.log` - you should see requests coming from your SoundTouch device.
+The device should acknowledge the configuration change. You can verify by checking the logs 
+- you should see requests coming from your SoundTouch device.
 
 ## Step 4: Install Überböse Android App (Optional)
 
-Vist [Überböse companion app](https://github.com/julius-d/ueberboese-app)
+Visit [Überböse companion app](https://github.com/julius-d/ueberboese-app)
 
 [<img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="40">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/julius-d/ueberboese-app)
 
@@ -231,7 +232,7 @@ This will list all connected Spotify accounts.
 
 **Important:** You must connect at least one Spotify account via the management API or companion app before your SoundTouch devices can use Spotify. The API will automatically use the first connected account.
 
-## Step 6 (completely optional)
+## Step 6 (optional)
 
 With the help of a USB-Stick you can take even more control of your speaker.
 
