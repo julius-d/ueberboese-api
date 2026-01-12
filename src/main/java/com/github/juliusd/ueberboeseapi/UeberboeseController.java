@@ -56,16 +56,17 @@ public class UeberboeseController implements DefaultApi {
     SourceApiDto source = buildSourceApiDto(recentItemRequestApiDto);
 
     // Create the response object
-    RecentItemResponseApiDto response = new RecentItemResponseApiDto();
-    response.setId(String.valueOf(saved.id()));
-    response.setContentItemType(recentItemRequestApiDto.getContentItemType());
-    response.setCreatedOn(saved.createdOn());
-    response.setLastplayedat(recentItemRequestApiDto.getLastplayedat());
-    response.setLocation(recentItemRequestApiDto.getLocation());
-    response.setName(recentItemRequestApiDto.getName());
-    response.setSource(source);
-    response.setSourceid(recentItemRequestApiDto.getSourceid());
-    response.setUpdatedOn(saved.updatedOn());
+    var response =
+        new RecentItemResponseApiDto()
+            .id(String.valueOf(saved.id()))
+            .contentItemType(saved.contentItemType())
+            .createdOn(saved.createdOn())
+            .lastplayedat(saved.lastPlayedAt())
+            .location(saved.location())
+            .name(saved.name())
+            .source(source)
+            .sourceid(saved.sourceId())
+            .updatedOn(saved.updatedOn());
 
     // Build the Location header
     String locationHeader =
