@@ -37,6 +37,8 @@ class RecentServiceTest extends TestBase {
     assertThat(result.location()).isEqualTo("/playback/test/123");
     assertThat(result.sourceId()).isEqualTo("19989621");
     assertThat(result.deviceId()).isEqualTo(deviceId);
+    assertThat(result.createdOn()).isAfter(OffsetDateTime.parse("2026-01-01T10:15:30+01:00"));
+    assertThat(result.lastPlayedAt()).isAfter(OffsetDateTime.parse("2026-01-01T10:15:30+01:00"));
   }
 
   @Test

@@ -27,6 +27,7 @@ public class RecentService {
     Optional<Recent> existing =
         recentRepository.findByAccountIdAndLocationAndSourceId(
             accountId, request.getLocation(), request.getSourceid());
+    var now = OffsetDateTime.now().withNano(0);
 
     Recent saved;
     if (existing.isPresent()) {
@@ -43,7 +44,7 @@ public class RecentService {
               .deviceId(deviceId) // Update to latest device
               .lastPlayedAt(request.getLastplayedat())
               .createdOn(current.createdOn()) // Keep original createdOn
-              .updatedOn(OffsetDateTime.now())
+              .updatedOn(now)
               .version(current.version())
               .build();
       saved = recentRepository.save(updated);
@@ -60,8 +61,8 @@ public class RecentService {
               .contentItemType(request.getContentItemType())
               .deviceId(deviceId)
               .lastPlayedAt(request.getLastplayedat())
-              .createdOn(OffsetDateTime.now())
-              .updatedOn(OffsetDateTime.now())
+              .createdOn(now)
+              .updatedOn(now)
               .version(null) // Let Spring Data JDBC manage the version
               .build();
       saved = recentRepository.save(recent);
