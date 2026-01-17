@@ -3,9 +3,14 @@ package com.github.juliusd.ueberboeseapi.service;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.github.juliusd.ueberboeseapi.ProxyService;
 import com.github.juliusd.ueberboeseapi.generated.dtos.FullAccountResponseApiDto;
+import com.github.juliusd.ueberboeseapi.generated.dtos.PresetApiDto;
+import com.github.juliusd.ueberboeseapi.generated.dtos.PresetsContainerApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.RecentItemApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.RecentsContainerApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.SourceApiDto;
+import com.github.juliusd.ueberboeseapi.preset.Preset;
+import com.github.juliusd.ueberboeseapi.preset.PresetMapper;
+import com.github.juliusd.ueberboeseapi.preset.PresetService;
 import com.github.juliusd.ueberboeseapi.recent.Recent;
 import com.github.juliusd.ueberboeseapi.recent.RecentMapper;
 import com.github.juliusd.ueberboeseapi.recent.RecentService;
@@ -38,6 +43,8 @@ public class FullAccountService {
   private final SpotifyAccountService spotifyAccountService;
   private final RecentService recentService;
   private final RecentMapper recentMapper;
+  private final PresetService presetService;
+  private final PresetMapper presetMapper;
 
   /**
    * Retrieves full account data for the given account ID. First checks the cache, and if not found,
@@ -57,6 +64,7 @@ public class FullAccountService {
         FullAccountResponseApiDto response = accountDataService.loadFullAccountData(accountId);
         log.info("Successfully loaded account data from cache for accountId: {}", accountId);
         injectRecentsFromDatabase(response, accountId);
+        injectPresetsFromDatabase(response, accountId);
         patch(response);
         return Optional.of(response);
       } catch (IOException e) {
@@ -98,8 +106,9 @@ public class FullAccountService {
             saveException.getMessage());
       }
 
-      // Inject database recents before patching
+      // Inject database recents and presets before patching
       injectRecentsFromDatabase(parsedResponse, accountId);
+      injectPresetsFromDatabase(parsedResponse, accountId);
       // Apply Spotify patches
       patch(parsedResponse);
 
@@ -150,6 +159,57 @@ public class FullAccountService {
     }
 
     log.info("Injected {} recents into full account for accountId: {}", recents.size(), accountId);
+  }
+
+  private void injectPresetsFromDatabase(FullAccountResponseApiDto response, String accountId) {
+    if (response.getDevices() == null || response.getDevices().getDevice() == null) {
+      return;
+    }
+
+    // Get sources from account for enrichment
+    List<SourceApiDto> sources =
+        (response.getSources() != null && response.getSources().getSource() != null)
+            ? response.getSources().getSource()
+            : List.of();
+
+    // Build a map of source ID -> source from the account's sources
+    Map<String, SourceApiDto> sourcesById = new HashMap<>();
+    for (SourceApiDto source : sources) {
+      if (source.getId() != null) {
+        sourcesById.put(source.getId(), source);
+      }
+    }
+
+    // For each device, inject and merge presets from database
+    for (var device : response.getDevices().getDevice()) {
+      String deviceId = device.getDeviceid();
+
+      // Fetch presets from database for this device
+      List<Preset> dbPresets = presetService.getPresets(accountId, deviceId);
+      List<PresetApiDto> dbPresetDtos = presetMapper.convertToApiDtos(dbPresets, sources);
+
+      // Replace mock sources in presets with actual sources from the account
+      for (PresetApiDto preset : dbPresetDtos) {
+        if (preset.getSource() != null
+            && preset.getSource().getId() != null
+            && sourcesById.containsKey(preset.getSource().getId())) {
+          preset.setSource(sourcesById.get(preset.getSource().getId()));
+        }
+      }
+
+      // Merge DB presets with XML presets (DB takes precedence by buttonNumber)
+      PresetsContainerApiDto mergedPresets =
+          presetMapper.mergePresets(device.getPresets(), dbPresetDtos);
+      device.setPresets(mergedPresets);
+
+      log.info(
+          "Injected {} DB presets into device {} for accountId: {}",
+          dbPresets.size(),
+          deviceId,
+          accountId);
+    }
+
+    log.info("Injected presets from database into full account for accountId: {}", accountId);
   }
 
   private void patch(FullAccountResponseApiDto response) {

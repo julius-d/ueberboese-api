@@ -5,6 +5,7 @@ import com.github.juliusd.ueberboeseapi.generated.DefaultApi;
 import com.github.juliusd.ueberboeseapi.generated.dtos.CredentialApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.FullAccountResponseApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.PowerOnRequestApiDto;
+import com.github.juliusd.ueberboeseapi.generated.dtos.PresetApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.PresetsContainerApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.RecentItemApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.RecentItemRequestApiDto;
@@ -13,6 +14,9 @@ import com.github.juliusd.ueberboeseapi.generated.dtos.RecentsContainerApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.SourceApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.SourceProviderApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.SourceProvidersResponseApiDto;
+import com.github.juliusd.ueberboeseapi.preset.Preset;
+import com.github.juliusd.ueberboeseapi.preset.PresetMapper;
+import com.github.juliusd.ueberboeseapi.preset.PresetService;
 import com.github.juliusd.ueberboeseapi.recent.Recent;
 import com.github.juliusd.ueberboeseapi.recent.RecentMapper;
 import com.github.juliusd.ueberboeseapi.recent.RecentService;
@@ -42,6 +46,8 @@ public class UeberboeseController implements DefaultApi {
   private final FullAccountService fullAccountService;
   private final RecentService recentService;
   private final RecentMapper recentMapper;
+  private final PresetService presetService;
+  private final PresetMapper presetMapper;
 
   @Autowired private HttpServletRequest request;
 
@@ -232,9 +238,15 @@ public class UeberboeseController implements DefaultApi {
                       ? device.getPresets().getPreset().size()
                       : 0);
 
-              // Return the presets for this device
-              PresetsContainerApiDto presets =
-                  device.getPresets() != null ? device.getPresets() : new PresetsContainerApiDto();
+              // Get presets from database
+              List<Preset> dbPresets = presetService.getPresets(accountId, deviceId);
+              List<PresetApiDto> dbPresetDtos =
+                  presetMapper.convertToApiDtos(
+                      dbPresets, fullAccountData.getSources().getSource());
+
+              // Merge DB presets with XML presets (DB takes precedence)
+              PresetsContainerApiDto mergedPresets =
+                  presetMapper.mergePresets(device.getPresets(), dbPresetDtos);
 
               return ResponseEntity.ok()
                   .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
@@ -244,7 +256,7 @@ public class UeberboeseController implements DefaultApi {
                       "Access-Control-Allow-Headers",
                       "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization")
                   .header("Access-Control-Expose-Headers", "Authorization")
-                  .body(presets);
+                  .body(mergedPresets);
             }
           }
         }

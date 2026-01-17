@@ -10,10 +10,12 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.xmlunit.matchers.CompareMatcher.isSimilarTo;
 
 import com.github.juliusd.ueberboeseapi.device.Device;
+import com.github.juliusd.ueberboeseapi.preset.Preset;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
+import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -658,21 +660,21 @@ class UeberboeseExperimentalControllerTest extends TestBase {
         <preset buttonNumber="2">
           <containerArt>https://image-cdn-ak.spotifycdn.com/image/ab67706c0000da84993ee084406c4089ad8f4b2a</containerArt>
           <contentItemType>tracklisturl</contentItemType>
-          <createdOn>2018-11-14T18:27:39.000+00:00</createdOn>
+          <createdOn>${xmlunit.isDateTime}</createdOn>
           <location>/playback/container/c3BvdGlmeTpwbGF5bGlzdDoyM1NNZHlPSEE2S2t6SG9QT0o1S1E5</location>
           <name>Radio Mix</name>
           <source id="19989643" type="Audio">
-            <createdOn>2018-08-11T09:52:31.000+00:00</createdOn>
-            <credential type="token_version_3">mockToken456xyz=</credential>
-            <name>mockuser5zt8py3wuxy123</name>
+            <createdOn>${xmlunit.isDateTime}</createdOn>
+            <credential type="token_version_3">${xmlunit.ignore}</credential>
+            <name>${xmlunit.ignore}</name>
             <sourceproviderid>15</sourceproviderid>
-            <sourcename>user@example.com</sourcename>
+            <sourcename>${xmlunit.ignore}</sourcename>
             <sourceSettings/>
-            <updatedOn>2018-11-26T18:42:27.000+00:00</updatedOn>
-            <username>mockuser5zt8py3wuxy123</username>
+            <updatedOn>${xmlunit.isDateTime}</updatedOn>
+            <username>${xmlunit.ignore}</username>
           </source>
-          <updatedOn>2025-12-28T16:38:41.000+00:00</updatedOn>
-          <username>Radio Mix</username>
+          <updatedOn>${xmlunit.isDateTime}</updatedOn>
+          <username>${xmlunit.ignore}</username>
         </preset>""";
 
     org.hamcrest.MatcherAssert.assertThat(
@@ -680,6 +682,97 @@ class UeberboeseExperimentalControllerTest extends TestBase {
         isSimilarTo(expectedXml)
             .ignoreWhitespace()
             .withDifferenceEvaluator(new PlaceholderDifferenceEvaluator()));
+  }
+
+  @Test
+  void updatePreset_shouldSaveToDatabase() {
+    // Given - presetRepository is injected via TestBase
+
+    // language=XML
+    String requestXml =
+        """
+        <?xml version="1.0" encoding="UTF-8" ?>
+        <preset buttonNumber="3">
+          <sourceid>19989643</sourceid>
+          <name>My Playlist</name>
+          <username>My Playlist</username>
+          <location>/playback/container/test123</location>
+          <contentItemType>tracklisturl</contentItemType>
+          <containerArt>https://example.org/art123.png</containerArt>
+        </preset>""";
+
+    // When
+    given()
+        .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+        .header("Content-type", "application/vnd.bose.streaming-v1.2+xml")
+        .body(requestXml)
+        .when()
+        .put("/streaming/account/testaccount/device/testdevice/preset/3")
+        .then()
+        .statusCode(200);
+
+    // Then - verify preset was saved to database
+    Optional<Preset> saved =
+        presetRepository.findByAccountIdAndDeviceIdAndButtonNumber("testaccount", "testdevice", 3);
+    assertThat(saved).isPresent();
+    assertThat(saved.get().name()).isEqualTo("My Playlist");
+    assertThat(saved.get().location()).isEqualTo("/playback/container/test123");
+    assertThat(saved.get().sourceId()).isEqualTo("19989643");
+    assertThat(saved.get().containerArt()).isEqualTo("https://example.org/art123.png");
+  }
+
+  @Test
+  void updatePreset_shouldUpsertExisting() {
+    // Given - existing preset (presetRepository is injected via TestBase)
+    var now = java.time.OffsetDateTime.now().withNano(0);
+    Preset existing =
+        Preset.builder()
+            .accountId("testaccount2")
+            .deviceId("testdevice2")
+            .buttonNumber(1)
+            .name("Old Name")
+            .location("/old/location")
+            .sourceId("old-source")
+            .containerArt("https://example.org/old.png")
+            .contentItemType("stationurl")
+            .createdOn(now)
+            .updatedOn(now)
+            .build();
+    Preset saved = presetRepository.save(existing);
+    Long existingId = saved.id();
+
+    // language=XML
+    String requestXml =
+        """
+        <?xml version="1.0" encoding="UTF-8" ?>
+        <preset buttonNumber="1">
+          <sourceid>new-source</sourceid>
+          <name>Updated Name</name>
+          <username>Updated Name</username>
+          <location>/new/location</location>
+          <contentItemType>tracklisturl</contentItemType>
+          <containerArt>https://example.org/new.png</containerArt>
+        </preset>""";
+
+    // When - update with same button number
+    given()
+        .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+        .header("Content-type", "application/vnd.bose.streaming-v1.2+xml")
+        .body(requestXml)
+        .when()
+        .put("/streaming/account/testaccount2/device/testdevice2/preset/1")
+        .then()
+        .statusCode(200);
+
+    // Then - verify preset was updated (same ID)
+    Optional<Preset> updated =
+        presetRepository.findByAccountIdAndDeviceIdAndButtonNumber(
+            "testaccount2", "testdevice2", 1);
+    assertThat(updated).isPresent();
+    assertThat(updated.get().id()).isEqualTo(existingId); // Same ID
+    assertThat(updated.get().name()).isEqualTo("Updated Name");
+    assertThat(updated.get().location()).isEqualTo("/new/location");
+    assertThat(updated.get().sourceId()).isEqualTo("new-source");
   }
 
   @Test

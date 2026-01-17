@@ -1,6 +1,7 @@
 package com.github.juliusd.ueberboeseapi;
 
 import com.github.juliusd.ueberboeseapi.device.DeviceRepository;
+import com.github.juliusd.ueberboeseapi.preset.PresetRepository;
 import com.github.juliusd.ueberboeseapi.recent.Recent;
 import com.github.juliusd.ueberboeseapi.recent.RecentRepository;
 import com.github.juliusd.ueberboeseapi.spotify.SpotifyAccount;
@@ -45,6 +46,7 @@ public class TestBase {
   @Autowired protected SpotifyAccountRepository spotifyAccountRepository;
   @Autowired protected DeviceRepository deviceRepository;
   @Autowired protected RecentRepository recentRepository;
+  @Autowired protected PresetRepository presetRepository;
 
   @BeforeEach
   void setUp() {
@@ -53,6 +55,7 @@ public class TestBase {
     spotifyAccountRepository.deleteAll();
     deviceRepository.deleteAll();
     recentRepository.deleteAll();
+    presetRepository.deleteAll();
   }
 
   protected void givenRecentsInDB() {

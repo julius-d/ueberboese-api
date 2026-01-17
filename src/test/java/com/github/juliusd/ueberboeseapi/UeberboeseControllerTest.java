@@ -3,8 +3,12 @@ package com.github.juliusd.ueberboeseapi;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItems;
 import static org.xmlunit.matchers.CompareMatcher.isSimilarTo;
 
+import com.github.juliusd.ueberboeseapi.preset.Preset;
+import java.time.OffsetDateTime;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.xmlunit.placeholder.PlaceholderDifferenceEvaluator;
@@ -848,5 +852,77 @@ class UeberboeseControllerTest extends TestBase {
         .post("/streaming/support/power_on")
         .then()
         .statusCode(400);
+  }
+
+  @Test
+  void getPresets_shouldMergeDatabasePresetsWithXml() {
+    // Given - DB presets that override some XML presets (presetRepository is injected via TestBase)
+    // Add DB preset for button 1 (should override XML button 1)
+    var now = OffsetDateTime.now().withNano(0);
+    Preset preset1 =
+        Preset.builder()
+            .accountId("6921042")
+            .deviceId("123980WER")
+            .buttonNumber(1)
+            .name("DB Override Preset 1")
+            .location("/db/location/1")
+            .sourceId("19989342")
+            .containerArt("https://db.example.org/art1.png")
+            .contentItemType("stationurl")
+            .createdOn(now)
+            .updatedOn(now)
+            .build();
+    presetRepository.save(preset1);
+
+    // Add DB preset for button 7 (new preset, not in XML)
+    Preset preset7 =
+        Preset.builder()
+            .accountId("6921042")
+            .deviceId("123980WER")
+            .buttonNumber(7)
+            .name("DB New Preset 7")
+            .location("/db/location/7")
+            .sourceId("19989643")
+            .containerArt("https://db.example.org/art7.png")
+            .contentItemType("tracklisturl")
+            .createdOn(now)
+            .updatedOn(now)
+            .build();
+    presetRepository.save(preset7);
+
+    // When / Then
+    given()
+        .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+        .header("User-agent", "Bose_Lisa/27.0.6")
+        .when()
+        .get("/streaming/account/6921042/device/123980WER/presets")
+        .then()
+        .statusCode(200)
+        .contentType("application/vnd.bose.streaming-v1.2+xml")
+        // Verify DB preset 1 overrides XML preset 1
+        .body(
+            "presets.preset.find { it.@buttonNumber == '1' }.name", equalTo("DB Override Preset 1"))
+        .body("presets.preset.find { it.@buttonNumber == '1' }.location", equalTo("/db/location/1"))
+        .body(
+            "presets.preset.find { it.@buttonNumber == '1' }.containerArt",
+            equalTo("https://db.example.org/art1.png"))
+        .body(
+            "presets.preset.find { it.@buttonNumber == '1' }.contentItemType",
+            equalTo("stationurl"))
+        // Verify DB preset 7 is added (new preset not in XML)
+        .body("presets.preset.find { it.@buttonNumber == '7' }.name", equalTo("DB New Preset 7"))
+        .body("presets.preset.find { it.@buttonNumber == '7' }.location", equalTo("/db/location/7"))
+        .body(
+            "presets.preset.find { it.@buttonNumber == '7' }.containerArt",
+            equalTo("https://db.example.org/art7.png"))
+        // Verify XML preset 2 still exists (not overridden)
+        .body("presets.preset.find { it.@buttonNumber == '2' }.name", equalTo("Radio Foobar"))
+        .body(
+            "presets.preset.find { it.@buttonNumber == '2' }.location",
+            equalTo("/playback/container/131311232312121212"))
+        // Verify all expected button numbers exist (1-7)
+        .body("presets.preset.@buttonNumber", hasItems("1", "2", "3", "4", "5", "6", "7"))
+        // Verify total count: 6 from XML + 1 new from DB (button 1 was overridden, not added)
+        .body("presets.preset.size()", equalTo(7));
   }
 }

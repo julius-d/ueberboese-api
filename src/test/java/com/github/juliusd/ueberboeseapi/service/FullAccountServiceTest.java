@@ -18,6 +18,8 @@ import com.github.juliusd.ueberboeseapi.generated.dtos.RecentItemApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.RecentsContainerApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.SourceApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.SourcesContainerApiDto;
+import com.github.juliusd.ueberboeseapi.preset.PresetMapper;
+import com.github.juliusd.ueberboeseapi.preset.PresetService;
 import com.github.juliusd.ueberboeseapi.recent.Recent;
 import com.github.juliusd.ueberboeseapi.recent.RecentMapper;
 import com.github.juliusd.ueberboeseapi.recent.RecentService;
@@ -48,6 +50,7 @@ class FullAccountServiceTest {
   @Mock private ProxyService proxyService;
   @Mock private SpotifyAccountService spotifyAccountService;
   @Mock private RecentService recentService;
+  @Mock private PresetService presetService;
   @Mock private HttpServletRequest request;
 
   private FullAccountService fullAccountService;
@@ -56,6 +59,7 @@ class FullAccountServiceTest {
   void setUp() {
     var xmlMapper = new XmlMessageConverterConfig().customXmlMapper();
     var recentMapper = new RecentMapper();
+    var presetMapper = new PresetMapper();
 
     fullAccountService =
         new FullAccountService(
@@ -64,7 +68,9 @@ class FullAccountServiceTest {
             xmlMapper,
             spotifyAccountService,
             recentService,
-            recentMapper);
+            recentMapper,
+            presetService,
+            presetMapper);
   }
 
   @Test
