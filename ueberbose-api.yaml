@@ -410,7 +410,7 @@ paths:
         '500':
           description: Internal server error
 
-  /streaming/account/{accountId}/device/{deviceId}/preset/{presetNumber}:
+  /streaming/account/{accountId}/device/{deviceId}/preset/{buttonNumber}:
     put:
       summary: Update device preset
       description: Updates or creates a preset for a specific button number on the device
@@ -422,7 +422,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/accountId'
         - $ref: '#/components/parameters/deviceId'
-        - name: presetNumber
+        - name: buttonNumber
           in: path
           required: true
           description: Preset button number (1-6)

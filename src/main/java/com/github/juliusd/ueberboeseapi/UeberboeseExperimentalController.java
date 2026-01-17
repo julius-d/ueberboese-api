@@ -30,10 +30,10 @@ public class UeberboeseExperimentalController implements ExperimentalApi {
   public ResponseEntity<PresetUpdateResponseApiDto> updatePreset(
       String accountId,
       String deviceId,
-      Integer presetNumber,
+      Integer buttonNumber,
       PresetUpdateRequestApiDto presetUpdateRequestApiDto) {
 
-    log.info("Updating preset {} for account {} and device {}", presetNumber, accountId, deviceId);
+    log.info("Updating preset {} for account {} and device {}", buttonNumber, accountId, deviceId);
 
     // Build the credential
     CredentialApiDto credential = new CredentialApiDto();
@@ -68,7 +68,7 @@ public class UeberboeseExperimentalController implements ExperimentalApi {
         .header(
             "Location",
             "http://streamingqa.bose.com/account/%s/device/%s/preset/%d"
-                .formatted(accountId, deviceId, presetNumber))
+                .formatted(accountId, deviceId, buttonNumber))
         .body(response);
   }
 
