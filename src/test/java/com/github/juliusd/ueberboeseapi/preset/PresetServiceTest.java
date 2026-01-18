@@ -5,22 +5,24 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.github.juliusd.ueberboeseapi.TestBase;
 import java.util.List;
 import java.util.Optional;
+import org.assertj.core.groups.Tuple;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 class PresetServiceTest extends TestBase {
 
-  @Autowired private PresetService presetService;
+  private static final String ACCOUNT_ID = "test-account";
+  private static final String DEVICE_ID = "test-device";
 
-  @Autowired private PresetRepository presetRepository;
+  @Autowired private PresetService presetService;
 
   @Test
   void savePreset_shouldCreateNewPreset() {
     // Given
     Preset preset =
         Preset.builder()
-            .accountId("test-account")
-            .deviceId("test-device")
+            .accountId(ACCOUNT_ID)
+            .deviceId(DEVICE_ID)
             .buttonNumber(1)
             .containerArt("https://example.org/art.png")
             .contentItemType("stationurl")
@@ -35,8 +37,8 @@ class PresetServiceTest extends TestBase {
     // Then
     assertThat(saved).isNotNull();
     assertThat(saved.id()).isNotNull();
-    assertThat(saved.accountId()).isEqualTo("test-account");
-    assertThat(saved.deviceId()).isEqualTo("test-device");
+    assertThat(saved.accountId()).isEqualTo(ACCOUNT_ID);
+    assertThat(saved.deviceId()).isEqualTo(DEVICE_ID);
     assertThat(saved.buttonNumber()).isEqualTo(1);
     assertThat(saved.containerArt()).isEqualTo("https://example.org/art.png");
     assertThat(saved.contentItemType()).isEqualTo("stationurl");
@@ -48,12 +50,110 @@ class PresetServiceTest extends TestBase {
   }
 
   @Test
+  void savePreset_shouldUpdateMetadataWhenContentStaysSame() {
+    // Given - create initial preset
+    Preset initial =
+        Preset.builder()
+            .accountId(ACCOUNT_ID)
+            .deviceId(DEVICE_ID)
+            .buttonNumber(1)
+            .containerArt("https://example.org/old-art.png")
+            .contentItemType("stationurl")
+            .location("/v1/playback/station/s111")
+            .name("Old Name")
+            .sourceId("source-1")
+            .build();
+
+    Preset saved = presetService.savePreset(initial);
+    Long initialId = saved.id();
+
+    // When - update metadata (name, containerArt) but keep same content identity
+    Preset update =
+        Preset.builder()
+            .accountId(ACCOUNT_ID)
+            .deviceId(DEVICE_ID)
+            .buttonNumber(1) // Same button
+            .containerArt("https://example.org/new-art.png") // Changed metadata
+            .contentItemType("stationurl") // Same contentItemType (part of content identity)
+            .location("/v1/playback/station/s111") // Same location
+            .name("New Name") // Changed metadata
+            .sourceId("source-1") // Same sourceId
+            .build();
+
+    Preset updated = presetService.savePreset(update);
+
+    // Then - should update metadata but keep same ID, createdOn, and content identity
+    assertThat(updated.id()).isEqualTo(initialId); // Same ID
+    assertThat(updated.buttonNumber()).isEqualTo(1); // Same button
+    assertThat(updated.location()).isEqualTo("/v1/playback/station/s111"); // Same location
+    assertThat(updated.sourceId()).isEqualTo("source-1"); // Same sourceId
+    assertThat(updated.contentItemType()).isEqualTo("stationurl"); // Same contentItemType
+    assertThat(updated.name()).isEqualTo("New Name"); // Updated metadata
+    assertThat(updated.containerArt())
+        .isEqualTo("https://example.org/new-art.png"); // Updated metadata
+    assertThat(updated.createdOn()).isEqualTo(saved.createdOn()); // Original createdOn preserved
+    assertThat(updated.updatedOn()).isAfterOrEqualTo(saved.updatedOn()); // updatedOn is updated
+
+    // Verify only one preset exists
+    List<Preset> presets = presetService.getPresets(ACCOUNT_ID, DEVICE_ID);
+    assertThat(presets).hasSize(1);
+  }
+
+  @Test
+  void savePreset_shouldReplaceWhenContentItemTypeChanges() {
+    // Given - create initial preset with stationurl
+    Preset initial =
+        Preset.builder()
+            .accountId(ACCOUNT_ID)
+            .deviceId(DEVICE_ID)
+            .buttonNumber(1)
+            .containerArt("https://example.org/art.png")
+            .contentItemType("stationurl")
+            .location("/v1/playback/station/s111")
+            .name("Radio Station")
+            .sourceId("source-1")
+            .build();
+
+    Preset saved = presetService.savePreset(initial);
+    Long initialId = saved.id();
+
+    // When - save different contentItemType at same button (different content)
+    Preset update =
+        Preset.builder()
+            .accountId(ACCOUNT_ID)
+            .deviceId(DEVICE_ID)
+            .buttonNumber(1) // Same button
+            .containerArt("https://example.org/playlist-art.png")
+            .contentItemType("tracklisturl") // Different contentItemType = different content
+            .location("/v1/playback/station/s111") // Same location
+            .name("Playlist")
+            .sourceId("source-1") // Same sourceId
+            .build();
+
+    Preset updated = presetService.savePreset(update);
+
+    // Then - should replace the content (same ID but all content fields changed)
+    assertThat(updated.id()).isEqualTo(initialId); // Same ID (replaced, not new record)
+    assertThat(updated.buttonNumber()).isEqualTo(1); // Same button
+    assertThat(updated.location()).isEqualTo("/v1/playback/station/s111"); // Same location
+    assertThat(updated.sourceId()).isEqualTo("source-1"); // Same sourceId
+    assertThat(updated.contentItemType()).isEqualTo("tracklisturl"); // Changed - new content
+    assertThat(updated.name()).isEqualTo("Playlist"); // Changed
+    assertThat(updated.containerArt()).isEqualTo("https://example.org/playlist-art.png"); // Changed
+    assertThat(updated.createdOn()).isEqualTo(saved.createdOn()); // Original createdOn preserved
+
+    // Verify only one preset exists
+    List<Preset> presets = presetService.getPresets(ACCOUNT_ID, DEVICE_ID);
+    assertThat(presets).hasSize(1);
+  }
+
+  @Test
   void savePreset_shouldUpdateExistingPreset() {
     // Given - create initial preset
     Preset initial =
         Preset.builder()
-            .accountId("test-account")
-            .deviceId("test-device")
+            .accountId(ACCOUNT_ID)
+            .deviceId(DEVICE_ID)
             .buttonNumber(2)
             .containerArt("https://example.org/old-art.png")
             .contentItemType("stationurl")
@@ -68,8 +168,8 @@ class PresetServiceTest extends TestBase {
     // When - save preset with same account/device/buttonNumber but different data
     Preset update =
         Preset.builder()
-            .accountId("test-account")
-            .deviceId("test-device")
+            .accountId(ACCOUNT_ID)
+            .deviceId(DEVICE_ID)
             .buttonNumber(2) // Same button number
             .containerArt("https://example.org/new-art.png")
             .contentItemType("tracklisturl")
@@ -89,8 +189,88 @@ class PresetServiceTest extends TestBase {
     assertThat(updated.updatedOn()).isAfterOrEqualTo(saved.createdOn()); // updatedOn is updated
 
     // Verify only one preset exists
-    List<Preset> presets = presetService.getPresets("test-account", "test-device");
+    List<Preset> presets = presetService.getPresets(ACCOUNT_ID, DEVICE_ID);
     assertThat(presets).hasSize(1);
+  }
+
+  @Test
+  void prestCanBeMoved() {
+    var initial1 =
+        Preset.builder()
+            .accountId(ACCOUNT_ID)
+            .deviceId(DEVICE_ID)
+            .buttonNumber(1)
+            .containerArt("https://example.org/art.png")
+            .contentItemType("stationurl")
+            .location("/v1/playback/station/s111")
+            .name("My Name")
+            .sourceId("source-1")
+            .build();
+    presetService.savePreset(initial1);
+
+    var initial1NowAt2 =
+        Preset.builder()
+            .accountId(ACCOUNT_ID)
+            .deviceId(DEVICE_ID)
+            .buttonNumber(2)
+            .containerArt("https://example.org/art.png")
+            .contentItemType("stationurl")
+            .location("/v1/playback/station/s111")
+            .name("My Name")
+            .sourceId("source-1")
+            .build();
+    presetService.savePreset(initial1NowAt2);
+
+    List<Preset> presets = presetService.getPresets(ACCOUNT_ID, DEVICE_ID);
+    assertThat(presets).hasSize(1).extracting(Preset::buttonNumber).containsExactly(2);
+  }
+
+  @Test
+  void prestCanBeMovedToAlreadyUsedPlace() {
+    var initialOne =
+        Preset.builder()
+            .accountId(ACCOUNT_ID)
+            .deviceId(DEVICE_ID)
+            .buttonNumber(1)
+            .containerArt("https://example.org/art.png")
+            .contentItemType("stationurl")
+            .location("/v1/playback/station/s111")
+            .name("My Name")
+            .sourceId("source-1")
+            .build();
+    presetService.savePreset(initialOne);
+
+    var initialTwo =
+        Preset.builder()
+            .accountId(ACCOUNT_ID)
+            .deviceId(DEVICE_ID)
+            .buttonNumber(2)
+            .containerArt("https://example.org/art2.png")
+            .contentItemType("stationurl")
+            .location("/v1/playback/station/s222")
+            .name("My Name 2")
+            .sourceId("source-2")
+            .build();
+    presetService.savePreset(initialTwo);
+
+    var initialOneNowAt2 =
+        Preset.builder()
+            .accountId(ACCOUNT_ID)
+            .deviceId(DEVICE_ID)
+            .buttonNumber(2)
+            .containerArt("https://example.org/art.png")
+            .contentItemType("stationurl")
+            .location("/v1/playback/station/s111")
+            .name("My Name")
+            .sourceId("source-1")
+            .build();
+    presetService.savePreset(initialOneNowAt2);
+
+    List<Preset> presets = presetService.getPresets(ACCOUNT_ID, DEVICE_ID);
+    assertThat(presets)
+        .hasSize(1)
+        .extracting(Preset::buttonNumber, Preset::name)
+        .containsExactly(Tuple.tuple(2, "My Name"));
   }
 
   @Test
@@ -129,13 +309,11 @@ class PresetServiceTest extends TestBase {
   @Test
   void getPreset_shouldReturnPresetByButtonNumber() {
     // Given
-    String accountId = "test-account-single";
-    String deviceId = "device-1";
-    savePreset(accountId, deviceId, 1, "Button 1", "source-1");
-    savePreset(accountId, deviceId, 2, "Button 2", "source-2");
+    savePreset(ACCOUNT_ID, DEVICE_ID, 1, "Button 1", "source-1");
+    savePreset(ACCOUNT_ID, DEVICE_ID, 2, "Button 2", "source-2");
 
     // When
-    Optional<Preset> preset = presetService.getPreset(accountId, deviceId, 1);
+    Optional<Preset> preset = presetService.getPreset(ACCOUNT_ID, DEVICE_ID, 1);
 
     // Then
     assertThat(preset).isPresent();
@@ -147,11 +325,10 @@ class PresetServiceTest extends TestBase {
   void getPreset_shouldReturnEmptyForNonExistentButton() {
     // Given
     String accountId = "test-account-missing";
-    String deviceId = "device-1";
-    savePreset(accountId, deviceId, 1, "Button 1", "source-1");
+    savePreset(accountId, DEVICE_ID, 1, "Button 1", "source-1");
 
     // When
-    Optional<Preset> preset = presetService.getPreset(accountId, deviceId, 99);
+    Optional<Preset> preset = presetService.getPreset(accountId, DEVICE_ID, 99);
 
     // Then
     assertThat(preset).isEmpty();
@@ -160,22 +337,20 @@ class PresetServiceTest extends TestBase {
   @Test
   void savePreset_shouldNotAffectDifferentDevices() {
     // Given
-    String accountId = "test-account";
-
     // Save presets for different devices with same button numbers
-    savePreset(accountId, "device-1", 1, "Device 1 Button 1", "source-1");
-    savePreset(accountId, "device-2", 1, "Device 2 Button 1", "source-2");
+    savePreset(ACCOUNT_ID, "device-1", 1, "Device 1 Button 1", "source-1");
+    savePreset(ACCOUNT_ID, "device-2", 1, "Device 2 Button 1", "source-2");
 
     // When
-    List<Preset> device1Presets = presetService.getPresets(accountId, "device-1");
-    List<Preset> device2Presets = presetService.getPresets(accountId, "device-2");
+    List<Preset> device1Presets = presetService.getPresets(ACCOUNT_ID, "device-1");
+    List<Preset> device2Presets = presetService.getPresets(ACCOUNT_ID, "device-2");
 
     // Then
     assertThat(device1Presets).hasSize(1);
-    assertThat(device1Presets.get(0).name()).isEqualTo("Device 1 Button 1");
+    assertThat(device1Presets.getFirst().name()).isEqualTo("Device 1 Button 1");
 
     assertThat(device2Presets).hasSize(1);
-    assertThat(device2Presets.get(0).name()).isEqualTo("Device 2 Button 1");
+    assertThat(device2Presets.getFirst().name()).isEqualTo("Device 2 Button 1");
   }
 
   @Test
@@ -193,10 +368,10 @@ class PresetServiceTest extends TestBase {
 
     // Then
     assertThat(account1Presets).hasSize(1);
-    assertThat(account1Presets.get(0).name()).isEqualTo("Account 1 Button 1");
+    assertThat(account1Presets.getFirst().name()).isEqualTo("Account 1 Button 1");
 
     assertThat(account2Presets).hasSize(1);
-    assertThat(account2Presets.get(0).name()).isEqualTo("Account 2 Button 1");
+    assertThat(account2Presets.getFirst().name()).isEqualTo("Account 2 Button 1");
   }
 
   private void savePreset(

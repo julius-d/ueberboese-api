@@ -13,8 +13,18 @@ public interface PresetRepository extends CrudRepository<Preset, Long> {
   List<Preset> findByAccountIdAndDeviceId(String accountId, String deviceId);
 
   @Query(
-      "SELECT * FROM PRESET WHERE ACCOUNT_ID = :accountId AND DEVICE_ID = :deviceId AND"
-          + " BUTTON_NUMBER = :buttonNumber")
+      """
+      SELECT * FROM PRESET WHERE ACCOUNT_ID = :accountId AND DEVICE_ID = :deviceId AND
+       BUTTON_NUMBER = :buttonNumber
+      """)
   Optional<Preset> findByAccountIdAndDeviceIdAndButtonNumber(
       String accountId, String deviceId, Integer buttonNumber);
+
+  @Query(
+      """
+      SELECT * FROM PRESET WHERE ACCOUNT_ID = :accountId AND DEVICE_ID = :deviceId AND
+       LOCATION = :location AND SOURCE_ID = :sourceId AND CONTENT_ITEM_TYPE = :contentItemType
+      """)
+  Optional<Preset> findByAccountIdAndDeviceIdAndLocationAndSourceIdAndContentItemType(
+      String accountId, String deviceId, String location, String sourceId, String contentItemType);
 }
