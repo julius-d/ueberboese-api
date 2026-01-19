@@ -181,7 +181,7 @@ sed -i \
   -e "s|<bmxRegistryUrl>.*</bmxRegistryUrl>|<bmxRegistryUrl>$HOST/bmx/registry/v1/services</bmxRegistryUrl>|" \
   OverrideSdkPrivateCfg.xml
 ```
-Or yoy can use `vi` for that. (If you know `vi`)
+Or you can use `vi` for that. (If you know `vi`)
 ```shell
 vi OverrideSdkPrivateCfg.xml
 ```
