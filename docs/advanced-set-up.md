@@ -121,3 +121,57 @@ spotty login: root
 ```
 Type `root` as username.
 No password is required. 😅
+
+## Change the config on the speaker
+
+To have **working internet radio**
+and to let the **analytics data** be sent to your Überböse-API server instead of to `events.api.bosecm.com`
+we have to change 2 lines in one file on the device.
+
+```shell
+cd /var/lib/Bose/PersistenceDataRoot
+cat OverrideSdkPrivateCfg.xml
+
+```
+This should show
+```xml
+<SoundTouchSdkPrivateCfg>
+    <margeServerUrl>https://ueberboese.your-example-host.org</margeServerUrl>
+    <statsServerUrl>https://events.api.bosecm.com</statsServerUrl>
+    <swUpdateUrl>https://ueberboese-downloads.your-example-host.org/updates/soundtouch</swUpdateUrl>
+    <isZeroconfEnabled>true</isZeroconfEnabled>
+    <usePandoraProductionServer>true</usePandoraProductionServer>
+    <saveMargeCustomerReport>false</saveMargeCustomerReport>
+    <bmxRegistryUrl>https://content.api.bose.io/bmx/registry/v1/services</bmxRegistryUrl>
+</SoundTouchSdkPrivateCfg>
+```
+We need to change it to
+```xml
+<SoundTouchSdkPrivateCfg>
+    <margeServerUrl>https://ueberboese.your-example-host.org</margeServerUrl>
+    <statsServerUrl>https://ueberboese.your-example-host.org</statsServerUrl>
+    <swUpdateUrl>https://ueberboese-downloads.your-example-host.org/updates/soundtouch</swUpdateUrl>
+    <isZeroconfEnabled>true</isZeroconfEnabled>
+    <usePandoraProductionServer>true</usePandoraProductionServer>
+    <saveMargeCustomerReport>false</saveMargeCustomerReport>
+    <bmxRegistryUrl>https://ueberboese.your-example-host.org/bmx/registry/v1/services</bmxRegistryUrl>
+</SoundTouchSdkPrivateCfg>
+```
+
+You can do that via
+```shell
+HOST=$(grep -o '<margeServerUrl>[^<]*' OverrideSdkPrivateCfg.xml | sed 's|<margeServerUrl>||') && \
+sed -i \
+  -e "s|<statsServerUrl>.*</statsServerUrl>|<statsServerUrl>$HOST</statsServerUrl>|" \
+  -e "s|<bmxRegistryUrl>.*</bmxRegistryUrl>|<bmxRegistryUrl>$HOST/bmx/registry/v1/services</bmxRegistryUrl>|" \
+  OverrideSdkPrivateCfg.xml
+```
+Or yoy can use `vi` for that. (If you know `vi`)
+```shell
+vi OverrideSdkPrivateCfg.xml
+```
+
+And then restart the speaker via
+```shell
+reboot
+```
