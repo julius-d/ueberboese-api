@@ -324,4 +324,34 @@ class BmxControllerTest extends TestBase {
         .contentType("application/json")
         .body("nextReportIn", notNullValue());
   }
+
+  @Test
+  void testReportTuneInAnalyticsWithReasonSubCode() {
+    given()
+        .auth()
+        .preemptive()
+        .basic("admin", "change_me!")
+        .contentType("application/json")
+        .queryParam("stream_id", "test123")
+        .queryParam("guide_id", "s80044")
+        .queryParam("listen_id", "456")
+        .queryParam("stream_type", "liveRadio")
+        .body(
+            """
+            {
+              "timeStamp": "2025-10-31T05:38:55+0000",
+              "eventType": "START",
+              "reason": "USER_SELECT_PLAYABLE",
+              "reasonSubCode": "NORMAL",
+              "timeIntoTrack": 0,
+              "playbackDelay": 6664
+            }
+            """)
+        .when()
+        .post("/bmx/tunein/v1/report")
+        .then()
+        .statusCode(200)
+        .contentType("application/json")
+        .body("nextReportIn", notNullValue());
+  }
 }

@@ -2503,6 +2503,9 @@ components:
           type: string
           description: Reason for the event
           example: "USER_SELECT_PLAYABLE"
+        reasonSubCode:
+          type: string
+          description: Sub-code providing additional detail about the reason
         timeIntoTrack:
           type: integer
           description: Time into track in seconds
