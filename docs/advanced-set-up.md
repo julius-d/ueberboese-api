@@ -95,7 +95,22 @@ sudo umount /mnt/usb
 
 ```
 
-**Done.** Plug the stick into the powered-off speaker, turn it on, and wait for the services (`sshd` / `telnetd`) to start.
+**Done.** You have prepared the USB Stick.
+
+
+## Plug in the USB stick
+Now it is time to plug in the stick.
+
+<p align="center">
+  <img src="images/advanced-set-up-st-20.jpg" width="32%" />
+  <img src="images/advanced-set-up-usb-stick-and-adapter.jpg" width="32%" />
+  <img src="images/advanced-set-up-st-10.jpg" width="32%" />
+</p>
+
+With the SoundTouch 20 it is very easy. Just use the USB-A port.
+
+For the SoundTouch 10, you need an adapter.
+For me an OTG-Adapter for micro-USB, that I got some years ago together with my smartphone, worked.
 
 ## Connect via telnet
 
