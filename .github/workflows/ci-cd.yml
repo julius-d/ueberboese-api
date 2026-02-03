@@ -143,24 +143,49 @@ jobs:
       run: |
         IMAGE_BASE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
 
-        # Create and push manifest for semantic version tag
-        docker manifest create ${IMAGE_BASE}:${VERSION} \
-          --amend ${IMAGE_BASE}:${VERSION}-arm64 \
-          --amend ${IMAGE_BASE}:${VERSION}-amd64
-        docker manifest push ${IMAGE_BASE}:${VERSION}
+        # Create multi-arch manifest for semantic version tag with description annotation
+        docker buildx imagetools create \
+          --tag ${IMAGE_BASE}:${VERSION} \
+          --annotation "index:org.opencontainers.image.description=API server to keep discontinued devices functional" \
+          --annotation "index:org.opencontainers.image.source=https://github.com/${{ github.repository }}" \
+          --annotation "index:org.opencontainers.image.version=${VERSION}" \
+          --annotation "index:org.opencontainers.image.revision=${{ github.sha }}" \
+          ${IMAGE_BASE}:${VERSION}-arm64 \
+          ${IMAGE_BASE}:${VERSION}-amd64
 
-        # Create and push manifest for commit SHA tag
-        docker manifest create ${IMAGE_BASE}:${{ github.sha }} \
-          --amend ${IMAGE_BASE}:${VERSION}-arm64 \
-          --amend ${IMAGE_BASE}:${VERSION}-amd64
-        docker manifest push ${IMAGE_BASE}:${{ github.sha }}
+        # Create multi-arch manifest for commit SHA tag
+        docker buildx imagetools create \
+          --tag ${IMAGE_BASE}:${{ github.sha }} \
+          --annotation "index:org.opencontainers.image.description=API server to keep discontinued devices functional" \
+          --annotation "index:org.opencontainers.image.source=https://github.com/${{ github.repository }}" \
+          --annotation "index:org.opencontainers.image.version=${VERSION}" \
+          --annotation "index:org.opencontainers.image.revision=${{ github.sha }}" \
+          ${IMAGE_BASE}:${VERSION}-arm64 \
+          ${IMAGE_BASE}:${VERSION}-amd64
 
-        # Create and push manifest for latest tag (if main branch)
+        # Create multi-arch manifest for latest tag (if main branch)
         if [[ "${{ github.ref_name }}" == "main" ]]; then
-          docker manifest create ${IMAGE_BASE}:latest \
-            --amend ${IMAGE_BASE}:${VERSION}-arm64 \
-            --amend ${IMAGE_BASE}:${VERSION}-amd64
-          docker manifest push ${IMAGE_BASE}:latest
+          docker buildx imagetools create \
+            --tag ${IMAGE_BASE}:latest \
+            --annotation "index:org.opencontainers.image.description=API server to keep discontinued devices functional" \
+            --annotation "index:org.opencontainers.image.source=https://github.com/${{ github.repository }}" \
+            --annotation "index:org.opencontainers.image.version=${VERSION}" \
+            --annotation "index:org.opencontainers.image.revision=${{ github.sha }}" \
+            ${IMAGE_BASE}:${VERSION}-arm64 \
+            ${IMAGE_BASE}:${VERSION}-amd64
+        fi
+
+        # Create multi-arch manifest for branch name tag (if not main)
+        if [[ "${{ github.ref_name }}" != "main" ]]; then
+          docker buildx imagetools create \
+            --tag ${IMAGE_BASE}:${{ github.ref_name }} \
+            --annotation "index:org.opencontainers.image.description=Reverse-engineered Bose SoundTouch streaming API to keep discontinued devices functional" \
+            --annotation "index:org.opencontainers.image.source=https://github.com/${{ github.repository }}" \
+            --annotation "index:org.opencontainers.image.version=${VERSION}" \
+            --annotation "index:org.opencontainers.image.revision=${{ github.sha }}" \
+            --annotation "index:org.opencontainers.image.licenses=Apache-2.0" \
+            ${IMAGE_BASE}:${VERSION}-arm64 \
+            ${IMAGE_BASE}:${VERSION}-amd64
         fi
 
     - name: Get multi-arch manifest digest
