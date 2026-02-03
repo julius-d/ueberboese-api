@@ -102,40 +102,68 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Build Docker image with semantic version
+    - name: Build ARM64 Docker image
       env:
         VERSION: ${{ needs.version.outputs.version || '0.0.0' }}
       run: |
-        # Build the application and generate SBOM, then create Docker image
-        mvn -B package spring-boot:build-image -DskipTests -Drevision=$VERSION
+        IMAGE_BASE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+        # Build the application and generate SBOM, then create ARM64 Docker image
+        mvn -B package spring-boot:build-image -DskipTests -Drevision=$VERSION \
+          -Dspring-boot.build-image.imagePlatform=linux/arm64 \
+          -Dspring-boot.build-image.imageName=${IMAGE_BASE}:${VERSION}-arm64
+        # Push ARM64 image immediately
+        docker push ${IMAGE_BASE}:${VERSION}-arm64
 
-    - name: Tag and push Docker image
+    - name: Build AMD64 Docker image
+      env:
+        VERSION: ${{ needs.version.outputs.version || '0.0.0' }}
+      run: |
+        IMAGE_BASE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+        # Build AMD64 Docker image (reuses JAR from previous build)
+        mvn -B spring-boot:build-image -DskipTests -Drevision=$VERSION \
+          -Dspring-boot.build-image.imagePlatform=linux/amd64 \
+          -Dspring-boot.build-image.imageName=${IMAGE_BASE}:${VERSION}-amd64
+        # Push AMD64 image immediately
+        docker push ${IMAGE_BASE}:${VERSION}-amd64
+
+    - name: Create and push multi-architecture manifests
       id: push-image
       env:
         VERSION: ${{ needs.version.outputs.version || '0.0.0' }}
       run: |
         IMAGE_BASE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
 
-        # Tag the locally built image with ALL tags upfront
-        docker tag ueberboese-api:$VERSION $IMAGE_BASE:$VERSION
-        docker tag ueberboese-api:$VERSION $IMAGE_BASE:${{ github.sha }}
+        # Create and push manifest for semantic version tag
+        docker manifest create ${IMAGE_BASE}:${VERSION} \
+          --amend ${IMAGE_BASE}:${VERSION}-arm64 \
+          --amend ${IMAGE_BASE}:${VERSION}-amd64
+        docker manifest push ${IMAGE_BASE}:${VERSION}
 
+        # Create and push manifest for commit SHA tag
+        docker manifest create ${IMAGE_BASE}:${{ github.sha }} \
+          --amend ${IMAGE_BASE}:${VERSION}-arm64 \
+          --amend ${IMAGE_BASE}:${VERSION}-amd64
+        docker manifest push ${IMAGE_BASE}:${{ github.sha }}
+
+        # Create and push manifest for latest tag (if main branch)
         if [[ "${{ github.ref_name }}" == "main" ]]; then
-          docker tag ueberboese-api:$VERSION $IMAGE_BASE:latest
+          docker manifest create ${IMAGE_BASE}:latest \
+            --amend ${IMAGE_BASE}:${VERSION}-arm64 \
+            --amend ${IMAGE_BASE}:${VERSION}-amd64
+          docker manifest push ${IMAGE_BASE}:latest
         fi
 
-        if [[ "${{ github.ref_name }}" != "main" ]]; then
-          docker tag ueberboese-api:$VERSION $IMAGE_BASE:${{ github.ref_name }}
-        fi
-
-        # Push all tags at once (creates single image manifest with multiple tags)
-        docker push --all-tags $IMAGE_BASE
-
-    - name: Get image digest
+    - name: Get multi-arch manifest digest
       id: image-digest
+      env:
+        VERSION: ${{ needs.version.outputs.version || '0.0.0' }}
       run: |
-        DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.version.outputs.version || '0.0.0' }} | cut -d'@' -f2)
-        echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+        IMAGE_BASE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+        # Get the digest of the multi-arch manifest (not individual images)
+        DIGEST=$(docker manifest inspect ${IMAGE_BASE}:${VERSION} | jq -r '.manifests[0].digest' | cut -d':' -f2)
+        # Alternative: use docker buildx imagetools inspect to get the manifest digest
+        MANIFEST_DIGEST=$(docker buildx imagetools inspect ${IMAGE_BASE}:${VERSION} --raw | sha256sum | cut -d' ' -f1)
+        echo "digest=sha256:${MANIFEST_DIGEST}" >> $GITHUB_OUTPUT
 
     - name: Generate provenance attestations
       uses: actions/attest-build-provenance@v1
