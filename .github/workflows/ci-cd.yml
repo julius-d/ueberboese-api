@@ -117,8 +117,9 @@ jobs:
         IMAGE_BASE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
         # Build the application and generate SBOM, then create ARM64 Docker image
         mvn -B package spring-boot:build-image -DskipTests -Drevision=$VERSION \
-          -Dspring-boot.build-image.imagePlatform=linux/arm64 \
-          -Dspring-boot.build-image.imageName=${IMAGE_BASE}:${VERSION}-arm64
+          -Dspring-boot.build-image.imagePlatform=linux/arm64
+        # Tag the locally built image for the registry
+        docker tag ueberboese-api:$VERSION ${IMAGE_BASE}:${VERSION}-arm64
         # Push ARM64 image immediately
         docker push ${IMAGE_BASE}:${VERSION}-arm64
 
@@ -129,8 +130,9 @@ jobs:
         IMAGE_BASE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
         # Build AMD64 Docker image (reuses JAR from previous build)
         mvn -B spring-boot:build-image -DskipTests -Drevision=$VERSION \
-          -Dspring-boot.build-image.imagePlatform=linux/amd64 \
-          -Dspring-boot.build-image.imageName=${IMAGE_BASE}:${VERSION}-amd64
+          -Dspring-boot.build-image.imagePlatform=linux/amd64
+        # Tag the locally built image for the registry
+        docker tag ueberboese-api:$VERSION ${IMAGE_BASE}:${VERSION}-amd64
         # Push AMD64 image immediately
         docker push ${IMAGE_BASE}:${VERSION}-amd64
 
