@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Überböse Streaming API
-  description: >
+  description: |
     The missing API specifications for your streaming device.
 
     This api spec combines the APIs of 4 different APIs / domains your speaker contacts.
