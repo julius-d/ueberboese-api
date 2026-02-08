@@ -110,6 +110,19 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: Build AMD64 Docker image
+      env:
+        VERSION: ${{ needs.version.outputs.version || '0.0.0' }}
+      run: |
+        IMAGE_BASE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+        # Build AMD64 Docker image (reuses JAR from previous build)
+        mvn -B spring-boot:build-image -DskipTests -Drevision=$VERSION \
+          -Dspring-boot.build-image.imagePlatform=linux/amd64
+        # Tag the locally built image for the registry
+        docker tag ueberboese-api:$VERSION ${IMAGE_BASE}:${VERSION}-amd64
+        # Push AMD64 image immediately
+        docker push ${IMAGE_BASE}:${VERSION}-amd64
+
     - name: Build ARM64 Docker image
       env:
         VERSION: ${{ needs.version.outputs.version || '0.0.0' }}
@@ -123,18 +136,6 @@ jobs:
         # Push ARM64 image immediately
         docker push ${IMAGE_BASE}:${VERSION}-arm64
 
-    - name: Build AMD64 Docker image
-      env:
-        VERSION: ${{ needs.version.outputs.version || '0.0.0' }}
-      run: |
-        IMAGE_BASE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
-        # Build AMD64 Docker image (reuses JAR from previous build)
-        mvn -B spring-boot:build-image -DskipTests -Drevision=$VERSION \
-          -Dspring-boot.build-image.imagePlatform=linux/amd64
-        # Tag the locally built image for the registry
-        docker tag ueberboese-api:$VERSION ${IMAGE_BASE}:${VERSION}-amd64
-        # Push AMD64 image immediately
-        docker push ${IMAGE_BASE}:${VERSION}-amd64
 
     - name: Create and push multi-architecture manifests
       id: push-image
