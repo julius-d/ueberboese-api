@@ -1,5 +1,6 @@
 package com.github.juliusd.ueberboeseapi.service;
 
+import com.github.juliusd.ueberboeseapi.generated.dtos.DeviceEventApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.DeviceEventsRequestApiDto;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,8 +22,7 @@ import org.springframework.stereotype.Service;
 public class EventStorageService {
 
   // In-memory storage of events by device ID
-  private final Map<String, List<DeviceEventsRequestApiDto>> eventsByDevice =
-      new ConcurrentHashMap<>();
+  private final Map<String, List<DeviceEventApiDto>> eventsByDevice = new ConcurrentHashMap<>();
 
   @Value("${ueberboese.events.max-events-per-device}")
   private int maxEventsPerDevice;
@@ -37,12 +37,12 @@ public class EventStorageService {
    * @param event The event data to store
    */
   public void storeEvent(String deviceId, DeviceEventsRequestApiDto event) {
-    List<DeviceEventsRequestApiDto> events =
+    List<DeviceEventApiDto> events =
         eventsByDevice.computeIfAbsent(deviceId, k -> new ArrayList<>());
 
     // Synchronize on the list to ensure thread-safe operations
     synchronized (events) {
-      events.add(event);
+      events.addAll(event.getPayload().getEvents());
 
       // Remove oldest events if limit exceeded
       while (events.size() > maxEventsPerDevice) {
@@ -57,8 +57,8 @@ public class EventStorageService {
    * @param deviceId The device ID
    * @return Copy of the list of events for the device (empty list if no events found)
    */
-  public List<DeviceEventsRequestApiDto> getEventsForDevice(String deviceId) {
-    List<DeviceEventsRequestApiDto> events = eventsByDevice.get(deviceId);
+  public List<DeviceEventApiDto> getEventsForDevice(String deviceId) {
+    var events = eventsByDevice.get(deviceId);
     if (events == null) {
       return new ArrayList<>();
     }
@@ -76,7 +76,7 @@ public class EventStorageService {
    * @return Number of events stored
    */
   public int getEventCount(String deviceId) {
-    List<DeviceEventsRequestApiDto> events = eventsByDevice.get(deviceId);
+    var events = eventsByDevice.get(deviceId);
     if (events == null) {
       return 0;
     }

@@ -1,6 +1,5 @@
 package com.github.juliusd.ueberboeseapi.mgmt;
 
-import com.github.juliusd.ueberboeseapi.generated.dtos.DeviceEventsRequestApiDto;
 import com.github.juliusd.ueberboeseapi.generated.mgmt.AccountManagementApi;
 import com.github.juliusd.ueberboeseapi.generated.mgmt.EventManagementApi;
 import com.github.juliusd.ueberboeseapi.generated.mgmt.dtos.DeviceEventApiDto;
@@ -49,20 +48,16 @@ public class MgmtController implements AccountManagementApi, EventManagementApi 
   public ResponseEntity<GetDeviceEvents200ResponseApiDto> getDeviceEvents(String deviceId) {
     log.info("Retrieving events for device: {}", deviceId);
 
-    List<DeviceEventsRequestApiDto> storedEvents = eventStorageService.getEventsForDevice(deviceId);
+    var storedEvents = eventStorageService.getEventsForDevice(deviceId);
     List<DeviceEventApiDto> allDeviceEvents = new ArrayList<>();
 
-    // Extract only the pure events from all stored event envelopes
-    for (DeviceEventsRequestApiDto storedEvent : storedEvents) {
-      for (com.github.juliusd.ueberboeseapi.generated.dtos.DeviceEventApiDto sourceEvent :
-          storedEvent.getPayload().getEvents()) {
-        DeviceEventApiDto deviceEvent = new DeviceEventApiDto();
-        deviceEvent.setData(sourceEvent.getData());
-        deviceEvent.setMonoTime(sourceEvent.getMonoTime());
-        deviceEvent.setTime(sourceEvent.getTime());
-        deviceEvent.setType(sourceEvent.getType());
-        allDeviceEvents.add(deviceEvent);
-      }
+    for (var sourceEvent : storedEvents) {
+      DeviceEventApiDto deviceEvent = new DeviceEventApiDto();
+      deviceEvent.setData(sourceEvent.getData());
+      deviceEvent.setMonoTime(sourceEvent.getMonoTime());
+      deviceEvent.setTime(sourceEvent.getTime());
+      deviceEvent.setType(sourceEvent.getType());
+      allDeviceEvents.add(deviceEvent);
     }
 
     GetDeviceEvents200ResponseApiDto response = new GetDeviceEvents200ResponseApiDto();
