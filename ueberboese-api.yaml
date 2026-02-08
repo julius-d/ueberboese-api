@@ -759,6 +759,86 @@ paths:
         '401':
           description: Unauthorized - Invalid or missing Bearer token
 
+  /streaming/account/{accountId}/device:
+    post:
+      summary: Register device to account
+      description: |
+        Registers/pairs a device (speaker) to a marge account.
+        Associates the device ID with the marge account ID.
+        This can be triggerd by calling:
+
+        ```
+        POST http://<speaker-id>:8090/setMargeAccount
+        Accept: application/xml
+        Content-Type: application/xml
+
+        <PairDeviceWithAccount>
+          <accountId>6921042</accountId>
+          <userAuthToken>Bearer test123</userAuthToken>
+        </PairDeviceWithAccount>
+        ```
+      operationId: addDevice
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/accountId'
+      requestBody:
+        required: true
+        content:
+          application/vnd.bose.streaming-v1.2+xml:
+            schema:
+              $ref: '#/components/schemas/DeviceUpdateRequest'
+            example: |
+              <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+              <device deviceid="587A628A4042">
+                <name>Kitchen</name>
+                <macaddress>587A628A4042</macaddress>
+              </device>
+      responses:
+        '201':
+          description: Device registered successfully
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: application/vnd.bose.streaming-v1.2+xml
+            Credentials:
+              schema:
+                type: string
+                example: Bearer nRW/F+ads/3fsfd//sdfs//fsdfs/qj/wer
+            Location:
+              schema:
+                type: string
+                example: http://streamingqa.bose.com/account/6921042/device/587A628A4042
+            METHOD_NAME:
+              schema:
+                type: string
+                example: addDevice
+          content:
+            application/vnd.bose.streaming-v1.2+xml:
+              schema:
+                $ref: '#/components/schemas/DeviceUpdateResponse'
+              example: |
+                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                <device deviceid="587A628A4042">
+                  <createdOn>2018-08-11T08:55:25.000+00:00</createdOn>
+                  <ipaddress></ipaddress>
+                  <name>Kitchen</name>
+                  <updatedOn>2026-01-02T11:12:09.074+00:00</updatedOn>
+                </device>
+        '401':
+          description: Unauthorized - Invalid or missing Bearer token
+          content:
+            application/vnd.bose.streaming-v1.2+xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example: |
+                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                <status>
+                  <message>Not Authorized</message>
+                  <status-code>401</status-code>
+                </status>
+
   /streaming/account/{accountId}/provider_settings:
     get:
       summary: Get provider settings

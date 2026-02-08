@@ -1,5 +1,6 @@
 package com.github.juliusd.ueberboeseapi.device;
 
+import static com.github.juliusd.ueberboeseapi.device.DeviceService.UN_PAIRED;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.github.juliusd.ueberboeseapi.TestBase;
@@ -136,5 +137,114 @@ class DeviceServiceTest extends TestBase {
     assertThat(updatedDevice.get().firstSeen()).isEqualTo(originalFirstSeen);
     assertThat(updatedDevice.get().lastSeen()).isEqualTo(originalLastSeen);
     assertThat(updatedDevice.get().updatedOn()).isAfterOrEqualTo(now);
+  }
+
+  @Test
+  void pairDevice_newDevice() {
+    var now = OffsetDateTime.now().withNano(0);
+
+    // When: pairDevice is called
+    var result = deviceService.pairDevice("6921042", "587A628A4042", "Kitchen");
+
+    // Then: A new device is created with correct accountId, name, and timestamps
+    assertThat(result).isNotNull();
+    assertThat(result.deviceId()).isEqualTo("587A628A4042");
+    assertThat(result.name()).isEqualTo("Kitchen");
+    assertThat(result.margeAccountId()).isEqualTo("6921042");
+    assertThat(result.ipAddress()).isEmpty();
+    assertThat(result.firstSeen()).isAfterOrEqualTo(now);
+    assertThat(result.lastSeen()).isAfterOrEqualTo(now);
+    assertThat(result.updatedOn()).isAfterOrEqualTo(now);
+
+    // Verify it's persisted in the database
+    var savedDevice = deviceRepository.findById("587A628A4042");
+    assertThat(savedDevice).isPresent();
+    assertThat(savedDevice.get().margeAccountId()).isEqualTo("6921042");
+  }
+
+  @Test
+  void pairDevice_existingUnpairedDevice() {
+    // Given: A device exists with margeAccountId="UN_PAIRED"
+    var now = OffsetDateTime.now().withNano(0);
+    var device =
+        Device.builder()
+            .deviceId("TEST_DEVICE_005")
+            .name("Old Name")
+            .ipAddress("192.168.1.104")
+            .margeAccountId(UN_PAIRED)
+            .firstSeen(now.minusDays(10))
+            .lastSeen(now.minusHours(1))
+            .updatedOn(now.minusHours(1))
+            .build();
+    deviceRepository.save(device);
+
+    // When: pairDevice is called with a new accountId
+    var result = deviceService.pairDevice("6921042", "TEST_DEVICE_005", "New Name");
+
+    // Then: margeAccountId is updated to new accountId
+    assertThat(result).isNotNull();
+    assertThat(result.deviceId()).isEqualTo("TEST_DEVICE_005");
+    assertThat(result.name()).isEqualTo("New Name");
+    assertThat(result.margeAccountId()).isEqualTo("6921042");
+    assertThat(result.updatedOn()).isAfterOrEqualTo(now);
+  }
+
+  @Test
+  void pairDevice_existingPairedDevice() {
+    // Given: A device exists with margeAccountId="6921042"
+    var now = OffsetDateTime.now().withNano(0);
+    var device =
+        Device.builder()
+            .deviceId("TEST_DEVICE_006")
+            .name("Old Name")
+            .ipAddress("192.168.1.105")
+            .margeAccountId("6921042")
+            .firstSeen(now.minusDays(10))
+            .lastSeen(now.minusHours(1))
+            .updatedOn(now.minusHours(1))
+            .build();
+    deviceRepository.save(device);
+
+    // When: pairDevice is called with a different accountId
+    var result = deviceService.pairDevice("6921043", "TEST_DEVICE_006", "Updated Name");
+
+    // Then: margeAccountId is updated to the new accountId
+    assertThat(result).isNotNull();
+    assertThat(result.deviceId()).isEqualTo("TEST_DEVICE_006");
+    assertThat(result.name()).isEqualTo("Updated Name");
+    assertThat(result.margeAccountId()).isEqualTo("6921043");
+    assertThat(result.updatedOn()).isAfterOrEqualTo(now);
+  }
+
+  @Test
+  void pairDevice_updatesName() {
+    // Given: A device exists with name="Old Name"
+    var now = OffsetDateTime.now().withNano(0);
+    var device =
+        Device.builder()
+            .deviceId("TEST_DEVICE_007")
+            .name("Old Name")
+            .ipAddress("192.168.1.106")
+            .margeAccountId("6921042")
+            .firstSeen(now.minusDays(10))
+            .lastSeen(now.minusHours(1))
+            .updatedOn(now.minusHours(1))
+            .build();
+    deviceRepository.save(device);
+
+    // When: pairDevice is called with a new name
+    var result = deviceService.pairDevice("6921042", "TEST_DEVICE_007", "New Name");
+
+    // Then: name is updated
+    assertThat(result).isNotNull();
+    assertThat(result.deviceId()).isEqualTo("TEST_DEVICE_007");
+    assertThat(result.name()).isEqualTo("New Name");
+    assertThat(result.margeAccountId()).isEqualTo("6921042");
+    assertThat(result.updatedOn()).isAfterOrEqualTo(now);
+
+    // Verify persisted
+    var savedDevice = deviceRepository.findById("TEST_DEVICE_007");
+    assertThat(savedDevice).isPresent();
+    assertThat(savedDevice.get().name()).isEqualTo("New Name");
   }
 }

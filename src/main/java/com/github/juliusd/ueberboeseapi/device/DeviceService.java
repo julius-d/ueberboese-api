@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class DeviceService {
 
-  private static final String UN_PAIRED = "UN_PAIRED";
+  static final String UN_PAIRED = "UN_PAIRED";
 
   private final DeviceRepository deviceRepository;
 
@@ -49,5 +49,46 @@ public class DeviceService {
 
     log.info("Successfully unpaired device {}, set margeAccountId to UN_PAIRED", deviceId);
     return true;
+  }
+
+  @Transactional
+  public Device pairDevice(String accountId, String deviceId, String name) {
+    log.info("Pairing device {} to account {}", deviceId, accountId);
+    var now = OffsetDateTime.now().withNano(0);
+
+    Optional<Device> deviceOpt = deviceRepository.findById(deviceId);
+
+    Device device =
+        deviceOpt
+            .map(
+                existingDevice -> {
+                  log.info(
+                      "Updating existing device {} with new account {} and name {}",
+                      deviceId,
+                      accountId,
+                      name);
+                  return existingDevice.toBuilder()
+                      .margeAccountId(accountId)
+                      .name(name)
+                      .updatedOn(now)
+                      .build();
+                })
+            .orElseGet(
+                () -> {
+                  log.info("Creating new device {} for account {}", deviceId, accountId);
+                  return Device.builder()
+                      .deviceId(deviceId)
+                      .name(name)
+                      .margeAccountId(accountId)
+                      .ipAddress("") // Empty IP address - not known at registration time
+                      .firstSeen(now)
+                      .lastSeen(now)
+                      .updatedOn(now)
+                      .build();
+                });
+
+    Device savedDevice = deviceRepository.save(device);
+    log.info("Successfully paired device {} to account {}", deviceId, accountId);
+    return savedDevice;
   }
 }

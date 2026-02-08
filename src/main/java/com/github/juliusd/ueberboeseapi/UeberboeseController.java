@@ -4,6 +4,8 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.github.juliusd.ueberboeseapi.device.DeviceService;
 import com.github.juliusd.ueberboeseapi.generated.DefaultApi;
 import com.github.juliusd.ueberboeseapi.generated.dtos.CredentialApiDto;
+import com.github.juliusd.ueberboeseapi.generated.dtos.DeviceUpdateRequestApiDto;
+import com.github.juliusd.ueberboeseapi.generated.dtos.DeviceUpdateResponseApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.ErrorResponseApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.FullAccountResponseApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.PowerOnRequestApiDto;
@@ -517,5 +519,40 @@ public class UeberboeseController implements DefaultApi {
         .header("Location", locationHeader)
         .header("METHOD_NAME", "removeDevice")
         .build();
+  }
+
+  @Override
+  public ResponseEntity<DeviceUpdateResponseApiDto> addDevice(
+      String accountId, DeviceUpdateRequestApiDto deviceUpdateRequestApiDto) {
+    log.info("Adding device to account {}", accountId);
+
+    String deviceId = deviceUpdateRequestApiDto.getDeviceid();
+    String name = deviceUpdateRequestApiDto.getName();
+
+    // Pair the device
+    var device = deviceService.pairDevice(accountId, deviceId, name);
+
+    // Build response DTO
+    var response =
+        new DeviceUpdateResponseApiDto()
+            .deviceid(device.deviceId())
+            .createdOn(device.firstSeen())
+            .ipaddress(device.ipAddress())
+            .name(device.name())
+            .updatedOn(device.updatedOn());
+
+    // Build the Location header
+    String locationHeader =
+        "http://streamingqa.bose.com/account/%s/device/%s".formatted(accountId, deviceId);
+
+    // Echo back the Authorization header as Credentials header
+    String authHeader = request.getHeader("Authorization");
+    String credentials = authHeader != null ? authHeader.trim() : "";
+
+    return ResponseEntity.created(URI.create(locationHeader))
+        .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
+        .header("Credentials", credentials)
+        .header("METHOD_NAME", "addDevice")
+        .body(response);
   }
 }
