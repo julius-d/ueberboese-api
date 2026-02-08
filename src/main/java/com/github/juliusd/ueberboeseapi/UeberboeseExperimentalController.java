@@ -150,24 +150,26 @@ public class UeberboeseExperimentalController implements ExperimentalApi {
     log.info("Updating device {} for account {}", deviceId, accountId);
 
     // Get or create device using builder pattern
-    var now = OffsetDateTime.now();
+    var now = OffsetDateTime.now().withNano(0);
     Device device =
         deviceRepository
             .findById(deviceId)
             .map(
                 existingDevice ->
                     existingDevice.toBuilder()
-                        .name(deviceUpdateRequestApiDto.getName()) // Update name
-                        .lastSeen(now) // Update lastSeen
+                        .name(deviceUpdateRequestApiDto.getName())
+                        .updatedOn(now)
                         .build())
             .orElseGet(
                 () ->
                     Device.builder()
                         .deviceId(deviceId)
+                        .margeAccountId(accountId)
                         .name(deviceUpdateRequestApiDto.getName())
                         .ipAddress(null) // No IP address for new devices
                         .firstSeen(now)
                         .lastSeen(now)
+                        .updatedOn(now)
                         .version(null)
                         .build());
 
@@ -179,7 +181,7 @@ public class UeberboeseExperimentalController implements ExperimentalApi {
     response.setCreatedOn(device.firstSeen());
     response.setIpaddress(device.ipAddress());
     response.setName(device.name());
-    response.setUpdatedOn(device.lastSeen());
+    response.setUpdatedOn(device.updatedOn());
 
     return ResponseEntity.ok()
         .header(

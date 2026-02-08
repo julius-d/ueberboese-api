@@ -4,6 +4,7 @@ import com.github.juliusd.ueberboeseapi.device.Device;
 import com.github.juliusd.ueberboeseapi.device.DeviceRepository;
 import java.time.OffsetDateTime;
 import java.util.Collection;
+import java.util.Objects;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -43,9 +44,12 @@ public class DeviceTrackingService {
                   ipAddress,
                   now,
                   existingDevice.ipAddress());
-              Device updatedDevice =
-                  existingDevice.toBuilder().ipAddress(ipAddress).lastSeen(now).build();
-              deviceRepository.save(updatedDevice);
+
+              var updatedDeviceBuilder = existingDevice.toBuilder().lastSeen(now);
+              if (!Objects.equals(existingDevice.ipAddress(), ipAddress)) {
+                updatedDeviceBuilder.ipAddress(ipAddress).updatedOn(now);
+              }
+              deviceRepository.save(updatedDeviceBuilder.build());
             },
             () -> {
               // First time seeing this device
@@ -59,6 +63,7 @@ public class DeviceTrackingService {
                       .ipAddress(ipAddress)
                       .firstSeen(now)
                       .lastSeen(now)
+                      .updatedOn(now)
                       .version(null)
                       .build();
               deviceRepository.save(newDevice);

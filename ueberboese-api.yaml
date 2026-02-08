@@ -704,6 +704,60 @@ paths:
           description: Not found - Account or device not found
         '500':
           description: Internal server error
+    delete:
+      summary: Remove device from account
+      description: |
+        Unpairs the device from the marge account.
+        This can be triggerd by calling:
+
+        ```
+        POST http://<speaker-id>:8090/setMargeAccount
+        Accept: application/xml
+        Content-Type: application/xml
+
+        <UnPairDeviceWithAccount/>
+        ```
+      operationId: removeDevice
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/accountId'
+        - $ref: '#/components/parameters/deviceId'
+      responses:
+        '200':
+          description: Device removed successfully (empty response)
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: application/vnd.bose.streaming-v1.2+xml
+            Location:
+              schema:
+                type: string
+                example: http://streamingqa.bose.com/account/6921042/device/587A628A4042
+            METHOD_NAME:
+              schema:
+                type: string
+                example: removeDevice
+        '400':
+          description: Device does not exist
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: application/vnd.bose.streaming-v1.2+xml
+          content:
+            application/vnd.bose.streaming-v1.2+xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example: |
+                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                <status>
+                  <message>Device does not exist </message>
+                  <status-code>4012</status-code>
+                </status>
+        '401':
+          description: Unauthorized - Invalid or missing Bearer token
 
   /streaming/account/{accountId}/provider_settings:
     get:

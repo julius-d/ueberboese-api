@@ -32,7 +32,6 @@ public class MgmtController implements AccountManagementApi, EventManagementApi 
 
     List<SpeakerApiDto> speakers = new ArrayList<>();
 
-    // Get all devices from the device tracking service (ignoring accountId as per requirement)
     for (DeviceTrackingService.DeviceInfo deviceInfo : deviceTrackingService.getAllDevices()) {
       SpeakerApiDto speaker = new SpeakerApiDto();
       speaker.setIpAddress(deviceInfo.getIpAddress());

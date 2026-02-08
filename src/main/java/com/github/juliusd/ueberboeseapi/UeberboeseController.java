@@ -1,8 +1,10 @@
 package com.github.juliusd.ueberboeseapi;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.github.juliusd.ueberboeseapi.device.DeviceService;
 import com.github.juliusd.ueberboeseapi.generated.DefaultApi;
 import com.github.juliusd.ueberboeseapi.generated.dtos.CredentialApiDto;
+import com.github.juliusd.ueberboeseapi.generated.dtos.ErrorResponseApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.FullAccountResponseApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.PowerOnRequestApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.PresetApiDto;
@@ -48,6 +50,7 @@ public class UeberboeseController implements DefaultApi {
   private final RecentMapper recentMapper;
   private final PresetService presetService;
   private final PresetMapper presetMapper;
+  private final DeviceService deviceService;
 
   @Autowired private HttpServletRequest request;
 
@@ -485,5 +488,34 @@ public class UeberboeseController implements DefaultApi {
       log.error("Error processing power_on request", e);
       return ResponseEntity.status(500).build();
     }
+  }
+
+  @Override
+  public ResponseEntity<Void> removeDevice(String accountId, String deviceId) {
+    log.info("Removing device {} from account {}", deviceId, accountId);
+
+    boolean unpaired = deviceService.unpairDevice(deviceId);
+
+    if (!unpaired) {
+      log.info("Device {} does not exist or is already unpaired", deviceId);
+      var errorResponse =
+          new ErrorResponseApiDto().message("Device does not exist ").statusCode("4012");
+
+      return (ResponseEntity<Void>)
+          (ResponseEntity<?>)
+              ResponseEntity.status(400)
+                  .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
+                  .body(errorResponse);
+    }
+
+    // Build the Location header
+    String locationHeader =
+        "http://streamingqa.bose.com/account/%s/device/%s".formatted(accountId, deviceId);
+
+    return ResponseEntity.ok()
+        .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
+        .header("Location", locationHeader)
+        .header("METHOD_NAME", "removeDevice")
+        .build();
   }
 }
