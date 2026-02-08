@@ -2616,7 +2616,7 @@ components:
         eventType:
           type: string
           description: Type of event
-          enum: ["START", "STOP", "PAUSE", "RESUME"]
+          enum: ["START", "STOP", "PAUSE", "RESUME", "TIMED"]
           example: "START"
         reason:
           type: string
