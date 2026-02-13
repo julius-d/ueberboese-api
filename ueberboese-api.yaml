@@ -1143,7 +1143,7 @@ paths:
         Endpoint called by Bose SoundTouch devices to submit event data.
         Events include playback state changes, source changes, button presses, and more.
         Every submitted event has a `type` field. Types seen in the wild include:
-        
+
         - art-changed
         - favorite-changed
         - item-started
