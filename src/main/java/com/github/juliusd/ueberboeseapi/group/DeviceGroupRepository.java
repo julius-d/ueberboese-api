@@ -28,4 +28,7 @@ public interface DeviceGroupRepository extends CrudRepository<DeviceGroup, Long>
 
   @Query("SELECT * FROM DEVICE_GROUP WHERE ACCOUNT_ID = :accountId")
   List<DeviceGroup> findByAccountId(String accountId);
+
+  @Query("SELECT * FROM DEVICE_GROUP WHERE ID = :groupId AND ACCOUNT_ID = :accountId")
+  Optional<DeviceGroup> findByIdAndAccountId(Long groupId, String accountId);
 }

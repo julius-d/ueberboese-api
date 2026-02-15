@@ -2,6 +2,7 @@ package com.github.juliusd.ueberboeseapi.group;
 
 import static com.github.juliusd.ueberboeseapi.device.Device.builder;
 import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.xmlunit.matchers.CompareMatcher.isSimilarTo;
 
@@ -279,7 +280,226 @@ class GroupControllerTest extends TestBase {
             .withDifferenceEvaluator(new PlaceholderDifferenceEvaluator()));
   }
 
-  private void givenGroupInDB(
+  @Test
+  void deleteDeviceGroup_shouldReturn200() {
+    // Given - existing group
+    DeviceGroup group = givenGroupInDB("6921042", "587A628A4042", "587A628A4042", "44EAD8A18888");
+
+    given()
+        .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+        .when()
+        .delete("/streaming/account/6921042/group/" + group.id())
+        .then()
+        .statusCode(200)
+        .contentType("application/vnd.bose.streaming-v1.2+xml");
+
+    // Verify group is deleted
+    assertThat(deviceGroupRepository.findById(group.id())).isEmpty();
+  }
+
+  @Test
+  void deleteDeviceGroup_shouldReturn400_whenGroupNotFound() {
+    String actualXml =
+        given()
+            .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+            .when()
+            .delete("/streaming/account/6921042/group/999999")
+            .then()
+            .statusCode(400)
+            .contentType("application/vnd.bose.streaming-v1.2+xml")
+            .extract()
+            .body()
+            .asString();
+
+    // language=XML
+    String expectedXml =
+        """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <status>
+          <message>Device Group not found </message>
+          <status-code>4040</status-code>
+        </status>""";
+
+    assertThat(
+        actualXml,
+        isSimilarTo(expectedXml)
+            .ignoreWhitespace()
+            .withDifferenceEvaluator(new PlaceholderDifferenceEvaluator()));
+  }
+
+  @Test
+  void deleteDeviceGroup_shouldReturn400_whenGroupBelongsToDifferentAccount() {
+    // Given - group belongs to account1
+    DeviceGroup group = givenGroupInDB("account1", "LEFT1", "LEFT1", "RIGHT1");
+
+    String actualXml =
+        given()
+            .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+            .when()
+            .delete("/streaming/account/account2/group/" + group.id())
+            .then()
+            .statusCode(400)
+            .contentType("application/vnd.bose.streaming-v1.2+xml")
+            .extract()
+            .body()
+            .asString();
+
+    // language=XML
+    String expectedXml =
+        """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <status>
+          <message>Device Group not found </message>
+          <status-code>4040</status-code>
+        </status>""";
+
+    assertThat(
+        actualXml,
+        isSimilarTo(expectedXml)
+            .ignoreWhitespace()
+            .withDifferenceEvaluator(new PlaceholderDifferenceEvaluator()));
+  }
+
+  @Test
+  void updateDeviceGroup_shouldReturn200WithFullGroup() {
+    // Given - existing group
+    DeviceGroup group = givenGroupInDB("6921042", "587A628A4042", "587A628A4042", "44EAD8A18888");
+
+    // language=XML
+    String requestXml =
+        """
+        <?xml version="1.0" encoding="UTF-8" ?>
+        <group>
+          <masterDeviceId>44EAD8A18888</masterDeviceId>
+          <name>Updated Stereo</name>
+        </group>""";
+
+    String actualXml =
+        given()
+            .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+            .header("Content-type", "application/vnd.bose.streaming-v1.2+xml")
+            .body(requestXml)
+            .when()
+            .put("/streaming/account/6921042/group/" + group.id())
+            .then()
+            .statusCode(200)
+            .contentType("application/vnd.bose.streaming-v1.2+xml")
+            .extract()
+            .body()
+            .asString();
+
+    // language=XML
+    String expectedXml =
+        """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <group id="${xmlunit.isNumber}">
+          <masterDeviceId>44EAD8A18888</masterDeviceId>
+          <name>Updated Stereo</name>
+          <roles>
+            <groupRole>
+              <deviceId>587A628A4042</deviceId>
+              <role>LEFT</role>
+            </groupRole>
+            <groupRole>
+              <deviceId>44EAD8A18888</deviceId>
+              <role>RIGHT</role>
+            </groupRole>
+          </roles>
+        </group>""";
+
+    assertThat(
+        actualXml,
+        isSimilarTo(expectedXml)
+            .ignoreWhitespace()
+            .withDifferenceEvaluator(new PlaceholderDifferenceEvaluator()));
+  }
+
+  @Test
+  void updateDeviceGroup_shouldReturn400_whenGroupNotFound() {
+    // language=XML
+    String requestXml =
+        """
+        <?xml version="1.0" encoding="UTF-8" ?>
+        <group>
+          <masterDeviceId>44EAD8A18888</masterDeviceId>
+          <name>Updated Stereo</name>
+        </group>""";
+
+    String actualXml =
+        given()
+            .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+            .header("Content-type", "application/vnd.bose.streaming-v1.2+xml")
+            .body(requestXml)
+            .when()
+            .put("/streaming/account/6921042/group/999999")
+            .then()
+            .statusCode(400)
+            .contentType("application/vnd.bose.streaming-v1.2+xml")
+            .extract()
+            .body()
+            .asString();
+
+    // language=XML
+    String expectedXml =
+        """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <status>
+          <message>Device Group not found </message>
+          <status-code>4040</status-code>
+        </status>""";
+
+    assertThat(
+        actualXml,
+        isSimilarTo(expectedXml)
+            .ignoreWhitespace()
+            .withDifferenceEvaluator(new PlaceholderDifferenceEvaluator()));
+  }
+
+  @Test
+  void updateDeviceGroup_shouldReturn400_whenMasterDeviceInvalid() {
+    // Given - existing group with LEFT1 and RIGHT1
+    DeviceGroup group = givenGroupInDB("6921042", "LEFT1", "LEFT1", "RIGHT1");
+
+    // language=XML
+    String requestXml =
+        """
+        <?xml version="1.0" encoding="UTF-8" ?>
+        <group>
+          <masterDeviceId>INVALID_DEVICE</masterDeviceId>
+          <name>Updated Stereo</name>
+        </group>""";
+
+    String actualXml =
+        given()
+            .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+            .header("Content-type", "application/vnd.bose.streaming-v1.2+xml")
+            .body(requestXml)
+            .when()
+            .put("/streaming/account/6921042/group/" + group.id())
+            .then()
+            .statusCode(400)
+            .contentType("application/vnd.bose.streaming-v1.2+xml")
+            .extract()
+            .body()
+            .asString();
+
+    // language=XML
+    String expectedXml =
+        """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <status>
+          <message>Master device must be LEFT or RIGHT device in the group</message>
+          <status-code>4000</status-code>
+        </status>""";
+
+    assertThat(
+        actualXml,
+        isSimilarTo(expectedXml)
+            .ignoreWhitespace()
+            .withDifferenceEvaluator(new PlaceholderDifferenceEvaluator()));
+  }
+
+  private DeviceGroup givenGroupInDB(
       String accountId, String masterDeviceId, String leftDeviceId, String rightDeviceId) {
     // Create devices first if they don't exist
     if (deviceRepository.findById(masterDeviceId).isEmpty()) {
@@ -303,7 +523,7 @@ class GroupControllerTest extends TestBase {
             .createdOn(now)
             .updatedOn(now)
             .build();
-    deviceGroupRepository.save(group);
+    return deviceGroupRepository.save(group);
   }
 
   private void givenDeviceInDB(String deviceId, String name, String margeAccountId) {

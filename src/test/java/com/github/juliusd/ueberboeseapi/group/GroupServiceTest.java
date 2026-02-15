@@ -7,6 +7,7 @@ import com.github.juliusd.ueberboeseapi.TestBase;
 import com.github.juliusd.ueberboeseapi.generated.dtos.GroupRequestApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.GroupRoleApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.GroupRolesApiDto;
+import com.github.juliusd.ueberboeseapi.generated.dtos.GroupUpdateRequestApiDto;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -217,6 +218,110 @@ class GroupServiceTest extends TestBase {
     assertThatThrownBy(() -> groupService.createGroup("account2", request))
         .isInstanceOf(DeviceAlreadyInGroupException.class)
         .hasMessageContaining("LEFT1");
+  }
+
+  @Test
+  void deleteGroup_shouldDeleteExistingGroup() {
+    // Given
+    String accountId = "6921042";
+    DeviceGroup existing = givenExistingGroup(accountId, "MASTER1", "LEFT1", "RIGHT1");
+
+    // When
+    groupService.deleteGroup(accountId, existing.id());
+
+    // Then
+    assertThat(deviceGroupRepository.findById(existing.id())).isEmpty();
+  }
+
+  @Test
+  void deleteGroup_shouldThrowException_whenGroupNotFound() {
+    // When/Then
+    assertThatThrownBy(() -> groupService.deleteGroup("6921042", 999999L))
+        .isInstanceOf(GroupNotFoundException.class);
+  }
+
+  @Test
+  void deleteGroup_shouldThrowException_whenGroupBelongsToDifferentAccount() {
+    // Given
+    DeviceGroup existing = givenExistingGroup("account1", "MASTER1", "LEFT1", "RIGHT1");
+
+    // When/Then
+    assertThatThrownBy(() -> groupService.deleteGroup("account2", existing.id()))
+        .isInstanceOf(GroupNotFoundException.class);
+  }
+
+  @Test
+  void updateGroup_shouldUpdateNameAndMaster() {
+    // Given
+    String accountId = "6921042";
+    DeviceGroup existing = givenExistingGroup(accountId, "LEFT1", "LEFT1", "RIGHT1");
+    OffsetDateTime originalUpdatedOn = existing.updatedOn();
+
+    var request = new GroupUpdateRequestApiDto().masterDeviceId("RIGHT1").name("Updated Stereo");
+
+    // When
+    DeviceGroup result = groupService.updateGroup(accountId, existing.id(), request);
+
+    // Then
+    assertThat(result.id()).isEqualTo(existing.id());
+    assertThat(result.masterDeviceId()).isEqualTo("RIGHT1");
+    assertThat(result.name()).isEqualTo("Updated Stereo");
+    assertThat(result.leftDeviceId()).isEqualTo("LEFT1");
+    assertThat(result.rightDeviceId()).isEqualTo("RIGHT1");
+    assertThat(result.updatedOn()).isAfterOrEqualTo(originalUpdatedOn);
+    assertThat(result.createdOn()).isEqualTo(existing.createdOn());
+  }
+
+  @Test
+  void updateGroup_shouldUpdateOnlyName() {
+    // Given
+    String accountId = "6921042";
+    DeviceGroup existing = givenExistingGroup(accountId, "LEFT1", "LEFT1", "RIGHT1");
+
+    var request = new GroupUpdateRequestApiDto().masterDeviceId("LEFT1").name("New Name");
+
+    // When
+    DeviceGroup result = groupService.updateGroup(accountId, existing.id(), request);
+
+    // Then
+    assertThat(result.masterDeviceId()).isEqualTo("LEFT1");
+    assertThat(result.name()).isEqualTo("New Name");
+  }
+
+  @Test
+  void updateGroup_shouldThrowException_whenGroupNotFound() {
+    // Given
+    var request = new GroupUpdateRequestApiDto().masterDeviceId("LEFT1").name("New Name");
+
+    // When/Then
+    assertThatThrownBy(() -> groupService.updateGroup("6921042", 999999L, request))
+        .isInstanceOf(GroupNotFoundException.class);
+  }
+
+  @Test
+  void updateGroup_shouldThrowException_whenMasterDeviceInvalid() {
+    // Given
+    String accountId = "6921042";
+    DeviceGroup existing = givenExistingGroup(accountId, "LEFT1", "LEFT1", "RIGHT1");
+
+    var request = new GroupUpdateRequestApiDto().masterDeviceId("INVALID_DEVICE").name("New Name");
+
+    // When/Then
+    assertThatThrownBy(() -> groupService.updateGroup(accountId, existing.id(), request))
+        .isInstanceOf(DeviceGroupException.class)
+        .hasMessageContaining("Master device must be LEFT or RIGHT device");
+  }
+
+  @Test
+  void updateGroup_shouldThrowException_whenGroupBelongsToDifferentAccount() {
+    // Given
+    DeviceGroup existing = givenExistingGroup("account1", "LEFT1", "LEFT1", "RIGHT1");
+
+    var request = new GroupUpdateRequestApiDto().masterDeviceId("RIGHT1").name("New Name");
+
+    // When/Then
+    assertThatThrownBy(() -> groupService.updateGroup("account2", existing.id(), request))
+        .isInstanceOf(GroupNotFoundException.class);
   }
 
   private DeviceGroup givenExistingGroup(

@@ -996,6 +996,127 @@ paths:
         '500':
           description: Internal server error
 
+  /streaming/account/{accountId}/group/{groupId}:
+    delete:
+      summary: Delete device group
+      description: Deletes an existing device group (stereo pair) by its ID
+      operationId: deleteDeviceGroup
+      tags:
+        - group
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/accountId'
+        - name: groupId
+          in: path
+          required: true
+          description: Unique identifier of the group to delete
+          schema:
+            type: string
+          example: "1225842"
+      responses:
+        '200':
+          description: Group deleted successfully (empty response body)
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: application/vnd.bose.streaming-v1.2+xml
+        '400':
+          description: Bad request - Group not found
+          content:
+            application/vnd.bose.streaming-v1.2+xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example: |
+                <?xml version="1.0" encoding="UTF-8"?>
+                <status>
+                  <message>Device Group not found </message>
+                  <status-code>4040</status-code>
+                </status>
+        '401':
+          description: Unauthorized - Invalid or missing Bearer token
+        '500':
+          description: Internal server error
+
+    put:
+      summary: Update device group
+      description: Updates an existing device group's name and/or master device
+      operationId: updateDeviceGroup
+      tags:
+        - group
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/accountId'
+        - name: groupId
+          in: path
+          required: true
+          description: Unique identifier of the group to update
+          schema:
+            type: string
+          example: "1225842"
+      requestBody:
+        required: true
+        content:
+          application/vnd.bose.streaming-v1.2+xml:
+            schema:
+              $ref: '#/components/schemas/GroupUpdateRequest'
+            example: |
+              <?xml version="1.0" encoding="UTF-8"?>
+              <group>
+                <masterDeviceId>44EAD8A18888</masterDeviceId>
+                <name>Updated Stereo</name>
+              </group>
+      responses:
+        '200':
+          description: Group updated successfully
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: application/vnd.bose.streaming-v1.2+xml
+          content:
+            application/vnd.bose.streaming-v1.2+xml:
+              schema:
+                $ref: '#/components/schemas/GroupResponse'
+              example: |
+                <?xml version="1.0" encoding="UTF-8"?>
+                <group id="1225842">
+                  <masterDeviceId>44EAD8A18888</masterDeviceId>
+                  <name>Updated Stereo</name>
+                  <roles>
+                    <groupRole>
+                      <deviceId>587A628A4042</deviceId>
+                      <role>LEFT</role>
+                    </groupRole>
+                    <groupRole>
+                      <deviceId>44EAD8A18888</deviceId>
+                      <role>RIGHT</role>
+                    </groupRole>
+                  </roles>
+                </group>
+        '400':
+          description: Bad request - Group not found
+          content:
+            application/vnd.bose.streaming-v1.2+xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                groupNotFound:
+                  summary: Group not found
+                  value: |
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <status>
+                      <message>Device Group not found </message>
+                      <status-code>4040</status-code>
+                    </status>
+
+        '401':
+          description: Unauthorized - Invalid or missing Bearer token
+        '500':
+          description: Internal server error
+
   /streaming/account/{accountId}/device/{deviceId}/group/:
     get:
       summary: Get device group
@@ -2297,6 +2418,24 @@ components:
           example: "Living Room Stereo"
         roles:
           $ref: '#/components/schemas/GroupRoles'
+
+    GroupUpdateRequest:
+      type: object
+      description: XML request to update an existing device group
+      xml:
+        name: group
+      required:
+        - masterDeviceId
+        - name
+      properties:
+        masterDeviceId:
+          type: string
+          description: Device ID of master (must be LEFT or RIGHT device in the group)
+          example: "44EAD8A18888"
+        name:
+          type: string
+          description: Group name
+          example: "Updated Stereo"
 
     GroupRoles:
       type: object
