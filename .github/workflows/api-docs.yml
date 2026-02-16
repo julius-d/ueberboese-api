@@ -5,7 +5,7 @@ on:
   push:
     branches: ["main"]
     paths:
-      - 'ueberbose-api.yaml'
+      - 'ueberboese-api.yaml'
   workflow_dispatch:
 
 jobs:
@@ -27,7 +27,7 @@ jobs:
 
       - name: Generate API Documentation
         run: |
-          redocly build-docs ueberbose-api.yaml \
+          redocly build-docs ueberboese-api.yaml \
             -o docs/ueberboese-api-specification.html
 
       - name: Commit documentation

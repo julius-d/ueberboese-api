@@ -22,6 +22,13 @@ The idea to achieve that is to reverse-engineer and rebuild the Bose streaming H
 - Self-hosted and open source
 - Comprehensive logging for API research
 
+With the Überböse Api and the
+[Überböse App](https://github.com/julius-d/ueberboese-app) you can
+- boot up your speakers without any problems
+- play presets from Spotify, TuneIn, and internet radio
+- change presets to other Spotify, TuneIn, and internet radio stations
+- create multi room zones
+
 ## Installation
 
 See the [Quick Start Guide](https://julius-d.github.io/ueberboese-api/quick-start).

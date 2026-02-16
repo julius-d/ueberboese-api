@@ -1,7 +1,15 @@
 openapi: 3.0.3
 info:
   title: Überböse Streaming API
-  description: Reverse engineered API specification
+  description: |
+    The missing API specifications for your streaming device.
+
+    This api spec combines the APIs of 4 different APIs / domains your speaker contacts.
+
+    - **marge**: Account bound API managing source providers, presets, recents, and devices
+    - **stats**: Device analytics and telemetry API collecting playback events and diagnostics
+    - **software-update**: Firmware update information
+    - **bmx**: API for streaming radio services (TuneIn, Custom Stations, etc.)
   version: 1.2.0
 paths:
   /streaming/sourceproviders:
@@ -696,6 +704,140 @@ paths:
           description: Not found - Account or device not found
         '500':
           description: Internal server error
+    delete:
+      summary: Remove device from account
+      description: |
+        Unpairs the device from the marge account.
+        This can be triggerd by calling:
+
+        ```
+        POST http://<speaker-id>:8090/setMargeAccount
+        Accept: application/xml
+        Content-Type: application/xml
+
+        <UnPairDeviceWithAccount/>
+        ```
+      operationId: removeDevice
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/accountId'
+        - $ref: '#/components/parameters/deviceId'
+      responses:
+        '200':
+          description: Device removed successfully (empty response)
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: application/vnd.bose.streaming-v1.2+xml
+            Location:
+              schema:
+                type: string
+                example: http://streamingqa.bose.com/account/6921042/device/587A628A4042
+            METHOD_NAME:
+              schema:
+                type: string
+                example: removeDevice
+        '400':
+          description: Device does not exist
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: application/vnd.bose.streaming-v1.2+xml
+          content:
+            application/vnd.bose.streaming-v1.2+xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example: |
+                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                <status>
+                  <message>Device does not exist </message>
+                  <status-code>4012</status-code>
+                </status>
+        '401':
+          description: Unauthorized - Invalid or missing Bearer token
+
+  /streaming/account/{accountId}/device:
+    post:
+      summary: Register device to account
+      description: |
+        Registers/pairs a device (speaker) to a marge account.
+        Associates the device ID with the marge account ID.
+        This can be triggerd by calling:
+
+        ```
+        POST http://<speaker-id>:8090/setMargeAccount
+        Accept: application/xml
+        Content-Type: application/xml
+
+        <PairDeviceWithAccount>
+          <accountId>6921042</accountId>
+          <userAuthToken>Bearer test123</userAuthToken>
+        </PairDeviceWithAccount>
+        ```
+      operationId: addDevice
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/accountId'
+      requestBody:
+        required: true
+        content:
+          application/vnd.bose.streaming-v1.2+xml:
+            schema:
+              $ref: '#/components/schemas/DeviceUpdateRequest'
+            example: |
+              <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+              <device deviceid="587A628A4042">
+                <name>Kitchen</name>
+                <macaddress>587A628A4042</macaddress>
+              </device>
+      responses:
+        '201':
+          description: Device registered successfully
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: application/vnd.bose.streaming-v1.2+xml
+            Credentials:
+              schema:
+                type: string
+                example: Bearer nRW/F+ads/3fsfd//sdfs//fsdfs/qj/wer
+            Location:
+              schema:
+                type: string
+                example: http://streamingqa.bose.com/account/6921042/device/587A628A4042
+            METHOD_NAME:
+              schema:
+                type: string
+                example: addDevice
+          content:
+            application/vnd.bose.streaming-v1.2+xml:
+              schema:
+                $ref: '#/components/schemas/DeviceUpdateResponse'
+              example: |
+                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                <device deviceid="587A628A4042">
+                  <createdOn>2018-08-11T08:55:25.000+00:00</createdOn>
+                  <ipaddress></ipaddress>
+                  <name>Kitchen</name>
+                  <updatedOn>2026-01-02T11:12:09.074+00:00</updatedOn>
+                </device>
+        '401':
+          description: Unauthorized - Invalid or missing Bearer token
+          content:
+            application/vnd.bose.streaming-v1.2+xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example: |
+                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                <status>
+                  <message>Not Authorized</message>
+                  <status-code>401</status-code>
+                </status>
 
   /streaming/account/{accountId}/provider_settings:
     get:
@@ -738,7 +880,29 @@ paths:
             schema:
               $ref: '#/components/schemas/PowerOnRequest'
             example: |
-              <?xml version="1.0" encoding="UTF-8" ?><device-data><device id="587A628A4042"><serialnumber>P123456789101123456789</serialnumber><firmware-version>27.0.6.46330.5043500 epdbuild.trunk.hepdswbld04.2022-08-04T11:20:29</firmware-version><product product_code="SoundTouch 10 sm2" type="5"><serialnumber>069236P81556160AE</serialnumber></product></device><diagnostic-data><device-landscape><rssi>Good</rssi><gateway-ip-address>192.168.178.1</gateway-ip-address><macaddresses><macaddress>587A628A4042</macaddress><macaddress>40BD32BAB0EB</macaddress></macaddresses><ip-address>192.168.178.50</ip-address><network-connection-type>Wireless</network-connection-type></device-landscape><network-landscape><network-data xmlns="http://www.Bose.com/Schemas/2012-12/NetworkMonitor/" /></network-landscape></diagnostic-data></device-data>
+              <?xml version="1.0" encoding="UTF-8" ?>
+              <device-data>
+                <device id="587A628A4042">
+                  <serialnumber>P123456789101123456789</serialnumber>
+                  <firmware-version>27.0.6.46330.5043500 epdbuild.trunk.hepdswbld04.2022-08-04T11:20:29</firmware-version>
+                  <product product_code="SoundTouch 10 sm2" type="5">
+                    <serialnumber>069236P81556160AE</serialnumber>
+                  </product>
+                </device>
+                <diagnostic-data>
+                  <device-landscape>
+                  <rssi>Good</rssi>
+                  <gateway-ip-address>192.168.178.1</gateway-ip-address>
+                  <macaddresses>
+                  <macaddress>587A628A4042</macaddress>
+                  <macaddress>40BD32BAB0EB</macaddress>
+                  </macaddresses><ip-address>192.168.178.50</ip-address>
+                  <network-connection-type>Wireless</network-connection-type>
+                  </device-landscape><network-landscape>
+                  <network-data xmlns="http://www.Bose.com/Schemas/2012-12/NetworkMonitor/" />
+                  </network-landscape>
+                </diagnostic-data>
+              </device-data>
       responses:
         '200':
           description: Successfully recorded device power on event
@@ -754,23 +918,42 @@ paths:
         '500':
           description: Server Error
 
-  /streaming/account/{accountId}/device/{deviceId}/group/:
-    get:
-      summary: Get device group
-      description: >
-        Unclear. Returns always an empty group.
-        What is it used for?
-      operationId: getDeviceGroup
+  /streaming/account/{accountId}/group/:
+    post:
+      summary: Create device group
+      description: Creates a new speaker group (stereo pair) with master device and roles
+      operationId: createDeviceGroup
       tags:
-        - unclear
+        - group
       security:
         - BearerAuth: []
       parameters:
         - $ref: '#/components/parameters/accountId'
-        - $ref: '#/components/parameters/deviceId'
+      requestBody:
+        required: true
+        content:
+          application/vnd.bose.streaming-v1.2+xml:
+            schema:
+              $ref: '#/components/schemas/GroupRequest'
+            example: |
+              <?xml version="1.0" encoding="UTF-8"?>
+              <group>
+                <masterDeviceId>587A628A4042</masterDeviceId>
+                <name>Living Room Stereo</name>
+                <roles>
+                  <groupRole>
+                    <deviceId>587A628A4042</deviceId>
+                    <role>LEFT</role>
+                  </groupRole>
+                  <groupRole>
+                    <deviceId>44EAD8A18888</deviceId>
+                    <role>RIGHT</role>
+                  </groupRole>
+                </roles>
+              </group>
       responses:
-        '200':
-          description: Successful response with group information
+        '201':
+          description: Group created successfully
           headers:
             Content-Type:
               schema:
@@ -781,13 +964,227 @@ paths:
               schema:
                 $ref: '#/components/schemas/GroupResponse'
               example: |
-                <?xml version="1.0" encoding="UTF-8" standalone="yes"?><group/>
+                <?xml version="1.0" encoding="UTF-8"?>
+                <group id="1225842">
+                  <masterDeviceId>587A628A4042</masterDeviceId>
+                  <name>Living Room Stereo</name>
+                  <roles>
+                    <groupRole>
+                      <deviceId>587A628A4042</deviceId>
+                      <role>LEFT</role>
+                    </groupRole>
+                    <groupRole>
+                      <deviceId>44EAD8A18888</deviceId>
+                      <role>RIGHT</role>
+                    </groupRole>
+                  </roles>
+                </group>
+        '400':
+          description: Bad request - Device already in group
+          content:
+            application/vnd.bose.streaming-v1.2+xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example: |
+                <?xml version="1.0" encoding="UTF-8"?>
+                <error>
+                  <status-code>4041</status-code>
+                  <message>Device 587A628A4042 already belongs to a group</message>
+                </error>
+        '401':
+          description: Unauthorized - Invalid or missing Bearer token
+        '500':
+          description: Internal server error
+
+  /streaming/account/{accountId}/group/{groupId}:
+    delete:
+      summary: Delete device group
+      description: Deletes an existing device group (stereo pair) by its ID
+      operationId: deleteDeviceGroup
+      tags:
+        - group
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/accountId'
+        - name: groupId
+          in: path
+          required: true
+          description: Unique identifier of the group to delete
+          schema:
+            type: string
+          example: "1225842"
+      responses:
+        '200':
+          description: Group deleted successfully (empty response body)
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: application/vnd.bose.streaming-v1.2+xml
+        '400':
+          description: Bad request - Group not found
+          content:
+            application/vnd.bose.streaming-v1.2+xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example: |
+                <?xml version="1.0" encoding="UTF-8"?>
+                <status>
+                  <message>Device Group not found </message>
+                  <status-code>4040</status-code>
+                </status>
+        '401':
+          description: Unauthorized - Invalid or missing Bearer token
+        '500':
+          description: Internal server error
+
+    put:
+      summary: Update device group
+      description: Updates an existing device group's name and/or master device
+      operationId: updateDeviceGroup
+      tags:
+        - group
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/accountId'
+        - name: groupId
+          in: path
+          required: true
+          description: Unique identifier of the group to update
+          schema:
+            type: string
+          example: "1225842"
+      requestBody:
+        required: true
+        content:
+          application/vnd.bose.streaming-v1.2+xml:
+            schema:
+              $ref: '#/components/schemas/GroupUpdateRequest'
+            example: |
+              <?xml version="1.0" encoding="UTF-8"?>
+              <group>
+                <masterDeviceId>44EAD8A18888</masterDeviceId>
+                <name>Updated Stereo</name>
+              </group>
+      responses:
+        '200':
+          description: Group updated successfully
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: application/vnd.bose.streaming-v1.2+xml
+          content:
+            application/vnd.bose.streaming-v1.2+xml:
+              schema:
+                $ref: '#/components/schemas/GroupResponse'
+              example: |
+                <?xml version="1.0" encoding="UTF-8"?>
+                <group id="1225842">
+                  <masterDeviceId>44EAD8A18888</masterDeviceId>
+                  <name>Updated Stereo</name>
+                  <roles>
+                    <groupRole>
+                      <deviceId>587A628A4042</deviceId>
+                      <role>LEFT</role>
+                    </groupRole>
+                    <groupRole>
+                      <deviceId>44EAD8A18888</deviceId>
+                      <role>RIGHT</role>
+                    </groupRole>
+                  </roles>
+                </group>
+        '400':
+          description: Bad request - Group not found
+          content:
+            application/vnd.bose.streaming-v1.2+xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                groupNotFound:
+                  summary: Group not found
+                  value: |
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <status>
+                      <message>Device Group not found </message>
+                      <status-code>4040</status-code>
+                    </status>
+
+        '401':
+          description: Unauthorized - Invalid or missing Bearer token
+        '500':
+          description: Internal server error
+
+  /streaming/account/{accountId}/device/{deviceId}/group/:
+    get:
+      summary: Get device group
+      description: |
+        Retrieves group information for a device.
+        Returns an empty group element if the device is not in a group
+      operationId: getDeviceGroup
+      tags:
+        - group
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/accountId'
+        - $ref: '#/components/parameters/deviceId'
+      responses:
+        '200':
+          description: |
+            Successful response.
+            Returns full group information if device is in a group,
+            or empty group element if not.
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: application/vnd.bose.streaming-v1.2+xml
+          content:
+            application/vnd.bose.streaming-v1.2+xml:
+              schema:
+                $ref: '#/components/schemas/GroupResponse'
+              examples:
+                deviceInGroup:
+                  summary: Device is in a group
+                  value: |
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <group id="1225842">
+                      <masterDeviceId>587A628A4042</masterDeviceId>
+                      <name>Living Room Stereo</name>
+                      <roles>
+                        <groupRole>
+                          <deviceId>587A628A4042</deviceId>
+                          <role>LEFT</role>
+                        </groupRole>
+                        <groupRole>
+                          <deviceId>44EAD8A18888</deviceId>
+                          <role>RIGHT</role>
+                        </groupRole>
+                      </roles>
+                    </group>
+                deviceNotInGroup:
+                  summary: Device is not in a group
+                  value: |
+                    <?xml version="1.0" encoding="UTF-8" standalone="yes"?><group/>
+        '400':
+          description: Bad request - Device does not exist
+          content:
+            application/vnd.bose.streaming-v1.2+xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example: |
+                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                <status>
+                  <message>Device does not exist</message>
+                  <status-code>4012</status-code>
+                </status>
         '401':
           description: Unauthorized - Invalid or missing Bearer token
         '403':
           description: Forbidden - Valid token but insufficient permissions
-        '404':
-          description: Not found - Account or device not found
         '500':
           description: Internal server error
 
@@ -978,6 +1375,23 @@ paths:
       description: |
         Endpoint called by Bose SoundTouch devices to submit event data.
         Events include playback state changes, source changes, button presses, and more.
+        Every submitted event has a `type` field. Types seen in the wild include:
+
+        - art-changed
+        - favorite-changed
+        - item-started
+        - masterdevice-changed
+        - play-item
+        - play-state-changed
+        - playpause-pressed
+        - power-pressed
+        - preset-pressed
+        - shuffle-state-changed
+        - skip-forward-pressed
+        - source-state-changed
+        - system-state-changed
+        - volume-change
+
       operationId: submitDeviceEvents
       tags:
         - events
@@ -1052,6 +1466,45 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BmxServicesResponse'
+        '401':
+          description: Unauthorized - Invalid or missing Bearer token
+        '500':
+          description: Internal server error
+
+  /bmx/registry/v1/servicesAvailability:
+    get:
+      summary: Get BMX services availability
+      description: |
+        Returns which streaming services can be added or removed from the user's account.
+      operationId: getBmxServicesAvailability
+      tags:
+        - bmx
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successful response with services availability
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: application/json
+            X-Bmx-Adapter-Version:
+              schema:
+                type: string
+                example: master.4.40
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BmxServicesAvailabilityResponse'
+              example:
+                services:
+                  - canAdd: true
+                    canRemove: false
+                    service: TUNEIN
+                  - canAdd: false
+                    canRemove: true
+                    service: SIRIUSXM_EVEREST
         '401':
           description: Unauthorized - Invalid or missing Bearer token
         '500':
@@ -1924,9 +2377,97 @@ components:
 
     GroupResponse:
       type: object
-      description: XML response containing group information (typically empty)
+      description: XML response containing group information
       xml:
         name: group
+      properties:
+        id:
+          type: string
+          description: Unique group identifier
+          xml:
+            attribute: true
+          example: "1225842"
+        masterDeviceId:
+          type: string
+          description: Device ID of the master device in the group
+          example: "587A628A4042"
+        name:
+          type: string
+          description: Name of the group
+          example: "Living Room Stereo"
+        roles:
+          $ref: '#/components/schemas/GroupRoles'
+
+    GroupRequest:
+      type: object
+      description: XML request to create a new device group
+      xml:
+        name: group
+      required:
+        - masterDeviceId
+        - name
+        - roles
+      properties:
+        masterDeviceId:
+          type: string
+          description: Device ID of the master device in the group
+          example: "587A628A4042"
+        name:
+          type: string
+          description: Name of the group
+          example: "Living Room Stereo"
+        roles:
+          $ref: '#/components/schemas/GroupRoles'
+
+    GroupUpdateRequest:
+      type: object
+      description: XML request to update an existing device group
+      xml:
+        name: group
+      required:
+        - masterDeviceId
+        - name
+      properties:
+        masterDeviceId:
+          type: string
+          description: Device ID of master (must be LEFT or RIGHT device in the group)
+          example: "44EAD8A18888"
+        name:
+          type: string
+          description: Group name
+          example: "Updated Stereo"
+
+    GroupRoles:
+      type: object
+      description: Container for group roles
+      xml:
+        name: roles
+      properties:
+        groupRole:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupRole'
+          xml:
+            wrapped: false
+
+    GroupRole:
+      type: object
+      description: Role assignment for a device in a group
+      xml:
+        name: groupRole
+      required:
+        - deviceId
+        - role
+      properties:
+        deviceId:
+          type: string
+          description: Device ID
+          example: "587A628A4042"
+        role:
+          type: string
+          description: Role of the device in the group
+          enum: [LEFT, RIGHT]
+          example: "LEFT"
 
     PowerOnRequest:
       type: object
@@ -2608,7 +3149,7 @@ components:
         eventType:
           type: string
           description: Type of event
-          enum: ["START", "STOP", "PAUSE", "RESUME"]
+          enum: ["START", "STOP", "PAUSE", "RESUME", "TIMED"]
           example: "START"
         reason:
           type: string
@@ -2636,3 +3177,36 @@ components:
           type: integer
           description: Seconds until next report should be sent
           example: 1800
+
+    BmxServicesAvailabilityResponse:
+      type: object
+      description: Response containing services availability information
+      required:
+        - services
+      properties:
+        services:
+          type: array
+          description: List of services with their availability status
+          items:
+            $ref: '#/components/schemas/BmxServiceAvailability'
+
+    BmxServiceAvailability:
+      type: object
+      description: Availability status for a single service
+      required:
+        - canAdd
+        - canRemove
+        - service
+      properties:
+        canAdd:
+          type: boolean
+          description: Whether the service can be added to the account
+          example: true
+        canRemove:
+          type: boolean
+          description: Whether the service can be removed from the account
+          example: false
+        service:
+          type: string
+          description: Name of the service
+          example: TUNEIN

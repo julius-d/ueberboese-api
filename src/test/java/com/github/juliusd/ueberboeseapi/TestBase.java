@@ -1,6 +1,7 @@
 package com.github.juliusd.ueberboeseapi;
 
 import com.github.juliusd.ueberboeseapi.device.DeviceRepository;
+import com.github.juliusd.ueberboeseapi.group.DeviceGroupRepository;
 import com.github.juliusd.ueberboeseapi.preset.PresetRepository;
 import com.github.juliusd.ueberboeseapi.recent.Recent;
 import com.github.juliusd.ueberboeseapi.recent.RecentRepository;
@@ -47,6 +48,7 @@ public class TestBase {
   @Autowired protected DeviceRepository deviceRepository;
   @Autowired protected RecentRepository recentRepository;
   @Autowired protected PresetRepository presetRepository;
+  @Autowired protected DeviceGroupRepository deviceGroupRepository;
 
   @BeforeEach
   void setUp() {
@@ -56,6 +58,7 @@ public class TestBase {
     deviceRepository.deleteAll();
     recentRepository.deleteAll();
     presetRepository.deleteAll();
+    deviceGroupRepository.deleteAll();
   }
 
   protected void givenRecentsInDB() {

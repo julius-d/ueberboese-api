@@ -10,8 +10,10 @@ import com.github.juliusd.ueberboeseapi.generated.dtos.BmxPlaybackResponseApiDto
 import com.github.juliusd.ueberboeseapi.generated.dtos.BmxReportResponseApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.BmxServiceApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.BmxServiceAssetsApiDto;
+import com.github.juliusd.ueberboeseapi.generated.dtos.BmxServiceAvailabilityApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.BmxServiceIconsApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.BmxServiceIdApiDto;
+import com.github.juliusd.ueberboeseapi.generated.dtos.BmxServicesAvailabilityResponseApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.BmxServicesResponseApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.BmxStreamApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.BmxTokenResponseApiDto;
@@ -66,6 +68,42 @@ public class BmxService {
     response.setBmxServices(services);
 
     return response;
+  }
+
+  /**
+   * Returns the availability status of BMX services.
+   *
+   * @return BMX services availability response
+   */
+  public BmxServicesAvailabilityResponseApiDto getBmxServicesAvailability() {
+    log.info("Building BMX services availability");
+
+    var services =
+        List.of(
+            createServiceAvailability("TUNEIN", true, false),
+            createServiceAvailability("SIRIUSXM_EVEREST", false, true));
+
+    BmxServicesAvailabilityResponseApiDto response = new BmxServicesAvailabilityResponseApiDto();
+    response.setServices(services);
+
+    return response;
+  }
+
+  /**
+   * Creates a service availability entry.
+   *
+   * @param serviceName Name of the service
+   * @param canAdd Whether the service can be added
+   * @param canRemove Whether the service can be removed
+   * @return Service availability DTO
+   */
+  private BmxServiceAvailabilityApiDto createServiceAvailability(
+      String serviceName, boolean canAdd, boolean canRemove) {
+    BmxServiceAvailabilityApiDto availability = new BmxServiceAvailabilityApiDto();
+    availability.setService(serviceName);
+    availability.setCanAdd(canAdd);
+    availability.setCanRemove(canRemove);
+    return availability;
   }
 
   /** Creates the TuneIn service definition. */

@@ -1,5 +1,6 @@
 package com.github.juliusd.ueberboeseapi;
 
+import static com.github.juliusd.ueberboeseapi.device.Device.*;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -924,5 +925,218 @@ class UeberboeseControllerTest extends TestBase {
         .body("presets.preset.@buttonNumber", hasItems("1", "2", "3", "4", "5", "6", "7"))
         // Verify total count: 6 from XML + 1 new from DB (button 1 was overridden, not added)
         .body("presets.preset.size()", equalTo(7));
+  }
+
+  @Test
+  void removeDevice_success() {
+    var device =
+        builder()
+            .deviceId("587A628A4042")
+            .name("Test Device")
+            .ipAddress("192.168.1.100")
+            .margeAccountId("6921042")
+            .firstSeen(OffsetDateTime.parse("2018-08-11T08:55:25.000+00:00"))
+            .lastSeen(OffsetDateTime.parse("2025-01-01T10:00:00.000+00:00"))
+            .build();
+    deviceRepository.save(device);
+
+    // When: DELETE request is made to remove the device
+    given()
+        .header("Authorization", "Bearer mockToken123")
+        .when()
+        .delete("/streaming/account/6921042/device/587A628A4042")
+        .then()
+        .statusCode(200)
+        .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
+        .header("Location", "http://streamingqa.bose.com/account/6921042/device/587A628A4042")
+        .header("METHOD_NAME", "removeDevice");
+
+    // Then: Verify the device's margeAccountId was set to UN_PAIRED
+    var updatedDevice = deviceRepository.findById("587A628A4042");
+    Assertions.assertThat(updatedDevice).isPresent();
+    Assertions.assertThat(updatedDevice.get().margeAccountId()).isEqualTo("UN_PAIRED");
+  }
+
+  @Test
+  void removeDevice_deviceDoesNotExist() {
+    String actualXml =
+        given()
+            .header("Authorization", "Bearer mockToken123")
+            .when()
+            .delete("/streaming/account/6921042/device/587A628A4042")
+            .then()
+            .statusCode(400)
+            .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
+            .extract()
+            .asString();
+
+    assertThat(
+        actualXml,
+        isSimilarTo(
+                """
+        <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <status>
+          <message>Device does not exist </message>
+          <status-code>4012</status-code>
+        </status>
+        """)
+            .ignoreWhitespace()
+            .withDifferenceEvaluator(new PlaceholderDifferenceEvaluator()));
+  }
+
+  @Test
+  void removeDevice_alreadyUnpaired() {
+    var device =
+        builder()
+            .deviceId("587A628A4042")
+            .name("Test Device")
+            .ipAddress("192.168.1.100")
+            .margeAccountId("UN_PAIRED")
+            .firstSeen(OffsetDateTime.parse("2018-08-11T08:55:25.000+00:00"))
+            .lastSeen(OffsetDateTime.parse("2025-01-01T10:00:00.000+00:00"))
+            .build();
+    deviceRepository.save(device);
+
+    String actualXml =
+        given()
+            .header("Authorization", "Bearer mockToken123")
+            .when()
+            .delete("/streaming/account/6921042/device/587A628A4042")
+            .then()
+            .statusCode(400)
+            .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
+            .extract()
+            .asString();
+
+    assertThat(
+        actualXml,
+        isSimilarTo(
+                """
+        <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <status>
+          <message>Device does not exist </message>
+          <status-code>4012</status-code>
+        </status>
+        """)
+            .ignoreWhitespace()
+            .withDifferenceEvaluator(new PlaceholderDifferenceEvaluator()));
+    var untouchedDevice = deviceRepository.findById("587A628A4042");
+    Assertions.assertThat(untouchedDevice).isPresent();
+    Assertions.assertThat(untouchedDevice.get().margeAccountId()).isEqualTo("UN_PAIRED");
+  }
+
+  @Test
+  void addDevice_success() {
+    String actualXml =
+        given()
+            .header("Authorization", "Bearer mockToken123")
+            .contentType("application/vnd.bose.streaming-v1.2+xml")
+            .body(
+                """
+                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                <device deviceid="587A628A4042">
+                  <name>Kitchen</name>
+                  <macaddress>587A628A4042</macaddress>
+                </device>
+                """)
+            .when()
+            .post("/streaming/account/6921042/device")
+            .then()
+            .statusCode(201)
+            .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
+            .header("Location", "http://streamingqa.bose.com/account/6921042/device/587A628A4042")
+            .header("METHOD_NAME", "addDevice")
+            .header("Credentials", containsString("Bearer"))
+            .extract()
+            .asString();
+
+    assertThat(
+        actualXml,
+        isSimilarTo(
+                """
+        <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <device deviceid="587A628A4042">
+          <createdOn>${xmlunit.ignore}</createdOn>
+          <ipaddress></ipaddress>
+          <name>Kitchen</name>
+          <updatedOn>${xmlunit.ignore}</updatedOn>
+        </device>
+        """)
+            .ignoreWhitespace()
+            .withDifferenceEvaluator(new PlaceholderDifferenceEvaluator()));
+
+    // Verify device exists in database with correct margeAccountId
+    var device = deviceRepository.findById("587A628A4042");
+    Assertions.assertThat(device).isPresent();
+    Assertions.assertThat(device.get().margeAccountId()).isEqualTo("6921042");
+    Assertions.assertThat(device.get().name()).isEqualTo("Kitchen");
+    Assertions.assertThat(device.get().ipAddress()).isEmpty();
+  }
+
+  @Test
+  void addDevice_existingDevice() {
+    // Given: A device already exists in DB with a different account
+    var now = OffsetDateTime.now().withNano(0);
+    var existingDevice =
+        builder()
+            .deviceId("587A628A4042")
+            .name("Old Name")
+            .ipAddress("192.168.1.100")
+            .margeAccountId("1234567")
+            .firstSeen(now.minusDays(10))
+            .lastSeen(now.minusHours(1))
+            .updatedOn(now.minusHours(1))
+            .build();
+    deviceRepository.save(existingDevice);
+
+    // language=XML
+    String requestBody =
+        """
+        <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <device deviceid="587A628A4042">
+          <name>Kitchen</name>
+          <macaddress>587A628A4042</macaddress>
+        </device>
+        """;
+
+    String actualXml =
+        given()
+            .header("Authorization", "Bearer mockToken123")
+            .contentType("application/vnd.bose.streaming-v1.2+xml")
+            .body(requestBody)
+            .when()
+            .post("/streaming/account/6921042/device")
+            .then()
+            .statusCode(201)
+            .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
+            .header("Location", "http://streamingqa.bose.com/account/6921042/device/587A628A4042")
+            .header("METHOD_NAME", "addDevice")
+            .header("Credentials", containsString("Bearer"))
+            .extract()
+            .asString();
+
+    // language=XML
+    String expectedXml =
+        """
+        <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <device deviceid="587A628A4042">
+          <createdOn>${xmlunit.ignore}</createdOn>
+          <ipaddress>192.168.1.100</ipaddress>
+          <name>Kitchen</name>
+          <updatedOn>${xmlunit.ignore}</updatedOn>
+        </device>
+        """;
+
+    assertThat(
+        actualXml,
+        isSimilarTo(expectedXml)
+            .ignoreWhitespace()
+            .withDifferenceEvaluator(new PlaceholderDifferenceEvaluator()));
+
+    // Verify margeAccountId is updated in database
+    var device = deviceRepository.findById("587A628A4042");
+    Assertions.assertThat(device).isPresent();
+    Assertions.assertThat(device.get().margeAccountId()).isEqualTo("6921042");
+    Assertions.assertThat(device.get().name()).isEqualTo("Kitchen");
   }
 }

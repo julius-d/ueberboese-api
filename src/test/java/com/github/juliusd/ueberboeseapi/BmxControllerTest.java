@@ -354,4 +354,52 @@ class BmxControllerTest extends TestBase {
         .contentType("application/json")
         .body("nextReportIn", notNullValue());
   }
+
+  @Test
+  void testReportTuneInAnalyticsWithTimedEventType() {
+    given()
+        .auth()
+        .preemptive()
+        .basic("admin", "change_me!")
+        .contentType("application/json")
+        .queryParam("stream_id", "e3342")
+        .queryParam("guide_id", "s288368")
+        .queryParam("listen_id", "1770563709735")
+        .queryParam("stream_type", "liveRadio")
+        .body(
+            """
+            {
+              "timeStamp": "2026-02-08T15:52:41+0000",
+              "eventType": "TIMED",
+              "reason": "TIMED_REPORT",
+              "timeIntoTrack": 300,
+              "playbackDelay": 0
+            }
+            """)
+        .when()
+        .post("/bmx/tunein/v1/report")
+        .then()
+        .statusCode(200)
+        .contentType("application/json")
+        .body("nextReportIn", notNullValue());
+  }
+
+  @Test
+  void testGetBmxServicesAvailability() {
+    given()
+        .contentType("application/json")
+        .when()
+        .get("/bmx/registry/v1/servicesAvailability")
+        .then()
+        .statusCode(200)
+        .contentType("application/json")
+        .header("X-Bmx-Adapter-Version", equalTo("master.4.40"))
+        .body("services", hasSize(2))
+        .body("services[0].service", equalTo("TUNEIN"))
+        .body("services[0].canAdd", equalTo(true))
+        .body("services[0].canRemove", equalTo(false))
+        .body("services[1].service", equalTo("SIRIUSXM_EVEREST"))
+        .body("services[1].canAdd", equalTo(false))
+        .body("services[1].canRemove", equalTo(true));
+  }
 }

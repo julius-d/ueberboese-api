@@ -5,6 +5,7 @@ import com.github.juliusd.ueberboeseapi.generated.BmxApi;
 import com.github.juliusd.ueberboeseapi.generated.dtos.BmxPlaybackResponseApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.BmxReportRequestApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.BmxReportResponseApiDto;
+import com.github.juliusd.ueberboeseapi.generated.dtos.BmxServicesAvailabilityResponseApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.BmxServicesResponseApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.BmxTokenRequestApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.BmxTokenResponseApiDto;
@@ -44,6 +45,15 @@ public class BmxController implements BmxApi {
       log.error("Failed to get BMX services", e);
       return ResponseEntity.internalServerError().build();
     }
+  }
+
+  @Override
+  public ResponseEntity<BmxServicesAvailabilityResponseApiDto> getBmxServicesAvailability() {
+    BmxServicesAvailabilityResponseApiDto response = bmxService.getBmxServicesAvailability();
+    return ResponseEntity.ok()
+        .header("Content-Type", "application/json")
+        .header("X-Bmx-Adapter-Version", "master.4.40")
+        .body(response);
   }
 
   @Override

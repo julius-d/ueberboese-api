@@ -34,9 +34,9 @@ services:
       - UEBERBOESE_MGMT_PASSWORD=your-secure-password
     volumes:
       # REQUIRED: Persist cached account data across container restarts
-      - ~/ueberboese-data:/data
+      - ~/ueberboese-data:/data:rw
       # Persist application logs on the host system
-      - ~/ueberboese-logs:/workspace/logs
+      - ~/ueberboese-logs:/workspace/logs:rw
     restart: unless-stopped
 ```
 
@@ -110,7 +110,7 @@ Replace `192.168.178.2` with your device's IP address.
 Once connected via netcat, enter:
 
 ```bash
-envswitch boseurls set https://ueberboese.your-example-host.org https://ueberboese-downloads.your-example-host.org/updates/soundtouch
+envswitch boseurls set http://ueberboese.your-example-host.org:8080 http://ueberboese-downloads.your-example-host.org:8080/updates/soundtouch
 ```
 
 Replace `your-example-host.org` with your actual domain.

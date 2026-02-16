@@ -284,11 +284,11 @@ class EventControllerTest extends TestBase {
   }
 
   @Test
-  void submitDeviceEvents_shouldKeepOnlyLast30Events() {
-    // Given: Submit 35 events for the same device
+  void submitDeviceEvents_shouldKeepOnlyLast50Events() {
+    // Given: Submit 55 events for the same device
     String deviceId = "587A628A4042";
 
-    for (int i = 0; i < 35; i++) {
+    for (int i = 0; i < 55; i++) {
       String requestJson =
           """
           {
@@ -344,22 +344,22 @@ class EventControllerTest extends TestBase {
             .extract()
             .response();
 
-    // Then: Should have exactly 30 events (events 5-34, oldest 0-4 removed)
-    assertThat(response.jsonPath().getList("events")).hasSize(30);
+    // Then: Should have exactly 30 events (events 5-54, oldest 0-4 removed)
+    assertThat(response.jsonPath().getList("events")).hasSize(50);
     // First event should be event number 5 (oldest 5 were removed)
     assertThat(response.jsonPath().getInt("events[0].monoTime")).isEqualTo(5);
-    // Last event should be event number 34
-    assertThat(response.jsonPath().getInt("events[29].monoTime")).isEqualTo(34);
+    // Last event should be event number 54
+    assertThat(response.jsonPath().getInt("events[49].monoTime")).isEqualTo(54);
   }
 
   @Test
   void submitDeviceEvents_shouldMaintainSeparateLimitsPerDevice() {
-    // Given: Submit 35 events for device1 and 10 events for device2
+    // Given: Submit 55 events for device1 and 10 events for device2
     String device1 = "DEVICE001";
     String device2 = "DEVICE002";
 
     // Submit 35 events to device1
-    for (int i = 0; i < 35; i++) {
+    for (int i = 0; i < 55; i++) {
       submitEventWithMonoTime(device1, i);
     }
 
@@ -393,8 +393,8 @@ class EventControllerTest extends TestBase {
             .extract()
             .response();
 
-    // Then: Device1 should have 30 events, Device2 should have all 10 events
-    assertThat(response1.jsonPath().getList("events")).hasSize(30);
+    // Then: Device1 should have 50 events, Device2 should have all 10 events
+    assertThat(response1.jsonPath().getList("events")).hasSize(50);
     assertThat(response1.jsonPath().getInt("events[0].monoTime")).isEqualTo(5);
 
     assertThat(response2.jsonPath().getList("events")).hasSize(10);

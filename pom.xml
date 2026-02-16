@@ -193,7 +193,7 @@
                             <generatorName>spring</generatorName>
                             <modelNameSuffix>ApiDto</modelNameSuffix>
                             <generateSupportingFiles>false</generateSupportingFiles>
-                            <inputSpec>${project.basedir}/ueberbose-api.yaml</inputSpec>
+                            <inputSpec>${project.basedir}/ueberboese-api.yaml</inputSpec>
                             <apiPackage>com.github.juliusd.ueberboeseapi.generated</apiPackage>
                             <skipIfSpecIsUnchanged>true</skipIfSpecIsUnchanged>
                             <templateDirectory>${project.basedir}/src/main/resources/templates/spring</templateDirectory>

@@ -13,6 +13,8 @@ public record Device(
     @NonNull @Id String deviceId,
     String name,
     String ipAddress,
+    String margeAccountId,
     OffsetDateTime firstSeen,
     OffsetDateTime lastSeen,
+    OffsetDateTime updatedOn,
     @Version Long version) {}

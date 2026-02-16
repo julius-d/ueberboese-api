@@ -151,9 +151,9 @@ cat OverrideSdkPrivateCfg.xml
 This should show
 ```xml
 <SoundTouchSdkPrivateCfg>
-    <margeServerUrl>https://ueberboese.your-example-host.org</margeServerUrl>
+    <margeServerUrl>http://ueberboese.your-example-host.org:8080</margeServerUrl>
     <statsServerUrl>https://events.api.bosecm.com</statsServerUrl>
-    <swUpdateUrl>https://ueberboese-downloads.your-example-host.org/updates/soundtouch</swUpdateUrl>
+    <swUpdateUrl>http://ueberboese-downloads.your-example-host.org:8080/updates/soundtouch</swUpdateUrl>
     <isZeroconfEnabled>true</isZeroconfEnabled>
     <usePandoraProductionServer>true</usePandoraProductionServer>
     <saveMargeCustomerReport>false</saveMargeCustomerReport>
@@ -163,13 +163,13 @@ This should show
 We need to change it to
 ```xml
 <SoundTouchSdkPrivateCfg>
-    <margeServerUrl>https://ueberboese.your-example-host.org</margeServerUrl>
-    <statsServerUrl>https://ueberboese.your-example-host.org</statsServerUrl>
-    <swUpdateUrl>https://ueberboese-downloads.your-example-host.org/updates/soundtouch</swUpdateUrl>
+    <margeServerUrl>http://ueberboese.your-example-host.org:8080</margeServerUrl>
+    <statsServerUrl>http://ueberboese.your-example-host.org:8080</statsServerUrl>
+    <swUpdateUrl>http://ueberboese-downloads.your-example-host.org:8080/updates/soundtouch</swUpdateUrl>
     <isZeroconfEnabled>true</isZeroconfEnabled>
     <usePandoraProductionServer>true</usePandoraProductionServer>
     <saveMargeCustomerReport>false</saveMargeCustomerReport>
-    <bmxRegistryUrl>https://ueberboese.your-example-host.org/bmx/registry/v1/services</bmxRegistryUrl>
+    <bmxRegistryUrl>http://ueberboese.your-example-host.org:8080/bmx/registry/v1/services</bmxRegistryUrl>
 </SoundTouchSdkPrivateCfg>
 ```
 
