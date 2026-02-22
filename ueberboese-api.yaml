@@ -1989,6 +1989,50 @@ components:
           type: string
           description: Space-separated list of granted scopes
           example: "playlist-read-private playlist-read-collaborative streaming user-library-read user-library-modify playlist-modify-private playlist-modify-public user-read-email user-read-private user-top-read"
+    
+    ProviderSetting:
+      type: object
+      description: Provider-specific settings
+      xml:
+        name: providerSetting
+      properties:
+        boseId:
+          type: integer
+          description: Bose account identifier associated with the provider settings
+          xml:
+            attribute: true
+          example: 6921042
+        keyName:
+          type: string
+          description: Name of the provider setting key
+          xml:
+            attribute: true
+          example: "exampleKey"
+        value:
+          type: boolean
+          description: Value of the provider setting
+          xml:
+            attribute: true
+          example: true
+        providerId:
+          type: integer
+          description: Identifier of the provider associated with the settings
+          xml:
+            attribute: true
+          example: 15
+
+    ProviderSettingsContainer:
+      type: object
+      description: Container for provider settings
+      xml:
+        name: providerSettings
+      properties:
+        providerSetting:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProviderSetting'
+          xml:
+            wrapped: false
 
     FullAccountResponse:
       type: object
@@ -2025,6 +2069,8 @@ components:
           example: "de"
         sources:
           $ref: '#/components/schemas/SourcesContainer'
+        providerSettings:
+          $ref: '#/components/schemas/ProviderSettingsContainer'
 
     DevicesContainer:
       type: object
@@ -2038,7 +2084,7 @@ components:
             $ref: '#/components/schemas/Device'
           xml:
             wrapped: false
-
+    
     Device:
       type: object
       description: Device information
