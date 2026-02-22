@@ -1989,7 +1989,7 @@ components:
           type: string
           description: Space-separated list of granted scopes
           example: "playlist-read-private playlist-read-collaborative streaming user-library-read user-library-modify playlist-modify-private playlist-modify-public user-read-email user-read-private user-top-read"
-    
+
     ProviderSetting:
       type: object
       description: Provider-specific settings
@@ -2084,7 +2084,7 @@ components:
             $ref: '#/components/schemas/Device'
           xml:
             wrapped: false
-    
+
     Device:
       type: object
       description: Device information

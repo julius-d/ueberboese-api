@@ -43,7 +43,8 @@ class UeberboeseExperimentalControllerTest extends TestBase {
   @Test
   void getFullAccount_shouldReturnCompleteAccountDetails() {
     // language=XML
-    String expectedXml = """
+    String expectedXml =
+        """
         <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
         <account id="6921042">
           <accountStatus>CHANGE_PASSWORD</accountStatus>
@@ -486,19 +487,20 @@ class UeberboeseExperimentalControllerTest extends TestBase {
     givenRecentsInDB();
     givenSpotifyAccountsInDB();
 
-    var responseXml = given()
-        .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
-        .header("User-agent", "Bose_Lisa/27.0.6")
-        .header("Authorization", "Bearer foo/qtwq6FH/bar")
-        .when()
-        .get("/streaming/account/6921042/full")
-        .then()
-        .statusCode(200)
-        .contentType("application/vnd.bose.streaming-v1.2+xml")
-        .header("METHOD_NAME", "getFullAccount")
-        .extract()
-        .body()
-        .asString();
+    var responseXml =
+        given()
+            .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+            .header("User-agent", "Bose_Lisa/27.0.6")
+            .header("Authorization", "Bearer foo/qtwq6FH/bar")
+            .when()
+            .get("/streaming/account/6921042/full")
+            .then()
+            .statusCode(200)
+            .contentType("application/vnd.bose.streaming-v1.2+xml")
+            .header("METHOD_NAME", "getFullAccount")
+            .extract()
+            .body()
+            .asString();
 
     assertThat(
         responseXml,
@@ -548,13 +550,15 @@ class UeberboeseExperimentalControllerTest extends TestBase {
   void getFullAccount_shouldCacheThenServeFromCache() throws Exception {
     // Given - use unique account ID that doesn't have cached file
     String testAccountId = "cache-roundtrip-test";
-    Path cacheFile = Path.of("src/test/resources/test-data", "streaming-account-full-" + testAccountId + ".xml");
+    Path cacheFile =
+        Path.of("src/test/resources/test-data", "streaming-account-full-" + testAccountId + ".xml");
 
     // Clean up cache file if exists from previous test run
     Files.deleteIfExists(cacheFile);
 
     // language=XML
-    String mockXmlResponse = """
+    String mockXmlResponse =
+        """
         <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
         <account id="cache-roundtrip-test">
           <accountStatus>ACTIVE</accountStatus>
@@ -572,16 +576,17 @@ class UeberboeseExperimentalControllerTest extends TestBase {
                     .withBody(mockXmlResponse)));
 
     // When - First request (cache miss)
-    String firstResponse = given()
-        .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
-        .when()
-        .get("/streaming/account/" + testAccountId + "/full")
-        .then()
-        .statusCode(200)
-        .contentType("application/vnd.bose.streaming-v1.2+xml")
-        .extract()
-        .body()
-        .asString();
+    String firstResponse =
+        given()
+            .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+            .when()
+            .get("/streaming/account/" + testAccountId + "/full")
+            .then()
+            .statusCode(200)
+            .contentType("application/vnd.bose.streaming-v1.2+xml")
+            .extract()
+            .body()
+            .asString();
 
     // Then - Verify proxy was called once
     wireMockServer.verify(
@@ -591,16 +596,17 @@ class UeberboeseExperimentalControllerTest extends TestBase {
     assertTrue(Files.exists(cacheFile), "Cache file should exist after first request");
 
     // When - Second request (cache hit)
-    String secondResponse = given()
-        .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
-        .when()
-        .get("/streaming/account/" + testAccountId + "/full")
-        .then()
-        .statusCode(200)
-        .contentType("application/vnd.bose.streaming-v1.2+xml")
-        .extract()
-        .body()
-        .asString();
+    String secondResponse =
+        given()
+            .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+            .when()
+            .get("/streaming/account/" + testAccountId + "/full")
+            .then()
+            .statusCode(200)
+            .contentType("application/vnd.bose.streaming-v1.2+xml")
+            .extract()
+            .body()
+            .asString();
 
     // Then - Verify proxy was STILL only called once (not twice)
     wireMockServer.verify(
@@ -616,7 +622,8 @@ class UeberboeseExperimentalControllerTest extends TestBase {
   @Test
   void updatePreset_shouldUpdatePresetSuccessfully() {
     // language=XML
-    String requestXml = """
+    String requestXml =
+        """
         <?xml version="1.0" encoding="UTF-8" ?>
         <preset buttonNumber="2">
           <sourceid>19989643</sourceid>
@@ -628,27 +635,29 @@ class UeberboeseExperimentalControllerTest extends TestBase {
         </preset>""";
 
     // Extract the response for XML comparison
-    String actualXml = given()
-        .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
-        .header("User-agent", "Bose_Lisa/27.0.6")
-        .header("Authorization", "Bearer mockToken123")
-        .header("Content-type", "application/vnd.bose.streaming-v1.2+xml")
-        .body(requestXml)
-        .when()
-        .put("/streaming/account/6921042/device/587A628A4042/preset/2")
-        .then()
-        .statusCode(200)
-        .contentType("application/vnd.bose.streaming-v1.2+xml")
-        .header(
-            "Location",
-            containsString(
-                "http://streamingqa.bose.com/account/6921042/device/587A628A4042/preset/2"))
-        .extract()
-        .body()
-        .asString();
+    String actualXml =
+        given()
+            .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+            .header("User-agent", "Bose_Lisa/27.0.6")
+            .header("Authorization", "Bearer mockToken123")
+            .header("Content-type", "application/vnd.bose.streaming-v1.2+xml")
+            .body(requestXml)
+            .when()
+            .put("/streaming/account/6921042/device/587A628A4042/preset/2")
+            .then()
+            .statusCode(200)
+            .contentType("application/vnd.bose.streaming-v1.2+xml")
+            .header(
+                "Location",
+                containsString(
+                    "http://streamingqa.bose.com/account/6921042/device/587A628A4042/preset/2"))
+            .extract()
+            .body()
+            .asString();
 
     // language=XML
-    String expectedXml = """
+    String expectedXml =
+        """
         <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
         <preset buttonNumber="2">
           <containerArt>https://image-cdn-ak.spotifycdn.com/image/ab67706c0000da84993ee084406c4089ad8f4b2a</containerArt>
@@ -682,7 +691,8 @@ class UeberboeseExperimentalControllerTest extends TestBase {
     // Given - presetRepository is injected via TestBase
 
     // language=XML
-    String requestXml = """
+    String requestXml =
+        """
         <?xml version="1.0" encoding="UTF-8" ?>
         <preset buttonNumber="3">
           <sourceid>19989643</sourceid>
@@ -704,7 +714,8 @@ class UeberboeseExperimentalControllerTest extends TestBase {
         .statusCode(200);
 
     // Then - verify preset was saved to database
-    Optional<Preset> saved = presetRepository.findByAccountIdAndDeviceIdAndButtonNumber("testaccount", "testdevice", 3);
+    Optional<Preset> saved =
+        presetRepository.findByAccountIdAndDeviceIdAndButtonNumber("testaccount", "testdevice", 3);
     assertThat(saved).isPresent();
     assertThat(saved.get().name()).isEqualTo("My Playlist");
     assertThat(saved.get().location()).isEqualTo("/playback/container/test123");
@@ -716,23 +727,25 @@ class UeberboeseExperimentalControllerTest extends TestBase {
   void updatePreset_shouldUpsertExisting() {
     // Given - existing preset (presetRepository is injected via TestBase)
     var now = java.time.OffsetDateTime.now().withNano(0);
-    Preset existing = Preset.builder()
-        .accountId("testaccount2")
-        .deviceId("testdevice2")
-        .buttonNumber(1)
-        .name("Old Name")
-        .location("/old/location")
-        .sourceId("old-source")
-        .containerArt("https://example.org/old.png")
-        .contentItemType("stationurl")
-        .createdOn(now)
-        .updatedOn(now)
-        .build();
+    Preset existing =
+        Preset.builder()
+            .accountId("testaccount2")
+            .deviceId("testdevice2")
+            .buttonNumber(1)
+            .name("Old Name")
+            .location("/old/location")
+            .sourceId("old-source")
+            .containerArt("https://example.org/old.png")
+            .contentItemType("stationurl")
+            .createdOn(now)
+            .updatedOn(now)
+            .build();
     Preset saved = presetRepository.save(existing);
     Long existingId = saved.id();
 
     // language=XML
-    String requestXml = """
+    String requestXml =
+        """
         <?xml version="1.0" encoding="UTF-8" ?>
         <preset buttonNumber="1">
           <sourceid>new-source</sourceid>
@@ -754,8 +767,9 @@ class UeberboeseExperimentalControllerTest extends TestBase {
         .statusCode(200);
 
     // Then - verify preset was updated (same ID)
-    Optional<Preset> updated = presetRepository.findByAccountIdAndDeviceIdAndButtonNumber(
-        "testaccount2", "testdevice2", 1);
+    Optional<Preset> updated =
+        presetRepository.findByAccountIdAndDeviceIdAndButtonNumber(
+            "testaccount2", "testdevice2", 1);
     assertThat(updated).isPresent();
     assertThat(updated.get().id()).isEqualTo(existingId); // Same ID
     assertThat(updated.get().name()).isEqualTo("Updated Name");
@@ -766,25 +780,27 @@ class UeberboeseExperimentalControllerTest extends TestBase {
   @Test
   void getSoftwareUpdate_shouldReturnEmptyUpdateLocation() {
     // language=XML
-    String expectedXml = """
+    String expectedXml =
+        """
         <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
         <software_update>
           <softwareUpdateLocation></softwareUpdateLocation>
         </software_update>
         """;
 
-    String actualXml = given()
-        .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
-        .header("User-agent", "Bose_Lisa/27.0.6")
-        .header("Authorization", "Bearer mockToken123")
-        .when()
-        .get("/streaming/software/update/account/6921042")
-        .then()
-        .statusCode(200)
-        .contentType("application/vnd.bose.streaming-v1.2+xml")
-        .extract()
-        .body()
-        .asString();
+    String actualXml =
+        given()
+            .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+            .header("User-agent", "Bose_Lisa/27.0.6")
+            .header("Authorization", "Bearer mockToken123")
+            .when()
+            .get("/streaming/software/update/account/6921042")
+            .then()
+            .statusCode(200)
+            .contentType("application/vnd.bose.streaming-v1.2+xml")
+            .extract()
+            .body()
+            .asString();
 
     assertThat(
         actualXml,
@@ -795,45 +811,49 @@ class UeberboeseExperimentalControllerTest extends TestBase {
 
   @Test
   void updateDevice_shouldUpdateDeviceNameSuccessfully() {
-    var existingDevice = Device.builder()
-        .deviceId("587A628A4042")
-        .name("Old Name")
-        .ipAddress("192.168.178.33")
-        .firstSeen(OffsetDateTime.parse("2018-08-11T08:55:25.000+00:00"))
-        .lastSeen(OffsetDateTime.parse("2025-01-01T10:00:00.000+00:00"))
-        .version(null)
-        .build();
+    var existingDevice =
+        Device.builder()
+            .deviceId("587A628A4042")
+            .name("Old Name")
+            .ipAddress("192.168.178.33")
+            .firstSeen(OffsetDateTime.parse("2018-08-11T08:55:25.000+00:00"))
+            .lastSeen(OffsetDateTime.parse("2025-01-01T10:00:00.000+00:00"))
+            .version(null)
+            .build();
     deviceRepository.save(existingDevice);
 
     // language=XML
-    String requestXml = """
+    String requestXml =
+        """
         <?xml version="1.0" encoding="UTF-8" ?>
         <device deviceid="587A628A4042">
           <name>Test Device</name>
           <macaddress>587A628A4042</macaddress>
         </device>""";
 
-    String actualXml = given()
-        .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
-        .header("User-agent", "Bose_Lisa/27.0.6")
-        .header("Authorization", "Bearer mockToken123")
-        .header("Content-type", "application/vnd.bose.streaming-v1.2+xml")
-        .body(requestXml)
-        .when()
-        .put("/streaming/account/6921042/device/587A628A4042")
-        .then()
-        .statusCode(200)
-        .contentType("application/vnd.bose.streaming-v1.2+xml")
-        .header(
-            "Location",
-            containsString("http://streamingqa.bose.com/account/6921042/device/587A628A4042"))
-        .header("METHOD_NAME", "updateDevice")
-        .extract()
-        .body()
-        .asString();
+    String actualXml =
+        given()
+            .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+            .header("User-agent", "Bose_Lisa/27.0.6")
+            .header("Authorization", "Bearer mockToken123")
+            .header("Content-type", "application/vnd.bose.streaming-v1.2+xml")
+            .body(requestXml)
+            .when()
+            .put("/streaming/account/6921042/device/587A628A4042")
+            .then()
+            .statusCode(200)
+            .contentType("application/vnd.bose.streaming-v1.2+xml")
+            .header(
+                "Location",
+                containsString("http://streamingqa.bose.com/account/6921042/device/587A628A4042"))
+            .header("METHOD_NAME", "updateDevice")
+            .extract()
+            .body()
+            .asString();
 
     // language=XML
-    String expectedXml = """
+    String expectedXml =
+        """
         <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
         <device deviceid="587A628A4042">
           <createdOn>2018-08-11T08:55:25.000+00:00</createdOn>
@@ -858,34 +878,37 @@ class UeberboeseExperimentalControllerTest extends TestBase {
     // No existing device - will trigger the orElseGet branch
 
     // language=XML
-    String requestXml = """
+    String requestXml =
+        """
         <?xml version="1.0" encoding="UTF-8" ?>
         <device deviceid="NEW_DEVICE_123">
           <name>New Device</name>
           <macaddress>NEW_DEVICE_123</macaddress>
         </device>""";
 
-    String actualXml = given()
-        .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
-        .header("User-agent", "Bose_Lisa/27.0.6")
-        .header("Authorization", "Bearer mockToken123")
-        .header("Content-type", "application/vnd.bose.streaming-v1.2+xml")
-        .body(requestXml)
-        .when()
-        .put("/streaming/account/6921042/device/NEW_DEVICE_123")
-        .then()
-        .statusCode(200)
-        .contentType("application/vnd.bose.streaming-v1.2+xml")
-        .header(
-            "Location",
-            containsString("http://streamingqa.bose.com/account/6921042/device/NEW_DEVICE_123"))
-        .header("METHOD_NAME", "updateDevice")
-        .extract()
-        .body()
-        .asString();
+    String actualXml =
+        given()
+            .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+            .header("User-agent", "Bose_Lisa/27.0.6")
+            .header("Authorization", "Bearer mockToken123")
+            .header("Content-type", "application/vnd.bose.streaming-v1.2+xml")
+            .body(requestXml)
+            .when()
+            .put("/streaming/account/6921042/device/NEW_DEVICE_123")
+            .then()
+            .statusCode(200)
+            .contentType("application/vnd.bose.streaming-v1.2+xml")
+            .header(
+                "Location",
+                containsString("http://streamingqa.bose.com/account/6921042/device/NEW_DEVICE_123"))
+            .header("METHOD_NAME", "updateDevice")
+            .extract()
+            .body()
+            .asString();
 
     // language=XML
-    String expectedXml = """
+    String expectedXml =
+        """
         <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
         <device deviceid="NEW_DEVICE_123">
           <createdOn>${xmlunit.isDateTime}</createdOn>
@@ -936,7 +959,8 @@ class UeberboeseExperimentalControllerTest extends TestBase {
   @Test
   void customerSupport_shouldAcceptDeviceDiagnosticData() {
     // language=XML
-    String requestXml = """
+    String requestXml =
+        """
         <?xml version="1.0" encoding="UTF-8" ?>
         <device-data>
           <device id="587A628A4042">
@@ -980,18 +1004,19 @@ class UeberboeseExperimentalControllerTest extends TestBase {
   @Test
   void deletePreset_shouldRemovePresetSuccessfully() {
     // Given - Create a preset first
-    Preset preset = Preset.builder()
-        .accountId("6921042")
-        .deviceId("587A628A4042")
-        .buttonNumber(1)
-        .containerArt("http://example.com/art.png")
-        .contentItemType("stationurl")
-        .location("/v1/playback/station/s12345")
-        .name("Test Station")
-        .sourceId("19989342")
-        .createdOn(OffsetDateTime.now())
-        .updatedOn(OffsetDateTime.now())
-        .build();
+    Preset preset =
+        Preset.builder()
+            .accountId("6921042")
+            .deviceId("587A628A4042")
+            .buttonNumber(1)
+            .containerArt("http://example.com/art.png")
+            .contentItemType("stationurl")
+            .location("/v1/playback/station/s12345")
+            .name("Test Station")
+            .sourceId("19989342")
+            .createdOn(OffsetDateTime.now())
+            .updatedOn(OffsetDateTime.now())
+            .build();
     presetRepository.save(preset);
 
     // When - Delete the preset
@@ -1005,29 +1030,31 @@ class UeberboeseExperimentalControllerTest extends TestBase {
         .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml");
 
     // Then - Verify preset was deleted from database
-    Optional<Preset> deleted = presetRepository.findByAccountIdAndDeviceIdAndButtonNumber("6921042", "587A628A4042", 1);
+    Optional<Preset> deleted =
+        presetRepository.findByAccountIdAndDeviceIdAndButtonNumber("6921042", "587A628A4042", 1);
     assertThat(deleted).isEmpty();
   }
 
   @Test
   void deletePreset_shouldReturn404WhenPresetNotFound() {
     // When - Try to delete non-existent preset
-    String actualXml = given()
-        .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
-        .header("Authorization", "Bearer mockBearerTokenABC123xyz=")
-        .when()
-        .delete("/streaming/account/6921042/device/587A628A4042/preset/5")
-        .then()
-        .statusCode(404)
-        .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
-        .extract()
-        .asString();
+    String actualXml =
+        given()
+            .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+            .header("Authorization", "Bearer mockBearerTokenABC123xyz=")
+            .when()
+            .delete("/streaming/account/6921042/device/587A628A4042/preset/5")
+            .then()
+            .statusCode(404)
+            .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
+            .extract()
+            .asString();
 
     // Then - Verify error response XML
     assertThat(
         actualXml,
         isSimilarTo(
-            """
+                """
                 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
                 <status>
                   <message>Not found</message>
@@ -1042,38 +1069,41 @@ class UeberboeseExperimentalControllerTest extends TestBase {
   void getPreset_shouldReturnPreset() {
     // Given - Create a preset in the database
     var now = OffsetDateTime.now().withNano(0);
-    Preset preset4 = Preset.builder()
-        .accountId("6921042")
-        .deviceId("587A628A4042")
-        .buttonNumber(4)
-        .name("Seasonal Mix")
-        .location("/playback/container/c3BvdGlmeTpwbGF5bGlzdDoyd0JCOGIzUWhDWXd5T0d2dE9id3dI")
-        .sourceId("19989621")
-        .containerArt("https://mosaic.scdn.co/300/mockimageurl")
-        .contentItemType("tracklisturl")
-        .createdOn(OffsetDateTime.parse("2018-11-26T18:47:06.000+00:00"))
-        .updatedOn(OffsetDateTime.parse("2022-11-17T19:35:37.000+00:00"))
-        .build();
+    Preset preset4 =
+        Preset.builder()
+            .accountId("6921042")
+            .deviceId("587A628A4042")
+            .buttonNumber(4)
+            .name("Seasonal Mix")
+            .location("/playback/container/c3BvdGlmeTpwbGF5bGlzdDoyd0JCOGIzUWhDWXd5T0d2dE9id3dI")
+            .sourceId("19989621")
+            .containerArt("https://mosaic.scdn.co/300/mockimageurl")
+            .contentItemType("tracklisturl")
+            .createdOn(OffsetDateTime.parse("2018-11-26T18:47:06.000+00:00"))
+            .updatedOn(OffsetDateTime.parse("2022-11-17T19:35:37.000+00:00"))
+            .build();
     presetRepository.save(preset4);
 
     // When / Then
-    String actualXml = given()
-        .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
-        .header("User-agent", "Bose_Lisa/27.0.6")
-        .header(
-            "Authorization",
-            "Bearer nRBCU6Iaiuu0MV498UmdWZv7Y1/qtwtEhLaERcp5C1jBxCDJjTS21UJItr2xw3RYSx808JkS9pOdUVGgP4FAPDd5wpT8MPVgmKtDjztBxRn1lCq6FH/riDIMW0OD9SyP")
-        .when()
-        .get("/streaming/account/6921042/device/587A628A4042/preset/4")
-        .then()
-        .statusCode(200)
-        .contentType("application/vnd.bose.streaming-v1.2+xml")
-        .extract()
-        .body()
-        .asString();
+    String actualXml =
+        given()
+            .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+            .header("User-agent", "Bose_Lisa/27.0.6")
+            .header(
+                "Authorization",
+                "Bearer nRBCU6Iaiuu0MV498UmdWZv7Y1/qtwtEhLaERcp5C1jBxCDJjTS21UJItr2xw3RYSx808JkS9pOdUVGgP4FAPDd5wpT8MPVgmKtDjztBxRn1lCq6FH/riDIMW0OD9SyP")
+            .when()
+            .get("/streaming/account/6921042/device/587A628A4042/preset/4")
+            .then()
+            .statusCode(200)
+            .contentType("application/vnd.bose.streaming-v1.2+xml")
+            .extract()
+            .body()
+            .asString();
 
     // language=XML
-    String expectedXml = """
+    String expectedXml =
+        """
         <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
         <preset buttonNumber="4">
           <containerArt>https://mosaic.scdn.co/300/mockimageurl</containerArt>
