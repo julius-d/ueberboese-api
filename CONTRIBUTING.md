@@ -14,7 +14,7 @@ After installing mise run `mise i` in the root dir of this project.
 The API the project provides to replace the Bose server is defined in [ueberboese-api.yaml](ueberboese-api.yaml)
 When you have changed that file run `./mvnw clean compile`
 
-When you are done with programming, 
+When you are done with programming,
 execute `./mvnw spotless:apply -o` to reformat the code
 then execute `./mvnw verify` to execute all test and checks.
 
