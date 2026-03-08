@@ -141,6 +141,14 @@ spotty login: root
 Type `root` as username.
 No password is required. 😅
 
+### Alternative
+
+If `telnet 192.168.178.2` does not work, try to connect via
+
+```shell
+ssh -o KexAlgorithms=+diffie-hellman-group1-sha1 -o HostKeyAlgorithms=+ssh-rsa root@192.168.178.2
+```
+
 ## Change the config on the speaker
 
 To have **working internet radio**
