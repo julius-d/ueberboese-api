@@ -4,11 +4,14 @@ title: Advanced setup
 description: Step-by-step guide for advanced setup of Überböse API
 ---
 
+To have **working internet radio**
+and to let the **analytics data** be sent to your Überböse-API server instead of to events.api.bosecm.com, you have to perform the advanced setup described in this guide.
+
 As described [here](https://flarn2006.blogspot.com/2014/09/hacking-bose-soundtouch-and-its-linux.html)
 and [here](https://github.com/deborahgu/soundcork)
 you can get a root shell into your speaker when you plug in a USB stick with an empty file called `remote_services`.
 
-For some people a normal, off the shelf, USB stick (probably formatted with FAT32) worked.
+For some people a normal, off-the-shelf, USB stick (probably formatted with FAT32) worked.
 But my ST-10 did not accept that. I needed an EXT2 formatted USB stick with a master boot record.
 
 I suggest that you first simply try out the USB stick as it is.
@@ -114,7 +117,7 @@ Now it is time to plug in the stick.
 With the SoundTouch 20 it is very easy. Just use the USB-A port.
 
 For the SoundTouch 10, you need an adapter.
-For me an OTG-Adapter for micro-USB, that I got some years ago together with my smartphone, worked.
+For me an OTG adapter for micro-USB, that I got some years ago together with my smartphone, worked.
 
 ## Connect via telnet
 
@@ -156,9 +159,28 @@ stty raw -echo; nc -t 192.168.178.22 23; stty sane
 
 ## Change the config on the speaker
 
-To have **working internet radio**
-and to let the **analytics data** be sent to your Überböse-API server instead of to `events.api.bosecm.com`
-we have to change 2 lines in one file on the device.
+### Automated setup
+
+Once you are connected to the speaker shell, run:
+
+```shell
+curl -fsS http://ueberboese.your-example-host.org:8080/mgmt/init/set-up-this-speaker.sh | sh
+```
+
+Replace `ueberboese.your-example-host.org:8080` with the hostname (and port, if needed) of your Überböse API server.
+
+The script will:
+- Back up any existing `OverrideSdkPrivateCfg.xml`
+- Write a fresh config with all URLs pointing to your server
+- Print a reminder to reboot
+
+No manual substitution is needed — the correct server URL is embedded automatically.
+
+### Manual setup
+
+Instead of using `curl -fsS http://ueberboese.your-example-host.org:8080/mgmt/init/set-up-this-speaker.sh | sh` you can also do the set-up manually:
+
+We only have to change two lines in one file on the device.
 
 ```shell
 cd /var/lib/Bose/PersistenceDataRoot
@@ -208,7 +230,7 @@ And then restart the speaker via
 reboot
 ```
 
-## Advanced setup without `envswitch`
+## Manual advanced setup without `envswitch`
 
 If you did **not** follow the guide step by step and did _not_ execute `envswitch boseurls set <...>`
 before you reached here, that is totally fine.
