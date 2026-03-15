@@ -1402,8 +1402,9 @@ paths:
 
         **art-changed**
         ```json
-        { "type": "art-changed",
-          "data": { "art-status": "SHOW_DEFAULT_IMAGE", "art-uri": "" } }
+        { "type": "art-changed", "data": { "art-status": "SHOW_DEFAULT_IMAGE", "art-uri": "" } }
+        { "type": "art-changed", "data": { "art-status": "IMAGE_PRESENT", "art-uri": "https://example.com/art.jpg" } }
+        { "type": "art-changed", "data": { "art-status": "", "art-uri": "" } }
         ```
 
         **balance-changed**
@@ -1413,27 +1414,108 @@ paths:
         ```
 
         **item-started**
+
+        Spotify track playing:
         ```json
         { "type": "item-started",
           "data": {
             "play-state": "PLAY_STATE", "repeat-state": "REPEAT_OFF", "shuffle-state": "SHUFFLE_OFF",
-            "contentItem": "a+long+base64+string=",
+            "contentItem": "<base64-encoded-ContentItem-xml>",
             "nowPlaying": {
               "source": "SPOTIFY", "sourceAccount": "SpotifyConnectUserName",
-              "playStatus": "PLAY_STATE",
-              "deviceID": "7C3866F83074",
-              "track": { "text": "My track" },
-              "trackID": "spotify:track:0FQRGccac4PQlrgpp0u3Ag",
-              "album": { "text": "My album" },
-              "artist": { "text": "My artist" },
-              "art": { "artImageStatus": "IMAGE_PRESENT", "text": "https://example.org/123" },
+              "playStatus": "PLAY_STATE", "deviceID": "DEVICE_A",
+              "track": { "text": "Kapitel 20: Abenteuer Afrika - Folge 96" },
+              "trackID": "spotify:track:XXXXXXXXXXXXXXXXXXXXXXXX",
+              "album": { "text": "Folge 96: Abenteuer Afrika" },
+              "artist": { "text": "Die drei !!!" },
+              "art": { "artImageStatus": "IMAGE_PRESENT", "text": "https://example.com/art.jpg" },
               "streamTypeField": { "text": "TRACK_ONDEMAND" },
               "time": { "text": "2", "total": "287" },
-              "repeatSetting": { "text": "REPEAT_OFF" },
-              "shuffleSetting": { "text": "SHUFFLE_OFF" },
+              "repeatSetting": { "text": "REPEAT_OFF" }, "shuffleSetting": { "text": "SHUFFLE_OFF" },
               "contentItem": { "source": "SPOTIFY", "type": "DO_NOT_RESUME", "isPresetable": "false",
-                "location": "/playback/container/bas642134",
-                "itemName": { "text": "My album" } }
+                "location": "/playback/container/XXXXXXXXXXXXXXXXXXXXXXXX",
+                "itemName": { "text": "Folge 96: Abenteuer Afrika" } }
+            }
+          }
+        }
+        ```
+
+        Spotify playlist, buffering:
+        ```json
+        { "type": "item-started",
+          "data": {
+            "play-state": "BUFFERING_STATE", "repeat-state": "REPEAT_OFF", "shuffle-state": "SHUFFLE_ON",
+            "contentItem": "<base64-encoded-ContentItem-xml>",
+            "nowPlaying": {
+              "source": "SPOTIFY", "sourceAccount": "spotifyUser123",
+              "playStatus": "BUFFERING_STATE", "deviceID": "DEVICE_A",
+              "track": { "text": "Take My Breath" }, "trackID": "spotify:track:XXXXXXXXXXXXXXXXXXXXXXXX",
+              "album": { "text": "Dawn FM" }, "artist": { "text": "The Weeknd" },
+              "art": { "artImageStatus": "IMAGE_PRESENT", "text": "https://example.com/art.jpg" },
+              "streamTypeField": { "text": "TRACK_ONDEMAND" },
+              "time": { "text": "0", "total": "339" },
+              "repeatSetting": { "text": "REPEAT_OFF" }, "shuffleSetting": { "text": "SHUFFLE_ON" },
+              "contentItem": { "source": "SPOTIFY", "type": "tracklisturl", "isPresetable": "true",
+                "location": "/playback/container/XXXXXXXXXXXXXXXXXXXXXXXX",
+                "itemName": { "text": "My Playlist" } }
+            }
+          }
+        }
+        ```
+
+        Spotify podcast, paused:
+        ```json
+        { "type": "item-started",
+          "data": {
+            "play-state": "PAUSE_STATE", "repeat-state": "REPEAT_OFF", "shuffle-state": "SHUFFLE_OFF",
+            "contentItem": "<base64-encoded-ContentItem-xml>",
+            "nowPlaying": {
+              "source": "SPOTIFY", "sourceAccount": "SpotifyConnectUserName",
+              "playStatus": "PAUSE_STATE", "deviceID": "DEVICE_A",
+              "track": { "text": "Episode Title" }, "trackID": "spotify:episode:XXXXXXXXXXXXXXXXXXXXXXXX",
+              "album": { "text": "My Podcast" }, "artist": { "text": "Podcast Author" },
+              "art": { "artImageStatus": "IMAGE_PRESENT", "text": "https://example.com/art.jpg" },
+              "streamTypeField": { "text": "RADIO_STREAMING" },
+              "time": { "text": "118", "total": "2514" },
+              "repeatSetting": { "text": "REPEAT_OFF" }, "shuffleSetting": { "text": "SHUFFLE_OFF" },
+              "contentItem": { "source": "SPOTIFY", "type": "DO_NOT_RESUME", "isPresetable": "false",
+                "location": "/playback/container/XXXXXXXXXXXXXXXXXXXXXXXX",
+                "itemName": { "text": "My Podcast" } }
+            }
+          }
+        }
+        ```
+
+        Bluetooth connecting:
+        ```json
+        { "type": "item-started",
+          "data": {
+            "play-state": "INVALID_PLAY_STATUS", "repeat-state": "", "shuffle-state": "",
+            "contentItem": "<base64-encoded-ContentItem-xml>",
+            "nowPlaying": {
+              "source": "BLUETOOTH", "sourceAccount": "",
+              "playStatus": "INVALID_PLAY_STATUS", "deviceID": "DEVICE_B",
+              "connectionStatusInfo": { "deviceName": "My Phone", "status": "CONNECTING" },
+              "art": { "artImageStatus": "SHOW_DEFAULT_IMAGE", "text": "" },
+              "contentItem": { "source": "BLUETOOTH", "type": "", "isPresetable": "false",
+                "location": "", "itemName": { "text": "" } }
+            }
+          }
+        }
+        ```
+
+        Unplayable item (STOP_STATE):
+        ```json
+        { "type": "item-started",
+          "data": {
+            "play-state": "STOP_STATE", "repeat-state": "", "shuffle-state": "",
+            "contentItem": "<base64-encoded-ContentItem-xml>",
+            "nowPlaying": {
+              "source": "SPOTIFY", "sourceAccount": "SpotifyConnectUserName",
+              "playStatus": "STOP_STATE", "deviceID": "DEVICE_A",
+              "art": { "artImageStatus": "SHOW_DEFAULT_IMAGE", "text": "" },
+              "contentItem": { "source": "SPOTIFY", "type": "DO_NOT_RESUME", "isPresetable": "false",
+                "location": "Unplayable location string", "itemName": { "text": "" } }
             }
           }
         }
@@ -1447,20 +1529,22 @@ paths:
 
         **masterdevice-changed**
         ```json
-        { "type": "masterdevice-changed",
-          "data": { "masterDeviceId": "123" } }
+        { "type": "masterdevice-changed", "data": { "masterDeviceId": "DEVICE_A" } }
         ```
 
         **play-item**
         ```json
         { "type": "play-item",
-          "data": { "origin": "device", "preset": "none", "contentItem": "a+long+base64+string=" } }
+          "data": { "origin": "device", "preset": "none", "contentItem": "<base64-encoded-ContentItem-xml>" } }
         ```
 
         **play-state-changed**
         ```json
-        { "type": "play-state-changed",
-          "data": { "play-state": "BUFFERING_STATE" } }
+        { "type": "play-state-changed", "data": { "play-state": "BUFFERING_STATE" } }
+        { "type": "play-state-changed", "data": { "play-state": "PLAY_STATE" } }
+        { "type": "play-state-changed", "data": { "play-state": "PAUSE_STATE" } }
+        { "type": "play-state-changed", "data": { "play-state": "STOP_STATE" } }
+        { "type": "play-state-changed", "data": { "play-state": "INVALID_PLAY_STATUS" } }
         ```
 
         **playpause-pressed**
@@ -1471,26 +1555,28 @@ paths:
 
         **power-pressed**
         ```json
-        { "type": "power-pressed",
-          "data": { "buttonId": "POWER", "origin": "console" } }
+        { "type": "power-pressed", "data": { "buttonId": "POWER", "origin": "console" } }
+        { "type": "power-pressed", "data": { "buttonId": "POWER", "origin": "ir-remote" } }
         ```
 
         **preset-pressed**
         ```json
-        { "type": "preset-pressed",
-          "data": { "buttonId": "PRESET_6", "origin": "console" } }
+        { "type": "preset-pressed", "data": { "buttonId": "PRESET_1", "origin": "ir-remote" } }
+        { "type": "preset-pressed", "data": { "buttonId": "PRESET_6", "origin": "console" } }
         ```
 
         **shuffle-state-changed**
         ```json
-        { "type": "shuffle-state-changed",
-          "data": { "shuffle-state": "SHUFFLE_ON" } }
+        { "type": "shuffle-state-changed", "data": { "shuffle-state": "SHUFFLE_ON" } }
+        { "type": "shuffle-state-changed", "data": { "shuffle-state": "SHUFFLE_OFF" } }
         ```
 
         **source-state-changed**
         ```json
-        { "type": "source-state-changed",
-          "data": { "source-state": "SPOTIFY" } }
+        { "type": "source-state-changed", "data": { "source-state": "SPOTIFY" } }
+        { "type": "source-state-changed", "data": { "source-state": "TUNEIN" } }
+        { "type": "source-state-changed", "data": { "source-state": "BLUETOOTH" } }
+        { "type": "source-state-changed", "data": { "source-state": "INVALID_SOURCE" } }
         ```
 
         **system-state-changed**
@@ -1498,23 +1584,31 @@ paths:
         { "type": "system-state-changed",
           "data": { "system-state": "Standby",
             "nowPlaying": { "source": "INVALID_SOURCE", "contentItem": { "source": "INVALID_SOURCE" } } } }
+        { "type": "system-state-changed",
+          "data": { "system-state": "On",
+            "nowPlaying": { "source": "SPOTIFY", "sourceAccount": "spotifyUser123",
+              "playStatus": "BUFFERING_STATE", "deviceID": "DEVICE_A",
+              "contentItem": { "source": "INVALID_SOURCE" } } } }
         ```
 
         **volume-change**
         ```json
         { "type": "volume-change",
           "data": { "startTime": "2026-02-22T19:02:56.852408+00:00", "volume-change": [30] } }
+        { "type": "volume-change",
+          "data": { "startTime": "2026-03-12T19:22:18.861558+00:00", "volume-change": [33, 32, 31, 30, 29, 28, 27, 26, 25, 24] } }
         ```
 
         **zone-state-changed**
         ```json
         { "type": "zone-state-changed",
-          "data": { "masterDeviceId": "123",
+          "data": { "masterDeviceId": "DEVICE_A",
             "roles": [
-              { "deviceId": "123", "role": "MASTER" },
-              { "deviceId": "345", "role": "SLAVE" },
-              { "deviceId": "678", "role": "SLAVE" }
+              { "deviceId": "DEVICE_A", "role": "MASTER" },
+              { "deviceId": "DEVICE_B", "role": "SLAVE" },
+              { "deviceId": "DEVICE_C", "role": "SLAVE" }
             ] } }
+        { "type": "zone-state-changed", "data": { "masterDeviceId": "", "roles": [] } }
         ```
 
       operationId: submitDeviceEvents
