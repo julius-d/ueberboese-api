@@ -1395,6 +1395,128 @@ paths:
         - volume-change
         - zone-state-changed
 
+        The following examples show the `data` shape for each event type
+        (only the varying `events` entry is shown; `envelope` and `payload.deviceInfo`
+        are structurally identical across all events — see the schema for their full structure).
+        Also leaving out the `monoTime` and `time` field. As every event has them.
+
+        **art-changed**
+        ```json
+        { "type": "art-changed",
+          "data": { "art-status": "SHOW_DEFAULT_IMAGE", "art-uri": "" } }
+        ```
+
+        **balance-changed**
+        ```json
+        { "type": "balance-changed",
+          "data": { "balance": 0 } }
+        ```
+
+        **item-started**
+        ```json
+        { "type": "item-started",
+          "data": {
+            "play-state": "PLAY_STATE", "repeat-state": "REPEAT_OFF", "shuffle-state": "SHUFFLE_OFF",
+            "contentItem": "a+long+base64+string=",
+            "nowPlaying": {
+              "source": "SPOTIFY", "sourceAccount": "SpotifyConnectUserName",
+              "playStatus": "PLAY_STATE",
+              "deviceID": "7C3866F83074",
+              "track": { "text": "My track" },
+              "trackID": "spotify:track:0FQRGccac4PQlrgpp0u3Ag",
+              "album": { "text": "My album" },
+              "artist": { "text": "My artist" },
+              "art": { "artImageStatus": "IMAGE_PRESENT", "text": "https://example.org/123" },
+              "streamTypeField": { "text": "TRACK_ONDEMAND" },
+              "time": { "text": "2", "total": "287" },
+              "repeatSetting": { "text": "REPEAT_OFF" },
+              "shuffleSetting": { "text": "SHUFFLE_OFF" },
+              "contentItem": { "source": "SPOTIFY", "type": "DO_NOT_RESUME", "isPresetable": "false",
+                "location": "/playback/container/bas642134",
+                "itemName": { "text": "My album" } }
+            }
+          }
+        }
+        ```
+
+        **language-changed**
+        ```json
+        { "type": "language-changed",
+          "data": { "language": "DISPLAY_LANGUAGE_GERMAN" } }
+        ```
+
+        **masterdevice-changed**
+        ```json
+        { "type": "masterdevice-changed",
+          "data": { "masterDeviceId": "123" } }
+        ```
+
+        **play-item**
+        ```json
+        { "type": "play-item",
+          "data": { "origin": "device", "preset": "none", "contentItem": "a+long+base64+string=" } }
+        ```
+
+        **play-state-changed**
+        ```json
+        { "type": "play-state-changed",
+          "data": { "play-state": "BUFFERING_STATE" } }
+        ```
+
+        **playpause-pressed**
+        ```json
+        { "type": "playpause-pressed",
+          "data": { "buttonId": "PLAY_PAUSE", "origin": "ir-remote" } }
+        ```
+
+        **power-pressed**
+        ```json
+        { "type": "power-pressed",
+          "data": { "buttonId": "POWER", "origin": "console" } }
+        ```
+
+        **preset-pressed**
+        ```json
+        { "type": "preset-pressed",
+          "data": { "buttonId": "PRESET_6", "origin": "console" } }
+        ```
+
+        **shuffle-state-changed**
+        ```json
+        { "type": "shuffle-state-changed",
+          "data": { "shuffle-state": "SHUFFLE_ON" } }
+        ```
+
+        **source-state-changed**
+        ```json
+        { "type": "source-state-changed",
+          "data": { "source-state": "SPOTIFY" } }
+        ```
+
+        **system-state-changed**
+        ```json
+        { "type": "system-state-changed",
+          "data": { "system-state": "Standby",
+            "nowPlaying": { "source": "INVALID_SOURCE", "contentItem": { "source": "INVALID_SOURCE" } } } }
+        ```
+
+        **volume-change**
+        ```json
+        { "type": "volume-change",
+          "data": { "startTime": "2026-02-22T19:02:56.852408+00:00", "volume-change": [30] } }
+        ```
+
+        **zone-state-changed**
+        ```json
+        { "type": "zone-state-changed",
+          "data": { "masterDeviceId": "123",
+            "roles": [
+              { "deviceId": "123", "role": "MASTER" },
+              { "deviceId": "345", "role": "SLAVE" },
+              { "deviceId": "678", "role": "SLAVE" }
+            ] } }
+        ```
+
       operationId: submitDeviceEvents
       tags:
         - events
@@ -1414,28 +1536,6 @@ paths:
           text/json:
             schema:
               $ref: '#/components/schemas/DeviceEventsRequest'
-            example:
-              envelope:
-                monoTime: 94118263
-                payloadProtocolVersion: "3.1"
-                payloadType: "scmudc"
-                protocolVersion: "1.0"
-                time: "2026-01-09T08:02:32.874426+00:00"
-                uniqueId: "587A628A4042"
-              payload:
-                deviceInfo:
-                  boseID: "6921042"
-                  deviceID: "587A628A4042"
-                  deviceType: "SoundTouch 20"
-                  serialNumber: "P123456789101123456789"
-                  softwareVersion: "27.0.6.46330.5043500 epdbuild.trunk.hepdswbld04.2022-08-04T11:20:29"
-                  systemSerialNumber: "069236P81556160AE"
-                events:
-                  - data:
-                      source-state: "SPOTIFY"
-                    monoTime: 94118263
-                    time: "2026-01-09T08:02:32.873379+00:00"
-                    type: "source-state-changed"
       responses:
         '200':
           description: Successfully received device events
