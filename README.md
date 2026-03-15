@@ -59,14 +59,19 @@ grep -h "event: " event-requests*.log 2>/dev/null | sed 's/.*event[^:]*: //' | j
 ```
 This shows something like
 ```
-     96 play-state-changed
-     32 item-started
-     32 art-changed
-      7 zone-state-changed
-      6 system-state-changed
-      5 volume-change
-      3 source-state-changed
-      3 play-item
-      1 preset-pressed
-      1 power-pressed
+   1541 play-state-changed
+    484 item-started
+    386 art-changed
+     96 system-state-changed
+     59 source-state-changed
+     58 volume-change
+     37 play-item
+     24 zone-state-changed
+     23 preset-pressed
+     14 power-pressed
+     10 balance-changed
+      6 shuffle-state-changed
+      5 masterdevice-changed
+      5 language-changed
+      4 playpause-pressed
 ```

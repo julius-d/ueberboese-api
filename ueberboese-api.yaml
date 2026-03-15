@@ -1378,8 +1378,10 @@ paths:
         Every submitted event has a `type` field. Types seen in the wild include:
 
         - art-changed
+        - balance-changed
         - favorite-changed
         - item-started
+        - language-changed
         - masterdevice-changed
         - play-item
         - play-state-changed
@@ -1391,6 +1393,7 @@ paths:
         - source-state-changed
         - system-state-changed
         - volume-change
+        - zone-state-changed
 
       operationId: submitDeviceEvents
       tags:
