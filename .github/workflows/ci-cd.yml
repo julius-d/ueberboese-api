@@ -74,16 +74,22 @@ jobs:
         path: target/surefire-reports/
 
   build-and-push-docker:
-    name: Build & Push Docker Image
+    name: Build & Push Docker Image (${{ matrix.arch }})
     needs: [version, test]
-    runs-on: ubuntu-latest
     if: github.event_name != 'pull_request'
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+
+    runs-on: ${{ matrix.runner }}
 
     permissions:
       contents: read
       packages: write
-      id-token: write  # Required for attestation signing
-      attestations: write  # Required for attestation publishing
 
     steps:
     - uses: actions/checkout@v4
@@ -95,14 +101,6 @@ jobs:
         distribution: 'temurin'
         cache: maven
 
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v3
-      with:
-        platforms: linux/amd64,linux/arm64
-
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-
     - name: Log in to Container Registry
       uses: docker/login-action@v3
       with:
@@ -110,33 +108,41 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Build AMD64 Docker image
+    - name: Build and push Docker image
       env:
         VERSION: ${{ needs.version.outputs.version || '0.0.0' }}
       run: |
         IMAGE_BASE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
-        # Build AMD64 Docker image first (most common deployment target)
-        mvn -B spring-boot:build-image -DskipTests -Drevision=$VERSION \
-          -Dspring-boot.build-image.imagePlatform=linux/amd64
-        # Tag the locally built image for the registry
-        docker tag ueberboese-api:$VERSION ${IMAGE_BASE}:${VERSION}-amd64
-        # Push AMD64 image immediately
-        docker push ${IMAGE_BASE}:${VERSION}-amd64
+        mvn -B spring-boot:build-image -DskipTests -Drevision=$VERSION
+        docker tag ueberboese-api:$VERSION ${IMAGE_BASE}:${VERSION}-${{ matrix.arch }}
+        docker push ${IMAGE_BASE}:${VERSION}-${{ matrix.arch }}
 
-    - name: Build ARM64 Docker image
-      env:
-        VERSION: ${{ needs.version.outputs.version || '0.0.0' }}
-      run: |
-        IMAGE_BASE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
-        # Clean to remove AMD64 buildpack layers before ARM64 build
-        mvn -B clean
-        mvn -B spring-boot:build-image -DskipTests -Drevision=$VERSION \
-          -Dspring-boot.build-image.imagePlatform=linux/arm64
-        # Tag the locally built image for the registry
-        docker tag ueberboese-api:$VERSION ${IMAGE_BASE}:${VERSION}-arm64
-        # Push ARM64 image immediately
-        docker push ${IMAGE_BASE}:${VERSION}-arm64
+    - name: Upload SBOM artifact
+      uses: actions/upload-artifact@v4
+      if: matrix.arch == 'amd64'
+      with:
+        name: sbom
+        path: target/classes/META-INF/sbom/application.cdx.json
 
+  merge-and-attest:
+    name: Merge Manifests & Attest
+    needs: [version, build-and-push-docker]
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+
+    permissions:
+      contents: read
+      packages: write
+      id-token: write  # Required for attestation signing
+      attestations: write  # Required for attestation publishing
+
+    steps:
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Create and push multi-architecture manifests
       id: push-image
@@ -171,11 +177,14 @@ jobs:
         VERSION: ${{ needs.version.outputs.version || '0.0.0' }}
       run: |
         IMAGE_BASE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
-        # Get the digest of the multi-arch manifest (not individual images)
-        DIGEST=$(docker manifest inspect ${IMAGE_BASE}:${VERSION} | jq -r '.manifests[0].digest' | cut -d':' -f2)
-        # Alternative: use docker buildx imagetools inspect to get the manifest digest
         MANIFEST_DIGEST=$(docker buildx imagetools inspect ${IMAGE_BASE}:${VERSION} --raw | sha256sum | cut -d' ' -f1)
         echo "digest=sha256:${MANIFEST_DIGEST}" >> $GITHUB_OUTPUT
+
+    - name: Download SBOM artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: sbom
+        path: sbom
 
     - name: Generate provenance attestations
       uses: actions/attest-build-provenance@v1
@@ -189,5 +198,5 @@ jobs:
       with:
         subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
         subject-digest: ${{ steps.image-digest.outputs.digest }}
-        sbom-path: target/classes/META-INF/sbom/application.cdx.json
+        sbom-path: sbom/application.cdx.json
         push-to-registry: false
