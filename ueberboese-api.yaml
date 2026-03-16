@@ -1378,10 +1378,13 @@ paths:
         Every submitted event has a `type` field. Types seen in the wild include:
 
         - art-changed
+        - aux-pressed
         - balance-changed
+        - dislike-pressed
         - favorite-changed
         - item-started
         - language-changed
+        - like-pressed
         - masterdevice-changed
         - play-item
         - play-state-changed
@@ -1407,10 +1410,26 @@ paths:
         { "type": "art-changed", "data": { "art-status": "", "art-uri": "" } }
         ```
 
+        **aux-pressed**
+        ```json
+        { "type": "aux-pressed", "data": { "buttonId": "AUX_INPUT", "origin": "ir-remote" } }
+        ```
+
         **balance-changed**
         ```json
         { "type": "balance-changed",
           "data": { "balance": 0 } }
+        ```
+
+        **dislike-pressed**
+        ```json
+        { "type": "dislike-pressed", "data": { "buttonId": "THUMBS_DOWN", "origin": "ir-remote" } }
+        ```
+
+        **favorite-changed**
+        ```json
+        { "type": "favorite-changed", "data": { "favorite-value": "true" } }
+        { "type": "favorite-changed", "data": { "favorite-value": "false" } }
         ```
 
         **item-started**
@@ -1527,6 +1546,11 @@ paths:
           "data": { "language": "DISPLAY_LANGUAGE_GERMAN" } }
         ```
 
+        **like-pressed**
+        ```json
+        { "type": "like-pressed", "data": { "buttonId": "THUMBS_UP", "origin": "ir-remote" } }
+        ```
+
         **masterdevice-changed**
         ```json
         { "type": "masterdevice-changed", "data": { "masterDeviceId": "DEVICE_A" } }
@@ -1569,6 +1593,11 @@ paths:
         ```json
         { "type": "shuffle-state-changed", "data": { "shuffle-state": "SHUFFLE_ON" } }
         { "type": "shuffle-state-changed", "data": { "shuffle-state": "SHUFFLE_OFF" } }
+        ```
+
+        **skip-forward-pressed**
+        ```json
+        { "type": "skip-forward-pressed", "data": { "buttonId": "NEXT_TRACK", "origin": "ir-remote" } }
         ```
 
         **source-state-changed**
