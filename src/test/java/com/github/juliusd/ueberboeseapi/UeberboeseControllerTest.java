@@ -1040,7 +1040,7 @@ class UeberboeseControllerTest extends TestBase {
                 </device>
                 """)
             .when()
-            .post("/streaming/account/6921042/device")
+            .post("/streaming/account/6921042/device/")
             .then()
             .statusCode(201)
             .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
@@ -1105,7 +1105,7 @@ class UeberboeseControllerTest extends TestBase {
             .contentType("application/vnd.bose.streaming-v1.2+xml")
             .body(requestBody)
             .when()
-            .post("/streaming/account/6921042/device")
+            .post("/streaming/account/6921042/device/")
             .then()
             .statusCode(201)
             .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")

@@ -759,7 +759,7 @@ paths:
         '401':
           description: Unauthorized - Invalid or missing Bearer token
 
-  /streaming/account/{accountId}/device:
+  /streaming/account/{accountId}/device/:
     post:
       summary: Register device to account
       description: |
