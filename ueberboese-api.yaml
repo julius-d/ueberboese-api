@@ -423,8 +423,6 @@ paths:
       summary: Update device preset
       description: Updates or creates a preset for a specific button number on the device
       operationId: updatePreset
-      tags:
-        - experimental
       security:
         - BearerAuth: []
       parameters:
@@ -500,8 +498,6 @@ paths:
       summary: Delete device preset
       description: Removes the preset at the specified button number
       operationId: deletePreset
-      tags:
-        - experimental
       security:
         - BearerAuth: []
       parameters:
@@ -546,8 +542,6 @@ paths:
       summary: Get device preset
       description: Retrieves a preset for a specific button number on the device
       operationId: getPreset
-      tags:
-        - experimental
       security:
         - BearerAuth: []
       parameters:
@@ -647,8 +641,6 @@ paths:
       summary: Update device information
       description: Updates device name and metadata
       operationId: updateDevice
-      tags:
-        - experimental
       security:
         - BearerAuth: []
       parameters:
@@ -1311,8 +1303,6 @@ paths:
         Reports device information, firmware version, product details, and network diagnostic data.
         I believe the call is triggered when opening CS pages in the Bose Soundtuch app.
       operationId: customerSupport
-      tags:
-        - experimental
       security:
         - BearerAuth: []
       requestBody:
@@ -1379,8 +1369,6 @@ paths:
         Maybe this are devices that have an old firmware or that were
         associated to a different accountId before.
       operationId: getDeviceBlacklist
-      tags:
-        - experimental
       security:
         - BearerAuth: []
       parameters:

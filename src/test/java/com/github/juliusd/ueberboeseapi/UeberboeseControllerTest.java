@@ -10,6 +10,7 @@ import static org.xmlunit.matchers.CompareMatcher.isSimilarTo;
 
 import com.github.juliusd.ueberboeseapi.preset.Preset;
 import java.time.OffsetDateTime;
+import java.util.Optional;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.xmlunit.placeholder.PlaceholderDifferenceEvaluator;
@@ -1194,5 +1195,469 @@ class UeberboeseControllerTest extends TestBase {
     Assertions.assertThat(device).isPresent();
     Assertions.assertThat(device.get().margeAccountId()).isEqualTo("6921042");
     Assertions.assertThat(device.get().name()).isEqualTo("Kitchen");
+  }
+
+  @Test
+  void updatePreset_shouldUpdatePresetSuccessfully() {
+    // language=XML
+    String requestXml =
+        """
+        <?xml version="1.0" encoding="UTF-8" ?>
+        <preset buttonNumber="2">
+          <sourceid>19989643</sourceid>
+          <name>Radio Mix</name>
+          <username>Radio Mix</username>
+          <location>/playback/container/c3BvdGlmeTpwbGF5bGlzdDoyM1NNZHlPSEE2S2t6SG9QT0o1S1E5</location>
+          <contentItemType>tracklisturl</contentItemType>
+          <containerArt>https://image-cdn-ak.spotifycdn.com/image/ab67706c0000da84993ee084406c4089ad8f4b2a</containerArt>
+        </preset>""";
+
+    String actualXml =
+        given()
+            .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+            .header("User-agent", "Bose_Lisa/27.0.6")
+            .header("Authorization", "Bearer mockToken123")
+            .header("Content-type", "application/vnd.bose.streaming-v1.2+xml")
+            .body(requestXml)
+            .when()
+            .put("/streaming/account/6921042/device/587A628A4042/preset/2")
+            .then()
+            .statusCode(200)
+            .contentType("application/vnd.bose.streaming-v1.2+xml")
+            .header(
+                "Location",
+                containsString(
+                    "http://streamingqa.bose.com/account/6921042/device/587A628A4042/preset/2"))
+            .extract()
+            .body()
+            .asString();
+
+    // language=XML
+    String expectedXml =
+        """
+        <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <preset buttonNumber="2">
+          <containerArt>https://image-cdn-ak.spotifycdn.com/image/ab67706c0000da84993ee084406c4089ad8f4b2a</containerArt>
+          <contentItemType>tracklisturl</contentItemType>
+          <createdOn>${xmlunit.isDateTime}</createdOn>
+          <location>/playback/container/c3BvdGlmeTpwbGF5bGlzdDoyM1NNZHlPSEE2S2t6SG9QT0o1S1E5</location>
+          <name>Radio Mix</name>
+          <source id="19989643" type="Audio">
+            <createdOn>${xmlunit.isDateTime}</createdOn>
+            <credential type="token_version_3">${xmlunit.ignore}</credential>
+            <name>${xmlunit.ignore}</name>
+            <sourceproviderid>15</sourceproviderid>
+            <sourcename>${xmlunit.ignore}</sourcename>
+            <sourceSettings/>
+            <updatedOn>${xmlunit.isDateTime}</updatedOn>
+            <username>${xmlunit.ignore}</username>
+          </source>
+          <updatedOn>${xmlunit.isDateTime}</updatedOn>
+          <username>${xmlunit.ignore}</username>
+        </preset>""";
+
+    org.hamcrest.MatcherAssert.assertThat(
+        actualXml,
+        isSimilarTo(expectedXml)
+            .ignoreWhitespace()
+            .withDifferenceEvaluator(new PlaceholderDifferenceEvaluator()));
+  }
+
+  @Test
+  void updatePreset_shouldSaveToDatabase() {
+    // language=XML
+    String requestXml =
+        """
+        <?xml version="1.0" encoding="UTF-8" ?>
+        <preset buttonNumber="3">
+          <sourceid>19989643</sourceid>
+          <name>My Playlist</name>
+          <username>My Playlist</username>
+          <location>/playback/container/test123</location>
+          <contentItemType>tracklisturl</contentItemType>
+          <containerArt>https://example.org/art123.png</containerArt>
+        </preset>""";
+
+    given()
+        .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+        .header("Content-type", "application/vnd.bose.streaming-v1.2+xml")
+        .body(requestXml)
+        .when()
+        .put("/streaming/account/testaccount/device/testdevice/preset/3")
+        .then()
+        .statusCode(200);
+
+    Optional<Preset> saved =
+        presetRepository.findByAccountIdAndDeviceIdAndButtonNumber("testaccount", "testdevice", 3);
+    Assertions.assertThat(saved).isPresent();
+    Assertions.assertThat(saved.get().name()).isEqualTo("My Playlist");
+    Assertions.assertThat(saved.get().location()).isEqualTo("/playback/container/test123");
+    Assertions.assertThat(saved.get().sourceId()).isEqualTo("19989643");
+    Assertions.assertThat(saved.get().containerArt()).isEqualTo("https://example.org/art123.png");
+  }
+
+  @Test
+  void updatePreset_shouldUpsertExisting() {
+    var now = java.time.OffsetDateTime.now().withNano(0);
+    Preset existing =
+        Preset.builder()
+            .accountId("testaccount2")
+            .deviceId("testdevice2")
+            .buttonNumber(1)
+            .name("Old Name")
+            .location("/old/location")
+            .sourceId("old-source")
+            .containerArt("https://example.org/old.png")
+            .contentItemType("stationurl")
+            .createdOn(now)
+            .updatedOn(now)
+            .build();
+    Preset saved = presetRepository.save(existing);
+    Long existingId = saved.id();
+
+    // language=XML
+    String requestXml =
+        """
+        <?xml version="1.0" encoding="UTF-8" ?>
+        <preset buttonNumber="1">
+          <sourceid>new-source</sourceid>
+          <name>Updated Name</name>
+          <username>Updated Name</username>
+          <location>/new/location</location>
+          <contentItemType>tracklisturl</contentItemType>
+          <containerArt>https://example.org/new.png</containerArt>
+        </preset>""";
+
+    given()
+        .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+        .header("Content-type", "application/vnd.bose.streaming-v1.2+xml")
+        .body(requestXml)
+        .when()
+        .put("/streaming/account/testaccount2/device/testdevice2/preset/1")
+        .then()
+        .statusCode(200);
+
+    Optional<Preset> updated =
+        presetRepository.findByAccountIdAndDeviceIdAndButtonNumber(
+            "testaccount2", "testdevice2", 1);
+    Assertions.assertThat(updated).isPresent();
+    Assertions.assertThat(updated.get().id()).isEqualTo(existingId);
+    Assertions.assertThat(updated.get().name()).isEqualTo("Updated Name");
+    Assertions.assertThat(updated.get().location()).isEqualTo("/new/location");
+    Assertions.assertThat(updated.get().sourceId()).isEqualTo("new-source");
+  }
+
+  @Test
+  void updateDevice_shouldUpdateDeviceNameSuccessfully() {
+    var existingDevice =
+        com.github.juliusd.ueberboeseapi.device.Device.builder()
+            .deviceId("587A628A4042")
+            .name("Old Name")
+            .ipAddress("192.168.178.33")
+            .firstSeen(OffsetDateTime.parse("2018-08-11T08:55:25.000+00:00"))
+            .lastSeen(OffsetDateTime.parse("2025-01-01T10:00:00.000+00:00"))
+            .version(null)
+            .build();
+    deviceRepository.save(existingDevice);
+
+    // language=XML
+    String requestXml =
+        """
+        <?xml version="1.0" encoding="UTF-8" ?>
+        <device deviceid="587A628A4042">
+          <name>Test Device</name>
+          <macaddress>587A628A4042</macaddress>
+        </device>""";
+
+    String actualXml =
+        given()
+            .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+            .header("User-agent", "Bose_Lisa/27.0.6")
+            .header("Authorization", "Bearer mockToken123")
+            .header("Content-type", "application/vnd.bose.streaming-v1.2+xml")
+            .body(requestXml)
+            .when()
+            .put("/streaming/account/6921042/device/587A628A4042")
+            .then()
+            .statusCode(200)
+            .contentType("application/vnd.bose.streaming-v1.2+xml")
+            .header(
+                "Location",
+                containsString("http://streamingqa.bose.com/account/6921042/device/587A628A4042"))
+            .header("METHOD_NAME", "updateDevice")
+            .extract()
+            .body()
+            .asString();
+
+    // language=XML
+    String expectedXml =
+        """
+        <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <device deviceid="587A628A4042">
+          <createdOn>2018-08-11T08:55:25.000+00:00</createdOn>
+          <ipaddress>192.168.178.33</ipaddress>
+          <name>Test Device</name>
+          <updatedOn>${xmlunit.isDateTime}</updatedOn>
+        </device>""";
+
+    org.hamcrest.MatcherAssert.assertThat(
+        actualXml,
+        isSimilarTo(expectedXml)
+            .ignoreWhitespace()
+            .withDifferenceEvaluator(new PlaceholderDifferenceEvaluator()));
+
+    com.github.juliusd.ueberboeseapi.device.Device updatedDevice =
+        deviceRepository.findById("587A628A4042").orElseThrow();
+    Assertions.assertThat(updatedDevice.name()).isEqualTo("Test Device");
+  }
+
+  @Test
+  void updateDevice_shouldCreateNewDeviceWhenNotExists() {
+    // language=XML
+    String requestXml =
+        """
+        <?xml version="1.0" encoding="UTF-8" ?>
+        <device deviceid="NEW_DEVICE_123">
+          <name>New Device</name>
+          <macaddress>NEW_DEVICE_123</macaddress>
+        </device>""";
+
+    String actualXml =
+        given()
+            .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+            .header("User-agent", "Bose_Lisa/27.0.6")
+            .header("Authorization", "Bearer mockToken123")
+            .header("Content-type", "application/vnd.bose.streaming-v1.2+xml")
+            .body(requestXml)
+            .when()
+            .put("/streaming/account/6921042/device/NEW_DEVICE_123")
+            .then()
+            .statusCode(200)
+            .contentType("application/vnd.bose.streaming-v1.2+xml")
+            .header(
+                "Location",
+                containsString("http://streamingqa.bose.com/account/6921042/device/NEW_DEVICE_123"))
+            .header("METHOD_NAME", "updateDevice")
+            .extract()
+            .body()
+            .asString();
+
+    // language=XML
+    String expectedXml =
+        """
+        <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <device deviceid="NEW_DEVICE_123">
+          <createdOn>${xmlunit.isDateTime}</createdOn>
+          <ipaddress>${xmlunit.ignore}</ipaddress>
+          <name>New Device</name>
+          <updatedOn>${xmlunit.isDateTime}</updatedOn>
+        </device>""";
+
+    assertThat(
+        actualXml,
+        isSimilarTo(expectedXml)
+            .ignoreWhitespace()
+            .withDifferenceEvaluator(new PlaceholderDifferenceEvaluator()));
+
+    com.github.juliusd.ueberboeseapi.device.Device newDevice =
+        deviceRepository.findById("NEW_DEVICE_123").orElseThrow();
+    Assertions.assertThat(newDevice.name()).isEqualTo("New Device");
+    Assertions.assertThat(newDevice.ipAddress()).isNull();
+  }
+
+  @Test
+  void customerSupport_shouldAcceptDeviceDiagnosticData() {
+    // language=XML
+    String requestXml =
+        """
+        <?xml version="1.0" encoding="UTF-8" ?>
+        <device-data>
+          <device id="587A628A4042">
+            <serialnumber>P123456789101123456789</serialnumber>
+            <firmware-version>27.0.6.46330.5043500 epdbuild.trunk.hepdswbld04.2022-08-04T11:20:29</firmware-version>
+            <product product_code="SoundTouch 10 sm2" type="5">
+              <serialnumber>069236P81556160AE</serialnumber>
+            </product>
+          </device>
+          <diagnostic-data>
+            <device-landscape>
+              <rssi>Good</rssi>
+              <gateway-ip-address>192.168.1.1</gateway-ip-address>
+              <macaddresses>
+                <macaddress>587A628A4042</macaddress>
+                <macaddress>40BD32BAB0EB</macaddress>
+              </macaddresses>
+              <ip-address>192.168.1.100</ip-address>
+              <network-connection-type>Wireless</network-connection-type>
+            </device-landscape>
+            <network-landscape>
+              <network-data xmlns="http://www.Bose.com/Schemas/2012-12/NetworkMonitor/"/>
+            </network-landscape>
+          </diagnostic-data>
+        </device-data>
+        """;
+
+    given()
+        .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+        .header("User-agent", "Bose_Lisa/27.0.6")
+        .header("Authorization", "Bearer mockToken123")
+        .header("Content-type", "application/vnd.bose.streaming-v1.2+xml")
+        .body(requestXml)
+        .when()
+        .post("/streaming/support/customersupport")
+        .then()
+        .statusCode(200)
+        .contentType("application/vnd.bose.streaming-v1.2+xml");
+  }
+
+  @Test
+  void deletePreset_shouldRemovePresetSuccessfully() {
+    Preset preset =
+        Preset.builder()
+            .accountId("6921042")
+            .deviceId("587A628A4042")
+            .buttonNumber(1)
+            .containerArt("http://example.com/art.png")
+            .contentItemType("stationurl")
+            .location("/v1/playback/station/s12345")
+            .name("Test Station")
+            .sourceId("19989342")
+            .createdOn(OffsetDateTime.now())
+            .updatedOn(OffsetDateTime.now())
+            .build();
+    presetRepository.save(preset);
+
+    given()
+        .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+        .header("Authorization", "Bearer mockBearerTokenABC123xyz=")
+        .when()
+        .delete("/streaming/account/6921042/device/587A628A4042/preset/1")
+        .then()
+        .statusCode(200)
+        .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml");
+
+    Optional<Preset> deleted =
+        presetRepository.findByAccountIdAndDeviceIdAndButtonNumber("6921042", "587A628A4042", 1);
+    Assertions.assertThat(deleted).isEmpty();
+  }
+
+  @Test
+  void deletePreset_shouldReturn404WhenPresetNotFound() {
+    String actualXml =
+        given()
+            .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+            .header("Authorization", "Bearer mockBearerTokenABC123xyz=")
+            .when()
+            .delete("/streaming/account/6921042/device/587A628A4042/preset/5")
+            .then()
+            .statusCode(404)
+            .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
+            .extract()
+            .asString();
+
+    assertThat(
+        actualXml,
+        isSimilarTo(
+                """
+                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                <status>
+                  <message>Not found</message>
+                  <status-code>404</status-code>
+                </status>
+                """)
+            .ignoreWhitespace()
+            .withDifferenceEvaluator(new PlaceholderDifferenceEvaluator()));
+  }
+
+  @Test
+  void getPreset_shouldReturnPreset() {
+    var now = OffsetDateTime.now().withNano(0);
+    Preset preset4 =
+        Preset.builder()
+            .accountId("6921042")
+            .deviceId("587A628A4042")
+            .buttonNumber(4)
+            .name("Seasonal Mix")
+            .location("/playback/container/c3BvdGlmeTpwbGF5bGlzdDoyd0JCOGIzUWhDWXd5T0d2dE9id3dI")
+            .sourceId("19989621")
+            .containerArt("https://mosaic.scdn.co/300/mockimageurl")
+            .contentItemType("tracklisturl")
+            .createdOn(OffsetDateTime.parse("2018-11-26T18:47:06.000+00:00"))
+            .updatedOn(OffsetDateTime.parse("2022-11-17T19:35:37.000+00:00"))
+            .build();
+    presetRepository.save(preset4);
+
+    String actualXml =
+        given()
+            .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+            .header("User-agent", "Bose_Lisa/27.0.6")
+            .header(
+                "Authorization",
+                "Bearer nRBCU6Iaiuu0MV498UmdWZv7Y1/qtwtEhLaERcp5C1jBxCDJjTS21UJItr2xw3RYSx808JkS9pOdUVGgP4FAPDd5wpT8MPVgmKtDjztBxRn1lCq6FH/riDIMW0OD9SyP")
+            .when()
+            .get("/streaming/account/6921042/device/587A628A4042/preset/4")
+            .then()
+            .statusCode(200)
+            .contentType("application/vnd.bose.streaming-v1.2+xml")
+            .extract()
+            .body()
+            .asString();
+
+    // language=XML
+    String expectedXml =
+        """
+        <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <preset buttonNumber="4">
+          <containerArt>https://mosaic.scdn.co/300/mockimageurl</containerArt>
+          <contentItemType>tracklisturl</contentItemType>
+          <createdOn>2018-11-26T18:47:06.000+00:00</createdOn>
+          <location>/playback/container/c3BvdGlmeTpwbGF5bGlzdDoyd0JCOGIzUWhDWXd5T0d2dE9id3dI</location>
+          <name>Seasonal Mix</name>
+          <source id="19989621" type="Audio">
+            <createdOn>2018-08-11T09:52:31.000+00:00</createdOn>
+            <credential type="token_version_3">mockToken789xyz=</credential>
+            <name>mockuser789xyz</name>
+            <sourceproviderid>15</sourceproviderid>
+            <sourcename>user@example.com</sourcename>
+            <sourceSettings/>
+            <updatedOn>2018-11-26T18:42:27.000+00:00</updatedOn>
+            <username>mockuser789xyz</username>
+          </source>
+          <updatedOn>2022-11-17T19:35:37.000+00:00</updatedOn>
+          <username>mockuser789xyz</username>
+        </preset>""";
+
+    assertThat(
+        actualXml,
+        isSimilarTo(expectedXml)
+            .ignoreWhitespace()
+            .withDifferenceEvaluator(new PlaceholderDifferenceEvaluator()));
+  }
+
+  @Test
+  void getPreset_shouldReturn404WhenNotFound() {
+    given()
+        .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+        .header("User-agent", "Bose_Lisa/27.0.6")
+        .header("Authorization", "Bearer test-token")
+        .when()
+        .get("/streaming/account/6921042/device/587A628A4042/preset/9")
+        .then()
+        .statusCode(404)
+        .contentType("application/vnd.bose.streaming-v1.2+xml")
+        .body("status.message", equalTo("Not found"))
+        .body("status.'status-code'", equalTo("404"));
+  }
+
+  @Test
+  void getDeviceBlacklist_shouldReturn404() {
+    given()
+        .header("Accept", "text/xml")
+        .header("User-Agent", "Bose_Lisa/27.0.6")
+        .header("Authorization", "Bearer mockToken123")
+        .when()
+        .get("/v1/blacklist/587A628A4042")
+        .then()
+        .statusCode(404);
   }
 }

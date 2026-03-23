@@ -1,15 +1,20 @@
 package com.github.juliusd.ueberboeseapi;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.github.juliusd.ueberboeseapi.device.Device;
+import com.github.juliusd.ueberboeseapi.device.DeviceRepository;
 import com.github.juliusd.ueberboeseapi.device.DeviceService;
 import com.github.juliusd.ueberboeseapi.generated.DefaultApi;
 import com.github.juliusd.ueberboeseapi.generated.dtos.CredentialApiDto;
+import com.github.juliusd.ueberboeseapi.generated.dtos.CustomerSupportRequestApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.DeviceUpdateRequestApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.DeviceUpdateResponseApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.ErrorResponseApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.FullAccountResponseApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.PowerOnRequestApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.PresetApiDto;
+import com.github.juliusd.ueberboeseapi.generated.dtos.PresetUpdateRequestApiDto;
+import com.github.juliusd.ueberboeseapi.generated.dtos.PresetUpdateResponseApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.PresetsContainerApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.RecentItemApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.RecentItemRequestApiDto;
@@ -53,6 +58,7 @@ public class UeberboeseController implements DefaultApi {
   private final PresetService presetService;
   private final PresetMapper presetMapper;
   private final DeviceService deviceService;
+  private final DeviceRepository deviceRepository;
 
   @Autowired private HttpServletRequest request;
 
@@ -554,5 +560,198 @@ public class UeberboeseController implements DefaultApi {
         .header("Credentials", credentials)
         .header("METHOD_NAME", "addDevice")
         .body(response);
+  }
+
+  @Override
+  public ResponseEntity<PresetUpdateResponseApiDto> updatePreset(
+      String accountId,
+      String deviceId,
+      Integer buttonNumber,
+      PresetUpdateRequestApiDto presetUpdateRequestApiDto) {
+
+    log.info("Updating preset {} for account {} and device {}", buttonNumber, accountId, deviceId);
+
+    Preset preset =
+        Preset.builder()
+            .accountId(accountId)
+            .deviceId(deviceId)
+            .buttonNumber(presetUpdateRequestApiDto.getButtonNumber())
+            .containerArt(presetUpdateRequestApiDto.getContainerArt())
+            .contentItemType(presetUpdateRequestApiDto.getContentItemType())
+            .location(presetUpdateRequestApiDto.getLocation())
+            .name(presetUpdateRequestApiDto.getName())
+            .sourceId(presetUpdateRequestApiDto.getSourceid())
+            .build();
+
+    Preset savedPreset = presetService.savePreset(preset);
+
+    SourceApiDto source = getSourceFromAccount(accountId, presetUpdateRequestApiDto.getSourceid());
+
+    PresetUpdateResponseApiDto response = new PresetUpdateResponseApiDto();
+    response.setButtonNumber(savedPreset.buttonNumber());
+    response.setContainerArt(savedPreset.containerArt());
+    response.setContentItemType(savedPreset.contentItemType());
+    response.setCreatedOn(savedPreset.createdOn());
+    response.setLocation(savedPreset.location());
+    response.setName(savedPreset.name());
+    response.setSource(source);
+    response.setUpdatedOn(savedPreset.updatedOn());
+    response.setUsername(source.getUsername() != null ? source.getUsername() : "");
+
+    return ResponseEntity.ok()
+        .header(
+            "Location",
+            "http://streamingqa.bose.com/account/%s/device/%s/preset/%d"
+                .formatted(accountId, deviceId, buttonNumber))
+        .body(response);
+  }
+
+  @Override
+  public ResponseEntity<Void> deletePreset(
+      String accountId, String deviceId, Integer buttonNumber) {
+    log.info("Deleting preset {} for account {} and device {}", buttonNumber, accountId, deviceId);
+
+    boolean deleted = presetService.deletePreset(accountId, deviceId, buttonNumber);
+
+    if (deleted) {
+      return ResponseEntity.ok()
+          .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
+          .build();
+    } else {
+      ErrorResponseApiDto errorResponse = new ErrorResponseApiDto();
+      errorResponse.setMessage("Not found");
+      errorResponse.setStatusCode("404");
+
+      return (ResponseEntity<Void>)
+          (ResponseEntity<?>)
+              ResponseEntity.status(404)
+                  .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
+                  .body(errorResponse);
+    }
+  }
+
+  @Override
+  public ResponseEntity<PresetUpdateResponseApiDto> getPreset(
+      String accountId, String deviceId, Integer buttonNumber) {
+
+    log.info("Getting preset {} for account {} and device {}", buttonNumber, accountId, deviceId);
+
+    var presetOpt = presetService.getPreset(accountId, deviceId, buttonNumber);
+
+    if (presetOpt.isEmpty()) {
+      log.warn(
+          "Preset not found for button {} on device {} in account {}",
+          buttonNumber,
+          deviceId,
+          accountId);
+
+      ErrorResponseApiDto errorResponse = new ErrorResponseApiDto();
+      errorResponse.setMessage("Not found");
+      errorResponse.setStatusCode("404");
+
+      return (ResponseEntity<PresetUpdateResponseApiDto>)
+          (ResponseEntity<?>)
+              ResponseEntity.status(404)
+                  .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
+                  .body(errorResponse);
+    }
+
+    Preset preset = presetOpt.get();
+
+    SourceApiDto source = getSourceFromAccount(accountId, preset.sourceId());
+
+    PresetUpdateResponseApiDto response = new PresetUpdateResponseApiDto();
+    response.setButtonNumber(preset.buttonNumber());
+    response.setContainerArt(preset.containerArt());
+    response.setContentItemType(preset.contentItemType());
+    response.setCreatedOn(preset.createdOn());
+    response.setLocation(preset.location());
+    response.setName(preset.name());
+    response.setSource(source);
+    response.setUpdatedOn(preset.updatedOn());
+    response.setUsername(source.getUsername() != null ? source.getUsername() : "");
+
+    return ResponseEntity.ok()
+        .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
+        .body(response);
+  }
+
+  @Override
+  public ResponseEntity<DeviceUpdateResponseApiDto> updateDevice(
+      String accountId, String deviceId, DeviceUpdateRequestApiDto deviceUpdateRequestApiDto) {
+    log.info("Updating device {} for account {}", deviceId, accountId);
+
+    var now = OffsetDateTime.now().withNano(0);
+    Device device =
+        deviceRepository
+            .findById(deviceId)
+            .map(
+                existingDevice ->
+                    existingDevice.toBuilder()
+                        .name(deviceUpdateRequestApiDto.getName())
+                        .updatedOn(now)
+                        .build())
+            .orElseGet(
+                () ->
+                    Device.builder()
+                        .deviceId(deviceId)
+                        .margeAccountId(accountId)
+                        .name(deviceUpdateRequestApiDto.getName())
+                        .ipAddress(null)
+                        .firstSeen(now)
+                        .lastSeen(now)
+                        .updatedOn(now)
+                        .version(null)
+                        .build());
+
+    device = deviceRepository.save(device);
+
+    DeviceUpdateResponseApiDto response = new DeviceUpdateResponseApiDto();
+    response.setDeviceid(device.deviceId());
+    response.setCreatedOn(device.firstSeen());
+    response.setIpaddress(device.ipAddress());
+    response.setName(device.name());
+    response.setUpdatedOn(device.updatedOn());
+
+    return ResponseEntity.ok()
+        .header(
+            "Location",
+            "http://streamingqa.bose.com/account/%s/device/%s".formatted(accountId, deviceId))
+        .header("METHOD_NAME", "updateDevice")
+        .body(response);
+  }
+
+  @Override
+  public ResponseEntity<Void> customerSupport(
+      CustomerSupportRequestApiDto customerSupportRequestApiDto) {
+    log.info("Received customer support data");
+
+    return ResponseEntity.ok()
+        .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
+        .build();
+  }
+
+  @Override
+  public ResponseEntity<Void> getDeviceBlacklist(String deviceId) {
+    log.info("Checking blacklist status for device {}", deviceId);
+    return ResponseEntity.notFound().build();
+  }
+
+  private SourceApiDto getSourceFromAccount(String accountId, String sourceId) {
+    if (accountDataService.hasAccountData(accountId)) {
+      try {
+        FullAccountResponseApiDto accountData = accountDataService.loadFullAccountData(accountId);
+        if (accountData.getSources() != null && accountData.getSources().getSource() != null) {
+          List<SourceApiDto> sources = accountData.getSources().getSource();
+          return sources.stream()
+              .filter(s -> s.getId().equals(sourceId))
+              .findFirst()
+              .orElseGet(() -> createMockSource(sourceId));
+        }
+      } catch (IOException e) {
+        log.warn("Failed to load account data for source lookup: {}", e.getMessage());
+      }
+    }
+    return createMockSource(sourceId);
   }
 }
