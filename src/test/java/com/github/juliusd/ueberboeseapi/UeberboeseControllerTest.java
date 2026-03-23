@@ -2,7 +2,7 @@ package com.github.juliusd.ueberboeseapi;
 
 import static com.github.juliusd.ueberboeseapi.device.Device.*;
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItems;
@@ -11,7 +11,7 @@ import static org.xmlunit.matchers.CompareMatcher.isSimilarTo;
 import com.github.juliusd.ueberboeseapi.preset.Preset;
 import java.time.OffsetDateTime;
 import java.util.Optional;
-import org.assertj.core.api.Assertions;
+import org.hamcrest.MatcherAssert;
 import org.junit.jupiter.api.Test;
 import org.xmlunit.placeholder.PlaceholderDifferenceEvaluator;
 
@@ -297,7 +297,7 @@ class UeberboeseControllerTest extends TestBase {
           <updatedOn>${xmlunit.isDateTime}</updatedOn>
         </recent>""";
 
-    assertThat(
+    MatcherAssert.assertThat(
         actualXml,
         isSimilarTo(expectedXml)
             .ignoreWhitespace()
@@ -374,7 +374,7 @@ class UeberboeseControllerTest extends TestBase {
           <updatedOn>${xmlunit.isDateTime}</updatedOn>
         </recent>""";
 
-    assertThat(
+    MatcherAssert.assertThat(
         actualXml,
         isSimilarTo(expectedXml)
             .ignoreWhitespace()
@@ -454,7 +454,7 @@ class UeberboeseControllerTest extends TestBase {
             .extract()
             .header("Location");
 
-    Assertions.assertThat(firstLocation)
+    assertThat(firstLocation)
         .isNotEqualTo(secondLocation)
         .describedAs("Location headers should contain different IDs for separate requests");
   }
@@ -522,7 +522,7 @@ class UeberboeseControllerTest extends TestBase {
          </recent>
        </recents>""";
 
-    assertThat(
+    MatcherAssert.assertThat(
         actualXml,
         isSimilarTo(expectedXml)
             .ignoreWhitespace()
@@ -666,7 +666,7 @@ class UeberboeseControllerTest extends TestBase {
             .body()
             .asString();
 
-    assertThat(
+    MatcherAssert.assertThat(
         actualXml,
         isSimilarTo(expectedXml)
             .ignoreWhitespace()
@@ -807,7 +807,7 @@ class UeberboeseControllerTest extends TestBase {
           <updatedOn>${xmlunit.isDateTime}</updatedOn>
         </recent>""";
 
-    assertThat(
+    MatcherAssert.assertThat(
         actualXml,
         isSimilarTo(expectedXml)
             .ignoreWhitespace()
@@ -954,8 +954,8 @@ class UeberboeseControllerTest extends TestBase {
 
     // Then: Verify the device's margeAccountId was set to UN_PAIRED
     var updatedDevice = deviceRepository.findById("587A628A4042");
-    Assertions.assertThat(updatedDevice).isPresent();
-    Assertions.assertThat(updatedDevice.get().margeAccountId()).isEqualTo("UN_PAIRED");
+    assertThat(updatedDevice).isPresent();
+    assertThat(updatedDevice.get().margeAccountId()).isEqualTo("UN_PAIRED");
   }
 
   @Test
@@ -971,7 +971,7 @@ class UeberboeseControllerTest extends TestBase {
             .extract()
             .asString();
 
-    assertThat(
+    MatcherAssert.assertThat(
         actualXml,
         isSimilarTo(
                 """
@@ -1009,7 +1009,7 @@ class UeberboeseControllerTest extends TestBase {
             .extract()
             .asString();
 
-    assertThat(
+    MatcherAssert.assertThat(
         actualXml,
         isSimilarTo(
                 """
@@ -1022,8 +1022,8 @@ class UeberboeseControllerTest extends TestBase {
             .ignoreWhitespace()
             .withDifferenceEvaluator(new PlaceholderDifferenceEvaluator()));
     var untouchedDevice = deviceRepository.findById("587A628A4042");
-    Assertions.assertThat(untouchedDevice).isPresent();
-    Assertions.assertThat(untouchedDevice.get().margeAccountId()).isEqualTo("UN_PAIRED");
+    assertThat(untouchedDevice).isPresent();
+    assertThat(untouchedDevice.get().margeAccountId()).isEqualTo("UN_PAIRED");
   }
 
   @Test
@@ -1051,7 +1051,7 @@ class UeberboeseControllerTest extends TestBase {
             .extract()
             .asString();
 
-    assertThat(
+    MatcherAssert.assertThat(
         actualXml,
         isSimilarTo(
                 """
@@ -1068,10 +1068,10 @@ class UeberboeseControllerTest extends TestBase {
 
     // Verify device exists in database with correct margeAccountId
     var device = deviceRepository.findById("587A628A4042");
-    Assertions.assertThat(device).isPresent();
-    Assertions.assertThat(device.get().margeAccountId()).isEqualTo("6921042");
-    Assertions.assertThat(device.get().name()).isEqualTo("Kitchen");
-    Assertions.assertThat(device.get().ipAddress()).isEmpty();
+    assertThat(device).isPresent();
+    assertThat(device.get().margeAccountId()).isEqualTo("6921042");
+    assertThat(device.get().name()).isEqualTo("Kitchen");
+    assertThat(device.get().ipAddress()).isEmpty();
   }
 
   @Test
@@ -1184,7 +1184,7 @@ class UeberboeseControllerTest extends TestBase {
         </device>
         """;
 
-    assertThat(
+    MatcherAssert.assertThat(
         actualXml,
         isSimilarTo(expectedXml)
             .ignoreWhitespace()
@@ -1192,9 +1192,9 @@ class UeberboeseControllerTest extends TestBase {
 
     // Verify margeAccountId is updated in database
     var device = deviceRepository.findById("587A628A4042");
-    Assertions.assertThat(device).isPresent();
-    Assertions.assertThat(device.get().margeAccountId()).isEqualTo("6921042");
-    Assertions.assertThat(device.get().name()).isEqualTo("Kitchen");
+    assertThat(device).isPresent();
+    assertThat(device.get().margeAccountId()).isEqualTo("6921042");
+    assertThat(device.get().name()).isEqualTo("Kitchen");
   }
 
   @Test
@@ -1256,7 +1256,7 @@ class UeberboeseControllerTest extends TestBase {
           <username>${xmlunit.ignore}</username>
         </preset>""";
 
-    org.hamcrest.MatcherAssert.assertThat(
+    MatcherAssert.assertThat(
         actualXml,
         isSimilarTo(expectedXml)
             .ignoreWhitespace()
@@ -1289,11 +1289,11 @@ class UeberboeseControllerTest extends TestBase {
 
     Optional<Preset> saved =
         presetRepository.findByAccountIdAndDeviceIdAndButtonNumber("testaccount", "testdevice", 3);
-    Assertions.assertThat(saved).isPresent();
-    Assertions.assertThat(saved.get().name()).isEqualTo("My Playlist");
-    Assertions.assertThat(saved.get().location()).isEqualTo("/playback/container/test123");
-    Assertions.assertThat(saved.get().sourceId()).isEqualTo("19989643");
-    Assertions.assertThat(saved.get().containerArt()).isEqualTo("https://example.org/art123.png");
+    assertThat(saved).isPresent();
+    assertThat(saved.get().name()).isEqualTo("My Playlist");
+    assertThat(saved.get().location()).isEqualTo("/playback/container/test123");
+    assertThat(saved.get().sourceId()).isEqualTo("19989643");
+    assertThat(saved.get().containerArt()).isEqualTo("https://example.org/art123.png");
   }
 
   @Test
@@ -1340,11 +1340,11 @@ class UeberboeseControllerTest extends TestBase {
     Optional<Preset> updated =
         presetRepository.findByAccountIdAndDeviceIdAndButtonNumber(
             "testaccount2", "testdevice2", 1);
-    Assertions.assertThat(updated).isPresent();
-    Assertions.assertThat(updated.get().id()).isEqualTo(existingId);
-    Assertions.assertThat(updated.get().name()).isEqualTo("Updated Name");
-    Assertions.assertThat(updated.get().location()).isEqualTo("/new/location");
-    Assertions.assertThat(updated.get().sourceId()).isEqualTo("new-source");
+    assertThat(updated).isPresent();
+    assertThat(updated.get().id()).isEqualTo(existingId);
+    assertThat(updated.get().name()).isEqualTo("Updated Name");
+    assertThat(updated.get().location()).isEqualTo("/new/location");
+    assertThat(updated.get().sourceId()).isEqualTo("new-source");
   }
 
   @Test
@@ -1400,7 +1400,7 @@ class UeberboeseControllerTest extends TestBase {
           <updatedOn>${xmlunit.isDateTime}</updatedOn>
         </device>""";
 
-    org.hamcrest.MatcherAssert.assertThat(
+    MatcherAssert.assertThat(
         actualXml,
         isSimilarTo(expectedXml)
             .ignoreWhitespace()
@@ -1408,7 +1408,7 @@ class UeberboeseControllerTest extends TestBase {
 
     com.github.juliusd.ueberboeseapi.device.Device updatedDevice =
         deviceRepository.findById("587A628A4042").orElseThrow();
-    Assertions.assertThat(updatedDevice.name()).isEqualTo("Test Device");
+    assertThat(updatedDevice.name()).isEqualTo("Test Device");
   }
 
   @Test
@@ -1453,7 +1453,7 @@ class UeberboeseControllerTest extends TestBase {
           <updatedOn>${xmlunit.isDateTime}</updatedOn>
         </device>""";
 
-    assertThat(
+    MatcherAssert.assertThat(
         actualXml,
         isSimilarTo(expectedXml)
             .ignoreWhitespace()
@@ -1461,8 +1461,8 @@ class UeberboeseControllerTest extends TestBase {
 
     com.github.juliusd.ueberboeseapi.device.Device newDevice =
         deviceRepository.findById("NEW_DEVICE_123").orElseThrow();
-    Assertions.assertThat(newDevice.name()).isEqualTo("New Device");
-    Assertions.assertThat(newDevice.ipAddress()).isNull();
+    assertThat(newDevice.name()).isEqualTo("New Device");
+    assertThat(newDevice.ipAddress()).isNull();
   }
 
   @Test
@@ -1538,7 +1538,7 @@ class UeberboeseControllerTest extends TestBase {
 
     Optional<Preset> deleted =
         presetRepository.findByAccountIdAndDeviceIdAndButtonNumber("6921042", "587A628A4042", 1);
-    Assertions.assertThat(deleted).isEmpty();
+    assertThat(deleted).isEmpty();
   }
 
   @Test
@@ -1555,7 +1555,7 @@ class UeberboeseControllerTest extends TestBase {
             .extract()
             .asString();
 
-    assertThat(
+    MatcherAssert.assertThat(
         actualXml,
         isSimilarTo(
                 """
@@ -1627,7 +1627,7 @@ class UeberboeseControllerTest extends TestBase {
           <username>mockuser789xyz</username>
         </preset>""";
 
-    assertThat(
+    MatcherAssert.assertThat(
         actualXml,
         isSimilarTo(expectedXml)
             .ignoreWhitespace()
