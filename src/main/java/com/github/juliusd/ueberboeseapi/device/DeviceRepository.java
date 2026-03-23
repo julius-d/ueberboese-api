@@ -10,4 +10,7 @@ public interface DeviceRepository extends CrudRepository<Device, String> {
 
   @Query("SELECT * FROM DEVICE ORDER BY LAST_SEEN DESC")
   List<Device> findAllByOrderByLastSeenDesc();
+
+  @Query("SELECT * FROM DEVICE WHERE MARGE_ACCOUNT_ID = :margeAccountId")
+  List<Device> findAllByMargeAccountId(String margeAccountId);
 }

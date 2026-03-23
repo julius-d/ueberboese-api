@@ -1074,6 +1074,62 @@ class UeberboeseControllerTest extends TestBase {
   }
 
   @Test
+  void getFullAccount_shouldIncludeNewlyPairedDevice() {
+    // Given: a device paired to account 6921042 that is NOT in the XML cache
+    var now = OffsetDateTime.parse("2026-03-03T10:16:30+01:00");
+    var newDevice =
+        builder()
+            .deviceId("NEW_DEVICE_001")
+            .name("New Speaker")
+            .ipAddress("192.168.1.50")
+            .margeAccountId("6921042")
+            .firstSeen(now.minusDays(1))
+            .lastSeen(now)
+            .updatedOn(now)
+            .build();
+    deviceRepository.save(newDevice);
+
+    given()
+        .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+        .header("User-agent", "Bose_Lisa/27.0.6")
+        .when()
+        .get("/streaming/account/6921042/full")
+        .then()
+        .statusCode(200)
+        // New device should be present
+        .body("account.devices.device.@deviceid", hasItems("NEW_DEVICE_001"))
+        // Existing devices from the XML cache should still be present
+        .body("account.devices.device.@deviceid", hasItems("123980WER", "42342FF23"));
+  }
+
+  @Test
+  void getFullAccount_shouldNotDuplicateDevicesAlreadyInCache() {
+    // Given: a device whose deviceId already exists in the XML cache (123980WER)
+    var now = OffsetDateTime.now().withNano(0);
+    var existingDevice =
+        builder()
+            .deviceId("123980WER")
+            .name("Foobar DB")
+            .ipAddress("10.0.0.1")
+            .margeAccountId("6921042")
+            .firstSeen(now.minusDays(5))
+            .lastSeen(now)
+            .updatedOn(now)
+            .build();
+    deviceRepository.save(existingDevice);
+
+    given()
+        .header("Accept", "application/vnd.bose.streaming-v1.2+xml")
+        .header("User-agent", "Bose_Lisa/27.0.6")
+        .when()
+        .get("/streaming/account/6921042/full")
+        .then()
+        .statusCode(200)
+        // "123980WER" should appear exactly once
+        .body("account.devices.device.findAll { it.@deviceid == '123980WER' }.size()", equalTo(1));
+  }
+
+  @Test
   void addDevice_existingDevice() {
     // Given: A device already exists in DB with a different account
     var now = OffsetDateTime.now().withNano(0);

@@ -1,7 +1,13 @@
 package com.github.juliusd.ueberboeseapi.service;
 
+import static java.util.stream.Collectors.toUnmodifiableSet;
+
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.github.juliusd.ueberboeseapi.ProxyService;
+import com.github.juliusd.ueberboeseapi.device.Device;
+import com.github.juliusd.ueberboeseapi.device.DeviceRepository;
+import com.github.juliusd.ueberboeseapi.generated.dtos.DeviceApiDto;
+import com.github.juliusd.ueberboeseapi.generated.dtos.DevicesContainerApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.FullAccountResponseApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.PresetApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.PresetsContainerApiDto;
@@ -21,7 +27,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +53,7 @@ public class FullAccountService {
   private final RecentMapper recentMapper;
   private final PresetService presetService;
   private final PresetMapper presetMapper;
+  private final DeviceRepository deviceRepository;
 
   /**
    * Retrieves full account data for the given account ID. First checks the cache, and if not found,
@@ -63,6 +72,7 @@ public class FullAccountService {
       try {
         FullAccountResponseApiDto response = accountDataService.loadFullAccountData(accountId);
         log.info("Successfully loaded account data from cache for accountId: {}", accountId);
+        injectDevicesFromDatabase(response, accountId);
         injectRecentsFromDatabase(response, accountId);
         injectPresetsFromDatabase(response, accountId);
         patch(response);
@@ -106,7 +116,8 @@ public class FullAccountService {
             saveException.getMessage());
       }
 
-      // Inject database recents and presets before patching
+      // Inject database devices, recents and presets before patching
+      injectDevicesFromDatabase(parsedResponse, accountId);
       injectRecentsFromDatabase(parsedResponse, accountId);
       injectPresetsFromDatabase(parsedResponse, accountId);
       // Apply Spotify patches
@@ -122,6 +133,42 @@ public class FullAccountService {
     }
   }
 
+  private void injectDevicesFromDatabase(FullAccountResponseApiDto response, String accountId) {
+    if (response.getDevices() == null) {
+      response.setDevices(new DevicesContainerApiDto());
+    }
+
+    Set<String> existingDeviceIds;
+    if (response.getDevices().getDevice() != null) {
+      existingDeviceIds =
+          response.getDevices().getDevice().stream()
+              .map(DeviceApiDto::getDeviceid)
+              .filter(Objects::nonNull)
+              .collect(toUnmodifiableSet());
+    } else {
+      existingDeviceIds = Set.of();
+    }
+
+    List<Device> dbDevices = deviceRepository.findAllByMargeAccountId(accountId);
+    for (Device device : dbDevices) {
+      if (!existingDeviceIds.contains(device.deviceId())) {
+        var deviceDto = new DeviceApiDto();
+        deviceDto.setDeviceid(device.deviceId());
+        deviceDto.setName(device.name());
+        deviceDto.setIpaddress(device.ipAddress());
+        deviceDto.setCreatedOn(device.firstSeen());
+        deviceDto.setUpdatedOn(device.updatedOn());
+        deviceDto.setPresets(new PresetsContainerApiDto());
+        deviceDto.setRecents(new RecentsContainerApiDto());
+        response.getDevices().addDeviceItem(deviceDto);
+        log.info(
+            "Injected DB-only device {} into full account for accountId: {}",
+            device.deviceId(),
+            accountId);
+      }
+    }
+  }
+
   private void injectRecentsFromDatabase(FullAccountResponseApiDto response, String accountId) {
     if (response.getDevices() == null || response.getDevices().getDevice() == null) {
       return;
@@ -129,8 +176,11 @@ public class FullAccountService {
 
     // Fetch recents from database (shared across all devices)
     List<Recent> recents = recentService.getRecents(accountId);
-    List<RecentItemApiDto> recentDtos =
-        recentMapper.convertToApiDtos(recents, response.getSources().getSource());
+    List<SourceApiDto> sources =
+        (response.getSources() != null && response.getSources().getSource() != null)
+            ? response.getSources().getSource()
+            : List.of();
+    List<RecentItemApiDto> recentDtos = recentMapper.convertToApiDtos(recents, sources);
 
     // Build a map of source ID -> source from the account's sources
     Map<String, SourceApiDto> sourcesById = new HashMap<>();

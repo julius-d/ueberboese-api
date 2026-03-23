@@ -8,6 +8,8 @@ import static org.mockito.Mockito.*;
 
 import com.github.juliusd.ueberboeseapi.ProxyService;
 import com.github.juliusd.ueberboeseapi.XmlMessageConverterConfig;
+import com.github.juliusd.ueberboeseapi.device.Device;
+import com.github.juliusd.ueberboeseapi.device.DeviceRepository;
 import com.github.juliusd.ueberboeseapi.generated.dtos.CredentialApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.DeviceApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.DevicesContainerApiDto;
@@ -51,6 +53,7 @@ class FullAccountServiceTest {
   @Mock private SpotifyAccountService spotifyAccountService;
   @Mock private RecentService recentService;
   @Mock private PresetService presetService;
+  @Mock private DeviceRepository deviceRepository;
   @Mock private HttpServletRequest request;
 
   private FullAccountService fullAccountService;
@@ -70,7 +73,8 @@ class FullAccountServiceTest {
             recentService,
             recentMapper,
             presetService,
-            presetMapper);
+            presetMapper,
+            deviceRepository);
   }
 
   @Test
@@ -82,6 +86,7 @@ class FullAccountServiceTest {
 
     when(accountDataService.hasAccountData(accountId)).thenReturn(true);
     when(accountDataService.loadFullAccountData(accountId)).thenReturn(expectedData);
+    when(deviceRepository.findAllByMargeAccountId(accountId)).thenReturn(List.of());
 
     // When
     Optional<FullAccountResponseApiDto> result =
@@ -131,6 +136,7 @@ class FullAccountServiceTest {
     when(accountDataService.hasAccountData(accountId)).thenReturn(false);
     when(proxyService.forwardRequest(eq(request), any()))
         .thenReturn(ResponseEntity.ok(xmlContent.getBytes()));
+    when(deviceRepository.findAllByMargeAccountId(accountId)).thenReturn(List.of());
 
     // When
     Optional<FullAccountResponseApiDto> result =
@@ -222,6 +228,8 @@ class FullAccountServiceTest {
     when(proxyService.forwardRequest(eq(request), any()))
         .thenReturn(ResponseEntity.ok(xmlContent.getBytes()));
 
+    when(deviceRepository.findAllByMargeAccountId(accountId)).thenReturn(List.of());
+
     // Mock cache save to throw exception
     doThrow(new IOException("Disk full"))
         .when(accountDataService)
@@ -266,6 +274,7 @@ class FullAccountServiceTest {
     // Mock account data service
     when(accountDataService.hasAccountData(accountId)).thenReturn(true);
     when(accountDataService.loadFullAccountData(accountId)).thenReturn(response);
+    when(deviceRepository.findAllByMargeAccountId(accountId)).thenReturn(List.of());
 
     // When
     Optional<FullAccountResponseApiDto> result =
@@ -306,6 +315,7 @@ class FullAccountServiceTest {
     // Mock account data service
     when(accountDataService.hasAccountData(accountId)).thenReturn(true);
     when(accountDataService.loadFullAccountData(accountId)).thenReturn(response);
+    when(deviceRepository.findAllByMargeAccountId(accountId)).thenReturn(List.of());
 
     // When
     Optional<FullAccountResponseApiDto> result =
@@ -341,6 +351,7 @@ class FullAccountServiceTest {
     // Mock account data service
     when(accountDataService.hasAccountData(accountId)).thenReturn(true);
     when(accountDataService.loadFullAccountData(accountId)).thenReturn(response);
+    when(deviceRepository.findAllByMargeAccountId(accountId)).thenReturn(List.of());
 
     // When
     Optional<FullAccountResponseApiDto> result =
@@ -363,6 +374,7 @@ class FullAccountServiceTest {
     when(spotifyAccountService.listAllAccounts()).thenReturn(List.of());
     when(accountDataService.hasAccountData(accountId)).thenReturn(true);
     when(accountDataService.loadFullAccountData(accountId)).thenReturn(response);
+    when(deviceRepository.findAllByMargeAccountId(accountId)).thenReturn(List.of());
 
     // When
     Optional<FullAccountResponseApiDto> result =
@@ -387,6 +399,7 @@ class FullAccountServiceTest {
     when(spotifyAccountService.listAllAccounts()).thenReturn(List.of());
     when(accountDataService.hasAccountData(accountId)).thenReturn(true);
     when(accountDataService.loadFullAccountData(accountId)).thenReturn(response);
+    when(deviceRepository.findAllByMargeAccountId(accountId)).thenReturn(List.of());
 
     // When
     Optional<FullAccountResponseApiDto> result =
@@ -429,6 +442,7 @@ class FullAccountServiceTest {
 
     when(accountDataService.hasAccountData(accountId)).thenReturn(true);
     when(accountDataService.loadFullAccountData(accountId)).thenReturn(response);
+    when(deviceRepository.findAllByMargeAccountId(accountId)).thenReturn(List.of());
 
     // When
     Optional<FullAccountResponseApiDto> result =
@@ -479,6 +493,7 @@ class FullAccountServiceTest {
 
     when(accountDataService.hasAccountData(accountId)).thenReturn(true);
     when(accountDataService.loadFullAccountData(accountId)).thenReturn(response);
+    when(deviceRepository.findAllByMargeAccountId(accountId)).thenReturn(List.of());
 
     // When
     Optional<FullAccountResponseApiDto> result =
@@ -510,6 +525,7 @@ class FullAccountServiceTest {
 
     when(accountDataService.hasAccountData(accountId)).thenReturn(true);
     when(accountDataService.loadFullAccountData(accountId)).thenReturn(response);
+    when(deviceRepository.findAllByMargeAccountId(accountId)).thenReturn(List.of());
 
     // When
     Optional<FullAccountResponseApiDto> result =
@@ -519,6 +535,90 @@ class FullAccountServiceTest {
     assertThat(result).isPresent();
     SourceApiDto spotifySource = result.get().getSources().getSource().getFirst();
     assertThat(spotifySource.getCredential().getValue()).isEqualTo(originalToken);
+  }
+
+  @Test
+  void testInjectDevicesFromDatabase_newDeviceAdded() throws IOException {
+    // Given: account XML with one device, DB has an additional device for the same account
+    String accountId = "test-account-new-device";
+
+    FullAccountResponseApiDto response = new FullAccountResponseApiDto();
+    response.setId(accountId);
+    DevicesContainerApiDto devices = new DevicesContainerApiDto();
+    DeviceApiDto existingDevice = new DeviceApiDto();
+    existingDevice.setDeviceid("EXISTING_DEVICE");
+    devices.addDeviceItem(existingDevice);
+    response.setDevices(devices);
+    response.setSources(new SourcesContainerApiDto());
+
+    var now = OffsetDateTime.now();
+    Device dbDevice =
+        Device.builder()
+            .deviceId("NEW_DEVICE_FROM_DB")
+            .name("New Speaker")
+            .ipAddress("192.168.1.99")
+            .margeAccountId(accountId)
+            .firstSeen(now.minusDays(1))
+            .lastSeen(now)
+            .updatedOn(now)
+            .build();
+
+    when(accountDataService.hasAccountData(accountId)).thenReturn(true);
+    when(accountDataService.loadFullAccountData(accountId)).thenReturn(response);
+    when(deviceRepository.findAllByMargeAccountId(accountId)).thenReturn(List.of(dbDevice));
+    when(spotifyAccountService.listAllAccounts()).thenReturn(List.of());
+
+    // When
+    Optional<FullAccountResponseApiDto> result =
+        fullAccountService.getFullAccount(accountId, request);
+
+    // Then: both devices present
+    assertThat(result).isPresent();
+    var deviceIds =
+        result.get().getDevices().getDevice().stream().map(DeviceApiDto::getDeviceid).toList();
+    assertThat(deviceIds).containsExactlyInAnyOrder("EXISTING_DEVICE", "NEW_DEVICE_FROM_DB");
+  }
+
+  @Test
+  void testInjectDevicesFromDatabase_doesNotDuplicateExistingDevice() throws IOException {
+    // Given: account XML already contains a device that is also in the DB
+    String accountId = "test-account-no-dup";
+
+    FullAccountResponseApiDto response = new FullAccountResponseApiDto();
+    response.setId(accountId);
+    DevicesContainerApiDto devices = new DevicesContainerApiDto();
+    DeviceApiDto existingDevice = new DeviceApiDto();
+    existingDevice.setDeviceid("SHARED_DEVICE");
+    devices.addDeviceItem(existingDevice);
+    response.setDevices(devices);
+    response.setSources(new SourcesContainerApiDto());
+
+    var now = OffsetDateTime.now();
+    Device dbDevice =
+        Device.builder()
+            .deviceId("SHARED_DEVICE")
+            .name("Shared Speaker")
+            .ipAddress("192.168.1.10")
+            .margeAccountId(accountId)
+            .firstSeen(now.minusDays(2))
+            .lastSeen(now)
+            .updatedOn(now)
+            .build();
+
+    when(accountDataService.hasAccountData(accountId)).thenReturn(true);
+    when(accountDataService.loadFullAccountData(accountId)).thenReturn(response);
+    when(deviceRepository.findAllByMargeAccountId(accountId)).thenReturn(List.of(dbDevice));
+    when(spotifyAccountService.listAllAccounts()).thenReturn(List.of());
+
+    // When
+    Optional<FullAccountResponseApiDto> result =
+        fullAccountService.getFullAccount(accountId, request);
+
+    // Then: only one device in the list (no duplication)
+    assertThat(result).isPresent();
+    assertThat(result.get().getDevices().getDevice()).hasSize(1);
+    assertThat(result.get().getDevices().getDevice().getFirst().getDeviceid())
+        .isEqualTo("SHARED_DEVICE");
   }
 
   // Helper methods
@@ -618,6 +718,7 @@ class FullAccountServiceTest {
 
     when(accountDataService.hasAccountData(accountId)).thenReturn(true);
     when(accountDataService.loadFullAccountData(accountId)).thenReturn(fullAccount);
+    when(deviceRepository.findAllByMargeAccountId(accountId)).thenReturn(List.of());
 
     // When
     Optional<FullAccountResponseApiDto> result =
@@ -646,6 +747,7 @@ class FullAccountServiceTest {
     var fullAccount = createFullAccountDto(accountId);
     when(accountDataService.hasAccountData(accountId)).thenReturn(true);
     when(accountDataService.loadFullAccountData(accountId)).thenReturn(fullAccount);
+    when(deviceRepository.findAllByMargeAccountId(accountId)).thenReturn(List.of());
 
     Recent recent =
         Recent.builder()
@@ -764,6 +866,7 @@ class FullAccountServiceTest {
 
     when(accountDataService.hasAccountData(accountId)).thenReturn(true);
     when(accountDataService.loadFullAccountData(accountId)).thenReturn(response);
+    when(deviceRepository.findAllByMargeAccountId(accountId)).thenReturn(List.of());
 
     var recent =
         Recent.builder()
@@ -817,14 +920,16 @@ class FullAccountServiceTest {
     when(spotifyAccountService.listAllAccounts()).thenReturn(List.of());
     when(accountDataService.hasAccountData(accountId)).thenReturn(true);
     when(accountDataService.loadFullAccountData(accountId)).thenReturn(response);
+    when(deviceRepository.findAllByMargeAccountId(accountId)).thenReturn(List.of());
 
     // When
     Optional<FullAccountResponseApiDto> result =
         fullAccountService.getFullAccount(accountId, request);
 
-    // Then - Should not throw exception
+    // Then - Should not throw exception; devices is initialized to an empty container
     assertThat(result).isPresent();
-    assertThat(result.get().getDevices()).isNull();
+    assertThat(result.get().getDevices()).isNotNull();
+    assertThat(result.get().getDevices().getDevice()).isEmpty();
   }
 
   @Test
@@ -843,6 +948,7 @@ class FullAccountServiceTest {
     when(spotifyAccountService.listAllAccounts()).thenReturn(List.of());
     when(accountDataService.hasAccountData(accountId)).thenReturn(true);
     when(accountDataService.loadFullAccountData(accountId)).thenReturn(fullAccount);
+    when(deviceRepository.findAllByMargeAccountId(accountId)).thenReturn(List.of());
 
     // When
     Optional<FullAccountResponseApiDto> result =
