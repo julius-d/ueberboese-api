@@ -246,7 +246,7 @@ With the help of an USB-Stick you can take even more control of your speaker:
 
 ```bash
 # Pull latest image and restart
-docker compose pull && docker compose up -d
+docker compose pull ueberboese-api && docker compose up -d ueberboese-api
 ```
 
 ### Restart the Container
