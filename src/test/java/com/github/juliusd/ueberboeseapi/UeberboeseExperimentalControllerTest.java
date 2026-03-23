@@ -1133,6 +1133,18 @@ class UeberboeseExperimentalControllerTest extends TestBase {
   }
 
   @Test
+  void getDeviceBlacklist_shouldReturn404() {
+    given()
+        .header("Accept", "text/xml")
+        .header("User-Agent", "Bose_Lisa/27.0.6")
+        .header("Authorization", "Bearer mockToken123")
+        .when()
+        .get("/v1/blacklist/587A628A4042")
+        .then()
+        .statusCode(404);
+  }
+
+  @Test
   void getPreset_shouldReturn404WhenNotFound() {
     given()
         .header("Accept", "application/vnd.bose.streaming-v1.2+xml")

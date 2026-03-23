@@ -1369,6 +1369,26 @@ paths:
         '500':
           description: Internal server error
 
+  /v1/blacklist/{deviceId}:
+    get:
+      summary: Get device blacklist status
+      description: >
+        Checks if a device is blacklisted.
+        Seems to always returns 404.
+        This endpoint is called by some devices during startup.
+        Maybe this are devices that have an old firmware or that were
+        associated to a different accountId before.
+      operationId: getDeviceBlacklist
+      tags:
+        - experimental
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/deviceId'
+      responses:
+        '404':
+          description: Device not found in blacklist (expected response)
+
   /v1/scmudc/{deviceId}:
     post:
       summary: Submit device events

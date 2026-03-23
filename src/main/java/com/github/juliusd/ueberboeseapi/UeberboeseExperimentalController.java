@@ -221,6 +221,12 @@ public class UeberboeseExperimentalController implements ExperimentalApi {
   }
 
   @Override
+  public ResponseEntity<Void> getDeviceBlacklist(String deviceId) {
+    log.info("Checking blacklist status for device {}", deviceId);
+    return ResponseEntity.notFound().build();
+  }
+
+  @Override
   public ResponseEntity<Void> deletePreset(
       String accountId, String deviceId, Integer buttonNumber) {
     log.info("Deleting preset {} for account {} and device {}", buttonNumber, accountId, deviceId);
