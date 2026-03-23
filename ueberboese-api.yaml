@@ -1391,6 +1391,7 @@ paths:
         - playpause-pressed
         - power-pressed
         - preset-pressed
+        - presets-changed
         - shuffle-state-changed
         - skip-forward-pressed
         - source-state-changed
@@ -1587,6 +1588,22 @@ paths:
         ```json
         { "type": "preset-pressed", "data": { "buttonId": "PRESET_1", "origin": "ir-remote" } }
         { "type": "preset-pressed", "data": { "buttonId": "PRESET_6", "origin": "console" } }
+        ```
+
+        **presets-changed**
+        ```json
+        { "type": "presets-changed",
+          "data": {
+            "presets": [
+              { "id": "P1", "name": "Preset 1 Name", "contentItem": "<base64-encoded-ContentItem-xml>" },
+              { "id": "P2", "name": "Preset 2 Name", "contentItem": "<base64-encoded-ContentItem-xml>" },
+              { "id": "P3", "name": "Preset 3 Name", "contentItem": "<base64-encoded-ContentItem-xml>" },
+              { "id": "P4", "name": "Preset 4 Name", "contentItem": "<base64-encoded-ContentItem-xml>" },
+              { "id": "P5", "name": "Preset 5 Name", "contentItem": "<base64-encoded-ContentItem-xml>" },
+              { "id": "P6", "name": "Preset 6 Name", "contentItem": "<base64-encoded-ContentItem-xml>" }
+            ]
+          }
+        }
         ```
 
         **shuffle-state-changed**
