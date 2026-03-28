@@ -14,6 +14,7 @@ import com.github.juliusd.ueberboeseapi.generated.dtos.PresetsContainerApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.RecentItemApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.RecentsContainerApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.SourceApiDto;
+import com.github.juliusd.ueberboeseapi.generated.dtos.SourcesContainerApiDto;
 import com.github.juliusd.ueberboeseapi.preset.Preset;
 import com.github.juliusd.ueberboeseapi.preset.PresetMapper;
 import com.github.juliusd.ueberboeseapi.preset.PresetService;
@@ -93,10 +94,15 @@ public class FullAccountService {
     // Check if proxy response is successful
     if (!proxyResponse.getStatusCode().is2xxSuccessful() || proxyResponse.getBody() == null) {
       log.warn(
-          "Proxy request failed for accountId: {}, status: {}",
+          "Proxy request failed for accountId: {}, status: {}, returning minimal account",
           accountId,
           proxyResponse.getStatusCode());
-      return Optional.empty();
+      var minimal = buildMinimalAccount(accountId);
+      injectDevicesFromDatabase(minimal, accountId);
+      injectRecentsFromDatabase(minimal, accountId);
+      injectPresetsFromDatabase(minimal, accountId);
+      patch(minimal);
+      return Optional.of(minimal);
     }
 
     // Try to parse and cache the response
@@ -308,6 +314,17 @@ public class FullAccountService {
     if (patchedCount > 0) {
       log.info("Patched {} Spotify sources with updated credentials and timestamps", patchedCount);
     }
+  }
+
+  private FullAccountResponseApiDto buildMinimalAccount(String accountId) {
+    var response = new FullAccountResponseApiDto();
+    response.setId(accountId);
+    response.setAccountStatus("ACTIVE");
+    response.setMode("global");
+    response.setPreferredLanguage("en");
+    response.setDevices(new DevicesContainerApiDto());
+    response.setSources(new SourcesContainerApiDto());
+    return response;
   }
 
   /**

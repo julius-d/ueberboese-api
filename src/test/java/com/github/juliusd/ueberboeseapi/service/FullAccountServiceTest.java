@@ -20,6 +20,7 @@ import com.github.juliusd.ueberboeseapi.generated.dtos.RecentItemApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.RecentsContainerApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.SourceApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.SourcesContainerApiDto;
+import com.github.juliusd.ueberboeseapi.preset.Preset;
 import com.github.juliusd.ueberboeseapi.preset.PresetMapper;
 import com.github.juliusd.ueberboeseapi.preset.PresetService;
 import com.github.juliusd.ueberboeseapi.recent.Recent;
@@ -151,43 +152,157 @@ class FullAccountServiceTest {
   }
 
   @Test
-  void testGetFullAccount_CacheMiss_ProxyFailure_ReturnsEmpty() throws IOException {
+  void testGetFullAccount_CacheMiss_ProxyFailure_ReturnsMinimalAccount() throws IOException {
     // Given
     String accountId = "test-account-error";
 
     when(accountDataService.hasAccountData(accountId)).thenReturn(false);
     when(proxyService.forwardRequest(eq(request), any()))
         .thenReturn(ResponseEntity.status(HttpStatus.BAD_GATEWAY).build());
+    when(deviceRepository.findAllByMargeAccountId(accountId)).thenReturn(List.of());
+    when(spotifyAccountService.listAllAccounts()).thenReturn(List.of());
 
     // When
     Optional<FullAccountResponseApiDto> result =
         fullAccountService.getFullAccount(accountId, request);
 
-    // Then
-    assertThat(result).isEmpty();
+    // Then - minimal account is returned instead of empty
+    assertThat(result).isPresent();
+    assertThat(result.get().getId()).isEqualTo(accountId);
+    assertThat(result.get().getAccountStatus()).isEqualTo("ACTIVE");
+    assertThat(result.get().getMode()).isEqualTo("global");
+    assertThat(result.get().getPreferredLanguage()).isEqualTo("en");
+    assertThat(result.get().getDevices()).isNotNull();
+    assertThat(result.get().getSources()).isNotNull();
 
     // Verify no attempt to cache was made
     verify(accountDataService, never()).saveFullAccountDataRaw(anyString(), anyString());
+    // Verify inject pipeline still ran
+    verify(deviceRepository).findAllByMargeAccountId(accountId);
   }
 
   @Test
-  void testGetFullAccount_CacheMiss_ProxyReturnsNullBody_ReturnsEmpty() throws IOException {
+  void testGetFullAccount_CacheMiss_ProxyReturnsNullBody_ReturnsMinimalAccount()
+      throws IOException {
     // Given
     String accountId = "test-account-null";
 
     when(accountDataService.hasAccountData(accountId)).thenReturn(false);
     when(proxyService.forwardRequest(eq(request), any()))
         .thenReturn(ResponseEntity.ok().build()); // No body
+    when(deviceRepository.findAllByMargeAccountId(accountId)).thenReturn(List.of());
+    when(spotifyAccountService.listAllAccounts()).thenReturn(List.of());
 
     // When
     Optional<FullAccountResponseApiDto> result =
         fullAccountService.getFullAccount(accountId, request);
 
-    // Then
-    assertThat(result).isEmpty();
+    // Then - minimal account is returned instead of empty
+    assertThat(result).isPresent();
+    assertThat(result.get().getId()).isEqualTo(accountId);
 
     // Verify no attempt to cache was made
     verify(accountDataService, never()).saveFullAccountDataRaw(anyString(), anyString());
+  }
+
+  @Test
+  void testGetFullAccount_CacheMiss_ProxyReturns401_WithDbDevice_ReturnsDeviceInMinimalAccount() {
+    // Given
+    String accountId = "test-account-401";
+    Device dbDevice =
+        Device.builder()
+            .deviceId("DEVICE_FROM_DB")
+            .name("My Speaker")
+            .ipAddress("192.168.1.5")
+            .margeAccountId(accountId)
+            .firstSeen(OffsetDateTime.parse("2025-01-01T10:00:00.000+00:00"))
+            .lastSeen(OffsetDateTime.parse("2026-03-01T08:00:00.000+00:00"))
+            .updatedOn(OffsetDateTime.parse("2026-03-01T08:00:00.000+00:00"))
+            .build();
+
+    when(accountDataService.hasAccountData(accountId)).thenReturn(false);
+    when(proxyService.forwardRequest(eq(request), any()))
+        .thenReturn(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
+    when(deviceRepository.findAllByMargeAccountId(accountId)).thenReturn(List.of(dbDevice));
+    when(spotifyAccountService.listAllAccounts()).thenReturn(List.of());
+
+    // When
+    Optional<FullAccountResponseApiDto> result =
+        fullAccountService.getFullAccount(accountId, request);
+
+    // Then - DB device is present in the minimal account
+    assertThat(result).isPresent();
+    assertThat(result.get().getId()).isEqualTo(accountId);
+    var deviceIds =
+        result.get().getDevices().getDevice().stream().map(DeviceApiDto::getDeviceid).toList();
+    assertThat(deviceIds).containsExactly("DEVICE_FROM_DB");
+  }
+
+  @Test
+  void
+      testGetFullAccount_CacheMiss_ProxyReturns401_WithDbRecentsAndPresets_InjectsIntoMinimalAccount() {
+    // Given
+    String accountId = "test-account-401-recents-presets";
+    String deviceId = "DEVICE_FROM_DB_2";
+    Device dbDevice =
+        Device.builder()
+            .deviceId(deviceId)
+            .name("My Speaker")
+            .ipAddress("192.168.1.5")
+            .margeAccountId(accountId)
+            .firstSeen(OffsetDateTime.parse("2025-01-01T10:00:00.000+00:00"))
+            .lastSeen(OffsetDateTime.parse("2026-03-01T08:00:00.000+00:00"))
+            .updatedOn(OffsetDateTime.parse("2026-03-01T08:00:00.000+00:00"))
+            .build();
+    Recent dbRecent =
+        Recent.builder()
+            .id(1L)
+            .accountId(accountId)
+            .name("My Radio")
+            .location("/v1/playback/station/s12345")
+            .sourceId(SPOTIFY_SOURCE_ID)
+            .contentItemType("stationurl")
+            .lastPlayedAt(OffsetDateTime.parse("2026-02-01T12:00:00.000+00:00"))
+            .createdOn(OffsetDateTime.parse("2026-01-01T10:00:00.000+00:00"))
+            .updatedOn(OffsetDateTime.parse("2026-02-01T12:00:00.000+00:00"))
+            .build();
+    Preset dbPreset =
+        Preset.builder()
+            .id(1L)
+            .accountId(accountId)
+            .deviceId(deviceId)
+            .buttonNumber(1)
+            .name("My Playlist")
+            .location("/playback/container/abc123")
+            .sourceId(SPOTIFY_SOURCE_ID)
+            .containerArt("https://example.org/art.png")
+            .contentItemType("tracklisturl")
+            .createdOn(OffsetDateTime.parse("2026-01-01T10:00:00.000+00:00"))
+            .updatedOn(OffsetDateTime.parse("2026-02-01T12:00:00.000+00:00"))
+            .build();
+
+    when(accountDataService.hasAccountData(accountId)).thenReturn(false);
+    when(proxyService.forwardRequest(eq(request), any()))
+        .thenReturn(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
+    when(deviceRepository.findAllByMargeAccountId(accountId)).thenReturn(List.of(dbDevice));
+    when(recentService.getRecents(accountId)).thenReturn(List.of(dbRecent));
+    when(presetService.getPresets(accountId, deviceId)).thenReturn(List.of(dbPreset));
+    when(spotifyAccountService.listAllAccounts()).thenReturn(List.of());
+
+    // When
+    Optional<FullAccountResponseApiDto> result =
+        fullAccountService.getFullAccount(accountId, request);
+
+    // Then - DB recents and presets are injected into the device in the minimal account
+    assertThat(result).isPresent();
+    var device = result.get().getDevices().getDevice().getFirst();
+    var recents = device.getRecents().getRecent();
+    assertThat(recents).hasSize(1);
+    assertThat(recents.getFirst().getName()).isEqualTo("My Radio");
+    var presets = device.getPresets().getPreset();
+    assertThat(presets).hasSize(1);
+    assertThat(presets.getFirst().getName()).isEqualTo("My Playlist");
+    assertThat(presets.getFirst().getButtonNumber()).isEqualTo(1);
   }
 
   @Test
