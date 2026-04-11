@@ -6,6 +6,7 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.github.juliusd.ueberboeseapi.ProxyService;
 import com.github.juliusd.ueberboeseapi.device.Device;
 import com.github.juliusd.ueberboeseapi.device.DeviceRepository;
+import com.github.juliusd.ueberboeseapi.generated.dtos.AttachedProductApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.DeviceApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.DevicesContainerApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.FullAccountResponseApiDto;
@@ -164,6 +165,14 @@ public class FullAccountService {
         deviceDto.setIpaddress(device.ipAddress());
         deviceDto.setCreatedOn(device.firstSeen());
         deviceDto.setUpdatedOn(device.updatedOn());
+        deviceDto.setFirmwareVersion(device.firmwareVersion());
+        deviceDto.setSerialNumber(device.deviceSerialNumber());
+        if (device.productCode() != null || device.productSerialNumber() != null) {
+          var attachedProduct = new AttachedProductApiDto();
+          attachedProduct.setProductCode(device.productCode());
+          attachedProduct.setSerialnumber(device.productSerialNumber());
+          deviceDto.setAttachedProduct(attachedProduct);
+        }
         deviceDto.setPresets(new PresetsContainerApiDto());
         deviceDto.setRecents(new RecentsContainerApiDto());
         response.getDevices().addDeviceItem(deviceDto);

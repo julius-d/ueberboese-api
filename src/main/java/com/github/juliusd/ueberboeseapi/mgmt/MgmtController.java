@@ -33,7 +33,7 @@ public class MgmtController implements AccountManagementApi, EventManagementApi 
 
     for (DeviceTrackingService.DeviceInfo deviceInfo : deviceTrackingService.getAllDevices()) {
       SpeakerApiDto speaker = new SpeakerApiDto();
-      speaker.setIpAddress(deviceInfo.getIpAddress());
+      speaker.setIpAddress(deviceInfo.ipAddress());
       speakers.add(speaker);
     }
 

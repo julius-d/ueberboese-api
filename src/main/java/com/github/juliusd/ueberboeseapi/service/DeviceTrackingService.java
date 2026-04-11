@@ -3,10 +3,11 @@ package com.github.juliusd.ueberboeseapi.service;
 import com.github.juliusd.ueberboeseapi.device.Device;
 import com.github.juliusd.ueberboeseapi.device.DeviceRepository;
 import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.Objects;
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Builder;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,45 +23,80 @@ public class DeviceTrackingService {
 
   private final DeviceRepository deviceRepository;
 
+  /** Data class carrying all fields reported during a device power-on event. */
+  @Builder
+  public record PowerOnData(
+      @NonNull String deviceId,
+      @NonNull String ipAddress,
+      String firmwareVersion,
+      String deviceSerialNumber,
+      String productCode,
+      String productType,
+      String productSerialNumber) {}
+
   /**
    * Records a device power-on event. If this is the first time the device is seen, creates a new
-   * entry with firstSeen timestamp. Otherwise updates the lastSeen timestamp.
+   * entry with firstSeen timestamp. Otherwise, updates the lastSeen timestamp and any changed
+   * fields.
    *
-   * @param deviceId The device identifier from the power_on request
-   * @param ipAddress The IP address of the device
+   * @param data The power-on data from the power_on request
    */
-  public void recordDevicePowerOn(String deviceId, String ipAddress) {
-    log.debug("Recording power_on for device: {} at IP: {}", deviceId, ipAddress);
+  public void recordDevicePowerOn(PowerOnData data) {
+    var now = OffsetDateTime.now().truncatedTo(ChronoUnit.MILLIS);
 
     deviceRepository
-        .findById(deviceId)
+        .findById(data.deviceId())
         .ifPresentOrElse(
             existingDevice -> {
-              // Update existing device
-              OffsetDateTime now = OffsetDateTime.now();
               log.debug(
-                  "Updating device: {} at IP: {} (last seen: {}, previous IP: {})",
-                  deviceId,
-                  ipAddress,
-                  now,
+                  "Updating device: {} at IP: {} (previous IP: {})",
+                  data.deviceId(),
+                  data.ipAddress(),
                   existingDevice.ipAddress());
 
               var updatedDeviceBuilder = existingDevice.toBuilder().lastSeen(now);
-              if (!Objects.equals(existingDevice.ipAddress(), ipAddress)) {
-                updatedDeviceBuilder.ipAddress(ipAddress).updatedOn(now);
+
+              if (data.ipAddress() != null
+                  && !Objects.equals(existingDevice.ipAddress(), data.ipAddress())) {
+                updatedDeviceBuilder.ipAddress(data.ipAddress()).updatedOn(now);
               }
+              if (data.firmwareVersion() != null
+                  && !Objects.equals(existingDevice.firmwareVersion(), data.firmwareVersion())) {
+                updatedDeviceBuilder.firmwareVersion(data.firmwareVersion()).updatedOn(now);
+              }
+              if (data.deviceSerialNumber() != null
+                  && !Objects.equals(
+                      existingDevice.deviceSerialNumber(), data.deviceSerialNumber())) {
+                updatedDeviceBuilder.deviceSerialNumber(data.deviceSerialNumber()).updatedOn(now);
+              }
+              if (data.productCode() != null
+                  && !Objects.equals(existingDevice.productCode(), data.productCode())) {
+                updatedDeviceBuilder.productCode(data.productCode()).updatedOn(now);
+              }
+              if (data.productType() != null
+                  && !Objects.equals(existingDevice.productType(), data.productType())) {
+                updatedDeviceBuilder.productType(data.productType()).updatedOn(now);
+              }
+              if (data.productSerialNumber() != null
+                  && !Objects.equals(
+                      existingDevice.productSerialNumber(), data.productSerialNumber())) {
+                updatedDeviceBuilder.productSerialNumber(data.productSerialNumber()).updatedOn(now);
+              }
+
               deviceRepository.save(updatedDeviceBuilder.build());
             },
             () -> {
-              // First time seeing this device
-              OffsetDateTime now = OffsetDateTime.now();
-              log.info(
-                  "New device registered: {} at IP: {} (first seen: {})", deviceId, ipAddress, now);
-              Device newDevice =
+              log.info("New device registered: {} at IP: {}", data.deviceId(), data.ipAddress());
+              var newDevice =
                   Device.builder()
-                      .deviceId(deviceId)
+                      .deviceId(data.deviceId())
                       .name(null)
-                      .ipAddress(ipAddress)
+                      .ipAddress(data.ipAddress())
+                      .firmwareVersion(data.firmwareVersion())
+                      .deviceSerialNumber(data.deviceSerialNumber())
+                      .productCode(data.productCode())
+                      .productType(data.productType())
+                      .productSerialNumber(data.productSerialNumber())
                       .firstSeen(now)
                       .lastSeen(now)
                       .updatedOn(now)
@@ -87,12 +123,6 @@ public class DeviceTrackingService {
   }
 
   /** Data class representing information about a tracked device. */
-  @Data
-  @AllArgsConstructor
-  public static class DeviceInfo {
-    private String deviceId;
-    private String ipAddress;
-    private OffsetDateTime firstSeen;
-    private OffsetDateTime lastSeen;
-  }
+  public record DeviceInfo(
+      String deviceId, String ipAddress, OffsetDateTime firstSeen, OffsetDateTime lastSeen) {}
 }

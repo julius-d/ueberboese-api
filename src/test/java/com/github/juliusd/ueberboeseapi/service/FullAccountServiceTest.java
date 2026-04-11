@@ -215,6 +215,11 @@ class FullAccountServiceTest {
             .name("My Speaker")
             .ipAddress("192.168.1.5")
             .margeAccountId(accountId)
+            .firmwareVersion("27.0.6.46330.5043500 epdbuild.trunk.hepdswbld04.2022-08-04T11:20:29")
+            .deviceSerialNumber("PTEST0000000000000000001")
+            .productCode("SoundTouch 10 sm2")
+            .productType("5")
+            .productSerialNumber("TEST000000000000002")
             .firstSeen(OffsetDateTime.parse("2025-01-01T10:00:00.000+00:00"))
             .lastSeen(OffsetDateTime.parse("2026-03-01T08:00:00.000+00:00"))
             .updatedOn(OffsetDateTime.parse("2026-03-01T08:00:00.000+00:00"))
@@ -230,12 +235,19 @@ class FullAccountServiceTest {
     Optional<FullAccountResponseApiDto> result =
         fullAccountService.getFullAccount(accountId, request);
 
-    // Then - DB device is present in the minimal account
+    // Then - DB device is present in the minimal account with all stored fields
     assertThat(result).isPresent();
     assertThat(result.get().getId()).isEqualTo(accountId);
-    var deviceIds =
-        result.get().getDevices().getDevice().stream().map(DeviceApiDto::getDeviceid).toList();
-    assertThat(deviceIds).containsExactly("DEVICE_FROM_DB");
+    var devices = result.get().getDevices().getDevice();
+    assertThat(devices).extracting(DeviceApiDto::getDeviceid).containsExactly("DEVICE_FROM_DB");
+    var injectedDevice = devices.get(0);
+    assertThat(injectedDevice.getFirmwareVersion())
+        .isEqualTo("27.0.6.46330.5043500 epdbuild.trunk.hepdswbld04.2022-08-04T11:20:29");
+    assertThat(injectedDevice.getSerialNumber()).isEqualTo("PTEST0000000000000000001");
+    assertThat(injectedDevice.getAttachedProduct()).isNotNull();
+    assertThat(injectedDevice.getAttachedProduct().getProductCode()).isEqualTo("SoundTouch 10 sm2");
+    assertThat(injectedDevice.getAttachedProduct().getSerialnumber())
+        .isEqualTo("TEST000000000000002");
   }
 
   @Test

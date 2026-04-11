@@ -31,6 +31,7 @@ import com.github.juliusd.ueberboeseapi.recent.RecentMapper;
 import com.github.juliusd.ueberboeseapi.recent.RecentService;
 import com.github.juliusd.ueberboeseapi.service.AccountDataService;
 import com.github.juliusd.ueberboeseapi.service.DeviceTrackingService;
+import com.github.juliusd.ueberboeseapi.service.DeviceTrackingService.PowerOnData;
 import com.github.juliusd.ueberboeseapi.service.FullAccountService;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
@@ -461,8 +462,9 @@ public class UeberboeseController implements DefaultApi {
 
       // Extract device ID from the device element
       String deviceId = null;
-      if (powerOnRequestApiDto.getDevice() != null) {
-        deviceId = powerOnRequestApiDto.getDevice().getId();
+      var device = powerOnRequestApiDto.getDevice();
+      if (device != null) {
+        deviceId = device.getId();
       }
 
       // Extract IP address from diagnostic data
@@ -483,8 +485,20 @@ public class UeberboeseController implements DefaultApi {
         return ResponseEntity.badRequest().build();
       }
 
-      // Record the device power on event
-      deviceTrackingService.recordDevicePowerOn(deviceId, ipAddress);
+      var powerOnDataBuilder =
+          PowerOnData.builder()
+              .deviceId(deviceId)
+              .ipAddress(ipAddress)
+              .firmwareVersion(device.getFirmwareVersion())
+              .deviceSerialNumber(device.getSerialnumber());
+      var product = device.getProduct();
+      if (product != null) {
+        powerOnDataBuilder
+            .productCode(product.getProductCode())
+            .productType(product.getType())
+            .productSerialNumber(product.getSerialnumber());
+      }
+      deviceTrackingService.recordDevicePowerOn(powerOnDataBuilder.build());
 
       log.info("Successfully processed power_on for device: {} at IP: {}", deviceId, ipAddress);
 
