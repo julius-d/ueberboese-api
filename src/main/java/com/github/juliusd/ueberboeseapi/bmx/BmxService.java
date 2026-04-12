@@ -442,23 +442,17 @@ public class BmxService {
    * @return Token response with access token
    */
   public BmxTokenResponseApiDto refreshTuneInToken(String refreshToken) {
-    log.info("Refreshing TuneIn token (stub implementation)");
+    log.info("Refreshing TuneIn token");
 
     // Stub implementation - just return the refresh token as access token
-    // In a real implementation, you would call TuneIn's token endpoint
     BmxTokenResponseApiDto response = new BmxTokenResponseApiDto();
     response.setAccessToken(refreshToken);
 
     return response;
   }
 
-  /**
-   * Handles analytics reporting. This is a stub implementation that logs and returns OK.
-   *
-   * @return Report response
-   */
   public BmxReportResponseApiDto reportAnalytics() {
-    log.info("Received analytics report (stub implementation)");
+    log.info("Received analytics report");
 
     BmxReportResponseApiDto response = new BmxReportResponseApiDto();
     response.setNextReportIn(1800); // Report again in 30 minutes
