@@ -11,7 +11,6 @@ import com.github.juliusd.ueberboeseapi.generated.dtos.BmxTokenRequestApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.BmxTokenResponseApiDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -22,7 +21,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "ueberboese.bmx.enabled", havingValue = "true")
 public class BmxController implements BmxApi {
 
   private final BmxService bmxService;

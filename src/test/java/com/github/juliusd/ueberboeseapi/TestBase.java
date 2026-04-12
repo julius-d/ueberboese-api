@@ -24,7 +24,6 @@ import org.springframework.test.context.TestPropertySource;
     properties = {
       "ueberboese.experimental.enabled=true",
       "ueberboese.oauth.enabled=true",
-      "ueberboese.bmx.enabled=true",
       "ueberboese.data-directory=src/test/resources/test-data",
       "proxy.target-host=http://localhost:8089",
       "proxy.auth-target-host=http://localhost:8090",
