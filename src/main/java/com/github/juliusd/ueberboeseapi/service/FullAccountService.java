@@ -4,9 +4,11 @@ import static java.util.stream.Collectors.toUnmodifiableSet;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.github.juliusd.ueberboeseapi.ProxyService;
+import com.github.juliusd.ueberboeseapi.SourceProvider;
 import com.github.juliusd.ueberboeseapi.device.Device;
 import com.github.juliusd.ueberboeseapi.device.DeviceRepository;
 import com.github.juliusd.ueberboeseapi.generated.dtos.AttachedProductApiDto;
+import com.github.juliusd.ueberboeseapi.generated.dtos.CredentialApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.DeviceApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.DevicesContainerApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.FullAccountResponseApiDto;
@@ -26,6 +28,7 @@ import com.github.juliusd.ueberboeseapi.spotify.SpotifyAccount;
 import com.github.juliusd.ueberboeseapi.spotify.SpotifyAccountService;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -332,7 +335,16 @@ public class FullAccountService {
     response.setMode("global");
     response.setPreferredLanguage("en");
     response.setDevices(new DevicesContainerApiDto());
-    response.setSources(new SourcesContainerApiDto());
+    var sources = new SourcesContainerApiDto();
+    sources.addSourceItem(
+        new SourceApiDto()
+            .id("1")
+            .type("Audio")
+            .createdOn(OffsetDateTime.parse("2018-08-11T08:55:41+00:00"))
+            .updatedOn(OffsetDateTime.parse("2019-07-20T17:48:31+00:00"))
+            .sourceproviderid(SourceProvider.TUNEIN.getId() + "")
+            .credential(new CredentialApiDto("token", "eyJ...")));
+    response.setSources(sources);
     return response;
   }
 
