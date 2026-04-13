@@ -1388,21 +1388,26 @@ paths:
         - art-changed
         - aux-pressed
         - balance-changed
+        - bass-changed
+        - clock-changed
         - dislike-pressed
         - favorite-changed
         - item-started
         - language-changed
         - like-pressed
         - masterdevice-changed
+        - pause-pressed
         - play-item
         - play-state-changed
         - playpause-pressed
         - power-pressed
+        - preset-assigned
         - preset-pressed
         - presets-changed
         - shuffle-state-changed
         - skip-forward-pressed
         - source-state-changed
+        - stop-pressed
         - system-state-changed
         - volume-change
         - zone-state-changed
@@ -1428,6 +1433,19 @@ paths:
         ```json
         { "type": "balance-changed",
           "data": { "balance": 0 } }
+        ```
+
+        **bass-changed**
+        ```json
+        { "type": "bass-changed", "data": { "bass": -1 } }
+        ```
+
+        **clock-changed**
+        ```json
+        { "type": "clock-changed",
+          "data": { "brightness": 100, "enabled": "true", "timeformat": 24, "timezone": "Europe/Berlin", "useroffset": 0, "usertime": 0 } }
+        { "type": "clock-changed",
+          "data": { "brightness": 70, "enabled": "true", "timeformat": 12, "timezone": "", "useroffset": 0, "usertime": 0 } }
         ```
 
         **dislike-pressed**
@@ -1565,6 +1583,11 @@ paths:
         { "type": "masterdevice-changed", "data": { "masterDeviceId": "DEVICE_A" } }
         ```
 
+        **pause-pressed**
+        ```json
+        { "type": "pause-pressed", "data": { "buttonId": "PAUSE", "origin": "gabbo" } }
+        ```
+
         **play-item**
         ```json
         { "type": "play-item",
@@ -1590,6 +1613,12 @@ paths:
         ```json
         { "type": "power-pressed", "data": { "buttonId": "POWER", "origin": "console" } }
         { "type": "power-pressed", "data": { "buttonId": "POWER", "origin": "ir-remote" } }
+        ```
+
+        **preset-assigned**
+        ```json
+        { "type": "preset-assigned",
+          "data": { "preset": "P1", "origin": "device", "contentItem": "<base64-encoded-ContentItem-xml>" } }
         ```
 
         **preset-pressed**
@@ -1630,7 +1659,13 @@ paths:
         { "type": "source-state-changed", "data": { "source-state": "SPOTIFY" } }
         { "type": "source-state-changed", "data": { "source-state": "TUNEIN" } }
         { "type": "source-state-changed", "data": { "source-state": "BLUETOOTH" } }
+        { "type": "source-state-changed", "data": { "source-state": "AUX" } }
         { "type": "source-state-changed", "data": { "source-state": "INVALID_SOURCE" } }
+        ```
+
+        **stop-pressed**
+        ```json
+        { "type": "stop-pressed", "data": { "buttonId": "STOP", "origin": "gabbo" } }
         ```
 
         **system-state-changed**
