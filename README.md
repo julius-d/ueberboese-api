@@ -40,6 +40,7 @@ This has been tested on:
 - SoundTouch 10
 - SoundTouch 20
 - SoundTouch 30
+- SoundTouch 300
 
 ## Installation
 

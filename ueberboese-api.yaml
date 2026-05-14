@@ -2834,6 +2834,46 @@ components:
           type: string
           description: Product serial number
           example: "069123456789010AE"
+        components:
+          $ref: '#/components/schemas/PowerOnComponents'
+
+    PowerOnComponents:
+      type: object
+      description: Send by SoundTouch 300. Not by 10, 20 or 30.
+      xml:
+        name: components
+      properties:
+        component:
+          type: array
+          description: List of product components
+          items:
+            $ref: '#/components/schemas/PowerOnComponent'
+          xml:
+            name: component
+            wrapped: false
+
+    PowerOnComponent:
+      type: object
+      description: Individual component information
+      xml:
+        name: component
+      properties:
+        type:
+          type: string
+          description: Component type identifier
+          xml:
+            attribute: true
+          example: ""
+        serialnumber:
+          type: string
+          description: Component serial number
+          example: "n/a"
+        firmware-version:
+          type: string
+          description: Component firmware version
+          xml:
+            name: firmware-version
+          example: "1.8.1.12410"
 
     PowerOnDevice:
       type: object
