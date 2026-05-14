@@ -67,11 +67,10 @@ tail -f ~/ueberboese-logs/proxy-requests.log
 
 ## Step 2: Domain Setup
 
-You need to configure three domains that point to your deployment server:
+You need to configure 2 domains that point to your deployment server:
 
 - `ueberboese.your-example-host.org`
 - `ueberboeseoauth.your-example-host.org`
-- `ueberboese-downloads.your-example-host.org`
 
 **Important:** Replace `your-example-host.org` with whatever domain you like.
 The domains do not need to be available on the public internet,
@@ -105,23 +104,63 @@ nc 192.168.178.2 17000
 
 Replace `192.168.178.2` with your device's IP address.
 
+If `nc` does not work try `telnet`.
+
 #### 2. Execute Configuration Command
 
-Once connected via netcat, enter:
+Once connected via netcat, enter the following line one after each other:
 
 ```bash
-envswitch boseurls set http://ueberboese.your-example-host.org:8080 http://ueberboese-downloads.your-example-host.org:8080/updates/soundtouch
+envswitch boseurls set http://ueberboese.your-example-host.org:8080 http://ueberboese.your-example-host.org:8080/updates/soundtouch
+sys configuration bmxRegistryUrl http://ueberboese.your-example-host.org:8080/bmx/registry/v1/services
+sys configuration statsServerUrl http://ueberboese.your-example-host.org:8080
+getpdo CurrentSystemConfiguration
+sys reboot
 ```
 
 Replace `your-example-host.org` with your actual domain.
 
-Than type `exit` to leave the speaker
-```bash
-exit
+You should see something like:
+```
+->envswitch boseurls set http://ueberboese.your-example-host.org:8080 http://ueberboese.your-example-host.org:8080/updates/soundtouch
+Setting Bose Server URLs to http://ueberboese.your-example-host.org:8080 and http://ueberboese.your-example-host.org:8080/updates/soundtouch
+->OK
+->sys configuration bmxRegistryUrl http://ueberboese.your-example-host.org:8080/bmx/registry/v1/services
+OK
+->sys configuration statsServerUrl http://ueberboese.your-example-host.org:8080
+OK
+->getpdo CurrentSystemConfiguration
+margeServerUrl {
+  text: "http://ueberboese.your-example-host.org:8080"
+}
+statsServerUrl {
+  text: "http://ueberboese.your-example-host.org:8080"
+}
+swUpdateUrl {
+  text: "http://ueberboese.your-example-host.org:8080/updates/soundtouch"
+}
+isZeroconfEnabled {
+  text: true
+}
+usePandoraProductionServer {
+  text: true
+}
+saveMargeCustomerReport {
+  text: false
+}
+bmxRegistryUrl {
+  text: "http://ueberboese.your-example-host.org:8080/bmx/registry/v1/services"
+}
+
+->OK
+->sys reboot
+Rebooting system
 ```
 
 ### 3. Restart your speaker
 After executing the configuration commands, unplug each speaker to restart the speaker.
+
+If the speaker does not work as expected afterward, a second restart might be required.
 
 #### 4. Verify Configuration
 
@@ -132,7 +171,8 @@ The device should acknowledge the configuration change. You can verify by checki
 
 Visit [Überböse companion app](https://github.com/julius-d/ueberboese-app)
 
-[<img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="40">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/julius-d/ueberboese-app)
+[<img src="https://github.com/user-attachments/assets/713d71c5-3dec-4ec4-a3f2-8d28d025a9c6" alt="Get it on Obtainium" height="80">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/julius-d/ueberboese-app)
+[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="80">](https://f-droid.org/packages/io.github.juliusd.ueberboese.app)
 
 ## Step 5: Spotify OAuth (Optional)
 
@@ -171,7 +211,8 @@ environment:
 
 The easiest way is to install and use the [Überböse companion App](https://github.com/julius-d/ueberboese-app)
 
-[<img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="80">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/julius-d/ueberboese-app)
+[<img src="https://github.com/user-attachments/assets/713d71c5-3dec-4ec4-a3f2-8d28d025a9c6" alt="Get it on Obtainium" height="80">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/julius-d/ueberboese-app)
+[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="80">](https://f-droid.org/packages/io.github.juliusd.ueberboese.app)
 
 #### Option 2: Using curl Commands
 
@@ -233,10 +274,10 @@ This will list all connected Spotify accounts.
 **Important:** You must connect at least one Spotify account via the management API or companion app before your SoundTouch devices can use Spotify. The API will automatically use the first connected account.
 
 ## Step 6 (optional)
-Recommended for **working internet radio**
 
+**Not needed if you executed the commands from "Execute Configuration Command"!**
 
-With the help of an USB-Stick you can take even more control of your speaker:
+With the help of a USB-Stick you can take even more control of your speaker:
 
 [Do the advanced setup](advanced-set-up.md)
 
