@@ -44,6 +44,16 @@ public class NoiseController {
     return ResponseEntity.ok().build();
   }
 
+  @GetMapping("/presets.html")
+  public ResponseEntity<byte[]> presetsPage() throws IOException {
+    ClassPathResource resource = new ClassPathResource("static/presets.html");
+    byte[] content;
+    try (InputStream inputStream = resource.getInputStream()) {
+      content = inputStream.readAllBytes();
+    }
+    return ResponseEntity.ok().header("Content-Type", "text/html; charset=UTF-8").body(content);
+  }
+
   @GetMapping("/favicon.ico")
   public ResponseEntity<byte[]> favicon() throws IOException {
     ClassPathResource resource = new ClassPathResource("static/icons/favicon.ico");
