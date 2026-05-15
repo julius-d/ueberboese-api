@@ -251,7 +251,7 @@
           const sub = esc(item.subtext || item.formats || '');
           const img = item.image ? `<img src="${esc(item.image)}" onerror="this.remove()">` : '';
           const safeName = (item.text||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-          const safeImg = (item.image||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+          const safeImg  = (item.image||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
           return `<div class="result-item" onclick="pickStation(${n},'s${sid}','${safeName}','${safeImg}')">
             ${img}<div><div class="r-name">${name}</div><div class="r-sub">${sub}</div></div>
           </div>`;
