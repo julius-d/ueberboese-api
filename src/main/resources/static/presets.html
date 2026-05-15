@@ -339,9 +339,11 @@
       return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
-    // TuneIn CDN serves over HTTPS — upgrade HTTP image URLs to avoid ad-blocker blocks
+    // Proxy TuneIn CDN images through the API to avoid ad-blocker blocks
     function httpsImg(url) {
-      return (url||'').replace(/^http:\/\/(cdn[^/]*\.tunein\.com)/, 'https://$1');
+      if (!url) return '';
+      if (url.includes('tunein.com')) return '/speaker-proxy/image?url=' + encodeURIComponent(url);
+      return url;
     }
 
     const params = new URLSearchParams(location.search);
