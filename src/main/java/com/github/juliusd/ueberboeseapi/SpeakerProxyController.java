@@ -24,6 +24,8 @@ public class SpeakerProxyController {
   private static final String TUNEIN_SEARCH_URL =
       "http://opml.radiotime.com/Search.ashx?query=%s&formats=mp3&render=json";
   private static final String TUNEIN_BROWSE_URL = "http://opml.radiotime.com/?render=json";
+  private static final String TUNEIN_USER_AGENT =
+      "Mozilla/5.0 (compatible; SoundTouch/27.0; +https://github.com/julius-d/ueberboese-api)";
 
   private static final String TUNEIN_USER_AGENT =
       "Mozilla/5.0 (compatible; SoundTouch/27.0; +https://github.com/julius-d/ueberboese-api)";
