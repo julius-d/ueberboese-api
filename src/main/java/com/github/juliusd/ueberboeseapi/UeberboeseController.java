@@ -38,7 +38,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.net.URI;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -293,49 +292,23 @@ public class UeberboeseController implements DefaultApi {
       }
     }
 
+    // Cache miss — return DB presets only, do not proxy to dead Bose server
     log.info(
-        "Fetching presets directly from DB for accountId: {}, deviceId: {}", accountId, deviceId);
-
-    try {
-      List<Preset> dbPresets = presetService.getPresets(accountId, deviceId);
-
-      if (dbPresets != null && !dbPresets.isEmpty()) {
-        List<PresetApiDto> dbPresetDtos =
-            presetMapper.convertToApiDtos(dbPresets, new ArrayList<>());
-
-        PresetsContainerApiDto finalPresets = presetMapper.mergePresets(null, dbPresetDtos);
-
-        log.info(
-            "Successfully returning {} presets from DB for device: {}",
-            dbPresetDtos.size(),
-            deviceId);
-        return ResponseEntity.ok()
-            .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
-            .header("Access-Control-Allow-Origin", "*")
-            .header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-            .header(
-                "Access-Control-Allow-Headers",
-                "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization")
-            .header("Access-Control-Expose-Headers", "Authorization")
-            .body(finalPresets);
-      } else {
-        log.warn("No presets found in DB either for device {} and account {}", deviceId, accountId);
-
-        return ResponseEntity.ok()
-            .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
-            .body(new PresetsContainerApiDto());
-      }
-
-    } catch (Exception e) {
-      log.error(
-          "Failed to fetch presets from DB fallback for accountId: {}, error: {}",
-          accountId,
-          e.getMessage(),
-          e);
-      return ResponseEntity.status(502)
-          .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
-          .build();
-    }
+        "Cache miss for accountId: {}, deviceId: {}, returning DB presets only",
+        accountId,
+        deviceId);
+    List<Preset> dbPresets = presetService.getPresets(accountId, deviceId);
+    List<PresetApiDto> dbPresetDtos = presetMapper.convertToApiDtos(dbPresets, List.of());
+    PresetsContainerApiDto dbOnly = presetMapper.mergePresets(null, dbPresetDtos);
+    return ResponseEntity.ok()
+        .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
+        .header("Access-Control-Allow-Origin", "*")
+        .header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        .header(
+            "Access-Control-Allow-Headers",
+            "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization")
+        .header("Access-Control-Expose-Headers", "Authorization")
+        .body(dbOnly);
   }
 
   private static SourceProviderApiDto createSourceProvider(SourceProvider sourceProvider) {
