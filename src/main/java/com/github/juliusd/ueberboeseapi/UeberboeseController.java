@@ -33,6 +33,7 @@ import com.github.juliusd.ueberboeseapi.service.AccountDataService;
 import com.github.juliusd.ueberboeseapi.service.DeviceTrackingService;
 import com.github.juliusd.ueberboeseapi.service.DeviceTrackingService.PowerOnData;
 import com.github.juliusd.ueberboeseapi.service.FullAccountService;
+import com.github.juliusd.ueberboeseapi.service.SpeakerProvisioningService;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.net.URI;
@@ -60,6 +61,7 @@ public class UeberboeseController implements DefaultApi {
   private final PresetMapper presetMapper;
   private final DeviceService deviceService;
   private final DeviceRepository deviceRepository;
+  private final SpeakerProvisioningService speakerProvisioningService;
 
   @Autowired private HttpServletRequest request;
 
@@ -290,44 +292,23 @@ public class UeberboeseController implements DefaultApi {
       }
     }
 
-    // Cache miss - forward request to proxy
+    // Cache miss — return DB presets only, do not proxy to dead Bose server
     log.info(
-        "Cache miss for accountId: {}, deviceId: {}, forwarding request to proxy",
+        "Cache miss for accountId: {}, deviceId: {}, returning DB presets only",
         accountId,
         deviceId);
-    ResponseEntity<byte[]> proxyResponse = proxyService.forwardRequest(request, null);
-
-    // Check if proxy response is successful
-    if (!proxyResponse.getStatusCode().is2xxSuccessful() || proxyResponse.getBody() == null) {
-      log.warn(
-          "Proxy request failed for accountId: {}, deviceId: {}, status: {}",
-          accountId,
-          deviceId,
-          proxyResponse.getStatusCode());
-      return ResponseEntity.status(502)
-          .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
-          .build();
-    }
-
-    // Try to parse the response
-    try {
-      String xmlContent = new String(proxyResponse.getBody());
-      PresetsContainerApiDto parsedResponse =
-          xmlMapper.readValue(xmlContent, PresetsContainerApiDto.class);
-
-      return ResponseEntity.status(proxyResponse.getStatusCode())
-          .headers(proxyResponse.getHeaders())
-          .body(parsedResponse);
-    } catch (Exception parseException) {
-      log.error(
-          "Failed to parse proxy response for accountId: {}, deviceId: {}. Error: {}",
-          accountId,
-          deviceId,
-          parseException.getMessage());
-      return ResponseEntity.status(502)
-          .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
-          .build();
-    }
+    List<Preset> dbPresets = presetService.getPresets(accountId, deviceId);
+    List<PresetApiDto> dbPresetDtos = presetMapper.convertToApiDtos(dbPresets, List.of());
+    PresetsContainerApiDto dbOnly = presetMapper.mergePresets(null, dbPresetDtos);
+    return ResponseEntity.ok()
+        .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
+        .header("Access-Control-Allow-Origin", "*")
+        .header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        .header(
+            "Access-Control-Allow-Headers",
+            "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization")
+        .header("Access-Control-Expose-Headers", "Authorization")
+        .body(dbOnly);
   }
 
   private static SourceProviderApiDto createSourceProvider(SourceProvider sourceProvider) {
@@ -499,6 +480,7 @@ public class UeberboeseController implements DefaultApi {
             .productSerialNumber(product.getSerialnumber());
       }
       deviceTrackingService.recordDevicePowerOn(powerOnDataBuilder.build());
+      speakerProvisioningService.provisionIfNeeded(deviceId, ipAddress);
 
       log.info("Successfully processed power_on for device: {} at IP: {}", deviceId, ipAddress);
 
