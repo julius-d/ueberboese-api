@@ -107,9 +107,11 @@ public class BmxController implements BmxApi {
     log.info("Refreshing TuneIn token");
 
     try {
-      String refreshToken = bmxTokenRequestApiDto.getRefreshToken();
+      String refreshToken =
+          bmxTokenRequestApiDto != null ? bmxTokenRequestApiDto.getRefreshToken() : null;
       if (refreshToken == null || refreshToken.isEmpty()) {
-        return ResponseEntity.badRequest().build();
+        refreshToken = java.util.UUID.randomUUID().toString();
+        log.info("No refresh token provided, issuing new anonymous TuneIn token");
       }
 
       BmxTokenResponseApiDto response = bmxService.refreshTuneInToken(refreshToken);
