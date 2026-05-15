@@ -271,20 +271,23 @@
       document.getElementById('search-' + n).value = '';
     }
 
+    // Send a command directly to the speaker from the browser (bypasses CORS using no-cors mode).
+    // Used for fire-and-forget operations where we don't need the response.
+    function speakerPost(path, body) {
+      return fetch(`http://${speakerIp}:8090${path}`, {
+        method: 'POST', mode: 'no-cors', body,
+      }).catch(() => {});
+    }
+
     async function playPreset(n) {
-      const xml1 = `<key state="press" sender="Gabbo">PRESET_${n}</key>`;
-      const xml2 = `<key state="release" sender="Gabbo">PRESET_${n}</key>`;
-      await fetch(`/speaker-proxy/${speakerIp}/key`, {method:'POST',body:xml1,headers:{'Content-Type':'application/xml'}});
-      await fetch(`/speaker-proxy/${speakerIp}/key`, {method:'POST',body:xml2,headers:{'Content-Type':'application/xml'}});
+      await speakerPost('/key', `<key state="press" sender="Gabbo">PRESET_${n}</key>`);
+      await speakerPost('/key', `<key state="release" sender="Gabbo">PRESET_${n}</key>`);
       setStatus('Playing preset ' + n, 'ok');
     }
 
     async function removePreset(n) {
       if (!confirm(`Remove preset ${n}?`)) return;
-      await fetch(`/speaker-proxy/${speakerIp}/removePreset`, {
-        method:'POST', body:`<preset buttonNumber="${n}"/>`,
-        headers:{'Content-Type':'application/xml'}
-      }).catch(()=>{});
+      await speakerPost('/removePreset', `<preset buttonNumber="${n}"/>`);
       await fetch(`/streaming/account/${accountId}/device/${deviceId}/preset/${n}`, {method:'DELETE'});
       await loadPresets();
       setStatus('Preset ' + n + ' removed', 'ok');
@@ -316,12 +319,8 @@
 
       msgEl.textContent = 'Saving…'; msgEl.className = 'msg';
 
-      // Push to speaker
-      await fetch(`/speaker-proxy/${speakerIp}/storePreset`, {
-        method:'POST',
-        body: `<preset buttonNumber="${n}">${speakerXml}</preset>`,
-        headers:{'Content-Type':'application/xml'}
-      }).catch(()=>{});
+      // Push to speaker directly (no-cors, fire-and-forget)
+      await speakerPost('/storePreset', `<preset buttonNumber="${n}">${speakerXml}</preset>`);
 
       // Save to Überböse API DB
       const apiBody = `<?xml version="1.0" encoding="UTF-8"?><preset buttonNumber="${n}"><sourceid>1</sourceid><name>${esc(name)}</name><username>${esc(name)}</username><location>${esc(location)}</location><contentItemType>${contentItemType}</contentItemType><containerArt>${esc(art)}</containerArt></preset>`;
