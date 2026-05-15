@@ -144,7 +144,7 @@
       card.id = 'card-' + n;
 
       const artHtml = (p && p.containerArt)
-        ? `<img class="preset-art" src="${esc(p.containerArt)}" onerror="this.style.display='none';this.nextSibling.style.display='flex'"><div class="preset-art-empty" style="display:none">♪</div>`
+        ? `<img class="preset-art" src="${esc(httpsImg(p.containerArt))}" onerror="this.style.display='none';this.nextSibling.style.display='flex'"><div class="preset-art-empty" style="display:none">♪</div>`
         : `<div class="preset-art-empty">♪</div>`;
 
       const stationId = isTuneIn ? ((p.location||'').match(/\/v1\/playback\/station\/(s?\d+)/)?.[1]||'') : '';
@@ -249,9 +249,9 @@
           const sid = (item.guide_id || item.preset_id || '').replace(/^s/,'');
           const name = esc(item.text || '');
           const sub = esc(item.subtext || item.formats || '');
-          const img = item.image ? `<img src="${esc(item.image)}" onerror="this.remove()">` : '';
+          const img = item.image ? `<img src="${esc(httpsImg(item.image))}" onerror="this.remove()">` : '';
           const safeName = (item.text||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-          const safeImg  = (item.image||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+          const safeImg  = httpsImg(item.image||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
           return `<div class="result-item" onclick="pickStation(${n},'s${sid}','${safeName}','${safeImg}')">
             ${img}<div><div class="r-name">${name}</div><div class="r-sub">${sub}</div></div>
           </div>`;
@@ -337,6 +337,11 @@
 
     function esc(s) {
       return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // TuneIn CDN serves over HTTPS — upgrade HTTP image URLs to avoid ad-blocker blocks
+    function httpsImg(url) {
+      return (url||'').replace(/^http:\/\/(cdn[^/]*\.tunein\.com)/, 'https://$1');
     }
 
     const params = new URLSearchParams(location.search);
