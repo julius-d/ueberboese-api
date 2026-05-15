@@ -32,6 +32,35 @@ public class SpeakerProxyController {
 
   private final RestClient restClient = RestClient.create();
 
+  @GetMapping("/image")
+  public ResponseEntity<byte[]> proxyImage(@RequestParam String url) {
+    try {
+      if (!url.startsWith("http://cdn-profiles.tunein.com")
+          && !url.startsWith("https://cdn-profiles.tunein.com")
+          && !url.startsWith("http://cdn-radiotime-logos.tunein.com")
+          && !url.startsWith("https://cdn-radiotime-logos.tunein.com")
+          && !url.startsWith("http://cdn-albums.tunein.com")
+          && !url.startsWith("https://cdn-albums.tunein.com")) {
+        return ResponseEntity.badRequest().build();
+      }
+      byte[] image =
+          restClient
+              .get()
+              .uri(url)
+              .header("User-Agent", TUNEIN_USER_AGENT)
+              .retrieve()
+              .body(byte[].class);
+      String ct = url.endsWith(".png") || url.contains(".png?") ? "image/png" : "image/jpeg";
+      return ResponseEntity.ok()
+          .header("Content-Type", ct)
+          .header("Cache-Control", "public, max-age=86400")
+          .body(image);
+    } catch (Exception e) {
+      log.debug("Image proxy error for {}: {}", url, e.getMessage());
+      return ResponseEntity.notFound().build();
+    }
+  }
+
   @GetMapping("/speaker-info/{ip}")
   public ResponseEntity<String> speakerInfo(@PathVariable String ip) {
     try {
