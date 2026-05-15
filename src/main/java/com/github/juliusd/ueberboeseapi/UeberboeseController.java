@@ -33,6 +33,7 @@ import com.github.juliusd.ueberboeseapi.service.AccountDataService;
 import com.github.juliusd.ueberboeseapi.service.DeviceTrackingService;
 import com.github.juliusd.ueberboeseapi.service.DeviceTrackingService.PowerOnData;
 import com.github.juliusd.ueberboeseapi.service.FullAccountService;
+import com.github.juliusd.ueberboeseapi.service.SpeakerProvisioningService;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.net.URI;
@@ -61,6 +62,7 @@ public class UeberboeseController implements DefaultApi {
   private final PresetMapper presetMapper;
   private final DeviceService deviceService;
   private final DeviceRepository deviceRepository;
+  private final SpeakerProvisioningService speakerProvisioningService;
 
   @Autowired private HttpServletRequest request;
 
@@ -505,6 +507,7 @@ public class UeberboeseController implements DefaultApi {
             .productSerialNumber(product.getSerialnumber());
       }
       deviceTrackingService.recordDevicePowerOn(powerOnDataBuilder.build());
+      speakerProvisioningService.provisionIfNeeded(deviceId, ipAddress);
 
       log.info("Successfully processed power_on for device: {} at IP: {}", deviceId, ipAddress);
 
