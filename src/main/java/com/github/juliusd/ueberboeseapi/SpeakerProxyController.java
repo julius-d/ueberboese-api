@@ -25,6 +25,9 @@ public class SpeakerProxyController {
       "http://opml.radiotime.com/Search.ashx?query=%s&formats=mp3&render=json";
   private static final String TUNEIN_BROWSE_URL = "http://opml.radiotime.com/?render=json";
 
+  private static final String TUNEIN_USER_AGENT =
+      "Mozilla/5.0 (compatible; SoundTouch/27.0; +https://github.com/julius-d/ueberboese-api)";
+
   private final RestClient restClient = RestClient.create();
 
   @GetMapping("/speaker-info/{ip}")
@@ -40,39 +43,46 @@ public class SpeakerProxyController {
   }
 
   @GetMapping("/tunein-search")
-  public ResponseEntity<String> tuneInSearch(@RequestParam String q) {
+  public ResponseEntity<byte[]> tuneInSearch(@RequestParam String q) {
     try {
       String url =
           String.format(
               TUNEIN_SEARCH_URL,
               java.net.URLEncoder.encode(q, java.nio.charset.StandardCharsets.UTF_8));
       log.info("TuneIn search: {}", url);
-      String json = restClient.get().uri(url).retrieve().body(String.class);
+      byte[] json =
+          restClient
+              .get()
+              .uri(url)
+              .header("User-Agent", TUNEIN_USER_AGENT)
+              .retrieve()
+              .body(byte[].class);
       return ResponseEntity.ok().header("Content-Type", "application/json").body(json);
     } catch (Exception e) {
       log.warn("TuneIn search error: {}", e.getMessage());
-      return ResponseEntity.status(502).body("[]");
+      return ResponseEntity.status(502).body("[]".getBytes());
     }
   }
 
   @GetMapping("/tunein-browse")
-  public ResponseEntity<String> tuneInBrowse(@RequestParam(defaultValue = "") String url) {
+  public ResponseEntity<byte[]> tuneInBrowse(@RequestParam(defaultValue = "") String url) {
     try {
       String target = url.isEmpty() ? TUNEIN_BROWSE_URL : url;
       if (!target.startsWith("http://opml.radiotime.com")
           && !target.startsWith("https://opml.radiotime.com")) {
-        return ResponseEntity.badRequest().body("[]");
+        return ResponseEntity.badRequest().body("[]".getBytes());
       }
-      String json =
+      byte[] json =
           restClient
               .get()
               .uri(target + (target.contains("?") ? "&" : "?") + "render=json")
+              .header("User-Agent", TUNEIN_USER_AGENT)
               .retrieve()
-              .body(String.class);
+              .body(byte[].class);
       return ResponseEntity.ok().header("Content-Type", "application/json").body(json);
     } catch (Exception e) {
       log.warn("TuneIn browse error: {}", e.getMessage());
-      return ResponseEntity.status(502).body("[]");
+      return ResponseEntity.status(502).body("[]".getBytes());
     }
   }
 
