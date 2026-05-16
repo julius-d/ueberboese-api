@@ -473,6 +473,16 @@ class UeberboeseExperimentalControllerTest extends TestBase {
               <updatedOn>${xmlunit.isDateTime}</updatedOn>
               <username></username>
             </source>
+            <source id="10" type="Audio">
+              <createdOn>${xmlunit.isDateTime}</createdOn>
+              <credential type="token">mockTokenUser1</credential>
+              <name/>
+              <sourceproviderid>15</sourceproviderid>
+              <sourcename>Mock User 1</sourcename>
+              <sourceSettings/>
+              <updatedOn>${xmlunit.isDateTime}</updatedOn>
+              <username>mockuser123</username>
+            </source>
            </sources>
         <providerSettings/>
         </account>

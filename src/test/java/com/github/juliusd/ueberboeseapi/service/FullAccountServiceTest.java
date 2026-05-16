@@ -455,11 +455,14 @@ class FullAccountServiceTest {
   }
 
   @Test
-  void testPatch_SpotifySourceWithNoMatchingAccount_Unchanged() throws IOException {
+  void testPatch_SpotifySourceWithNoMatchingAccount_OriginalUnchangedAndMissingAccountAdded()
+      throws IOException {
     // Given
     String accountId = "test-account-no-match";
     String spotifyUserId = "spotify-user-456";
     String originalToken = "original-token";
+    OffsetDateTime createdAt = OffsetDateTime.parse("2025-01-01T10:00:00+00:00");
+    OffsetDateTime updatedAt = OffsetDateTime.parse("2025-06-01T10:00:00+00:00");
 
     FullAccountResponseApiDto response =
         createFullAccountWithSpotifySources(spotifyUserId, originalToken);
@@ -467,12 +470,7 @@ class FullAccountServiceTest {
     // Mock SpotifyAccountService to return different account
     SpotifyAccount differentAccount =
         new SpotifyAccount(
-            "different-user",
-            "Different User",
-            "different-token",
-            OffsetDateTime.now(),
-            OffsetDateTime.now(),
-            null);
+            "different-user", "Different User", "different-token", createdAt, updatedAt, null);
     when(spotifyAccountService.listAllAccounts()).thenReturn(List.of(differentAccount));
 
     // Mock account data service
@@ -484,10 +482,18 @@ class FullAccountServiceTest {
     Optional<FullAccountResponseApiDto> result =
         fullAccountService.getFullAccount(accountId, request);
 
-    // Then - Credential should remain unchanged
+    // Then - Original source credential should remain unchanged
     assertThat(result).isPresent();
     SourceApiDto spotifySource = result.get().getSources().getSource().getFirst();
     assertThat(spotifySource.getCredential().getValue()).isEqualTo(originalToken);
+
+    // The missing Spotify account is added as a new source
+    assertThat(result.get().getSources().getSource()).hasSize(2);
+    SourceApiDto addedSource = result.get().getSources().getSource().get(1);
+    assertThat(addedSource.getId()).isEqualTo("10");
+    assertThat(addedSource.getUsername()).isEqualTo("different-user");
+    assertThat(addedSource.getSourcename()).isEqualTo("Different User");
+    assertThat(addedSource.getCredential().getValue()).isEqualTo("different-token");
   }
 
   @Test
@@ -507,9 +513,10 @@ class FullAccountServiceTest {
     Optional<FullAccountResponseApiDto> result =
         fullAccountService.getFullAccount(accountId, request);
 
-    // Then - Should not throw exception
+    // Then - Sources container is initialized but empty
     assertThat(result).isPresent();
-    assertThat(result.get().getSources()).isNull();
+    assertThat(result.get().getSources()).isNotNull();
+    assertThat(result.get().getSources().getSource()).isNullOrEmpty();
   }
 
   @Test
@@ -1057,6 +1064,127 @@ class FullAccountServiceTest {
     assertThat(result).isPresent();
     assertThat(result.get().getDevices()).isNotNull();
     assertThat(result.get().getDevices().getDevice()).isEmpty();
+  }
+
+  @Test
+  void testPatch_AddsMissingSpotifyAccountsAsSources() throws IOException {
+    // Given
+    String accountId = "test-account-add-spotify";
+    OffsetDateTime createdAt1 = OffsetDateTime.parse("2025-01-01T10:00:00+00:00");
+    OffsetDateTime updatedAt1 = OffsetDateTime.parse("2025-06-01T10:00:00+00:00");
+    OffsetDateTime createdAt2 = OffsetDateTime.parse("2025-03-01T10:00:00+00:00");
+    OffsetDateTime updatedAt2 = OffsetDateTime.parse("2025-07-01T10:00:00+00:00");
+
+    FullAccountResponseApiDto response = new FullAccountResponseApiDto();
+    response.setId(accountId);
+    response.setSources(new SourcesContainerApiDto());
+    response.setDevices(new DevicesContainerApiDto());
+
+    SpotifyAccount account1 =
+        new SpotifyAccount("user-a", "Alice", "token-a", createdAt1, updatedAt1, null);
+    SpotifyAccount account2 =
+        new SpotifyAccount("user-b", "Bob", "token-b", createdAt2, updatedAt2, null);
+    when(spotifyAccountService.listAllAccounts()).thenReturn(List.of(account1, account2));
+
+    when(accountDataService.hasAccountData(accountId)).thenReturn(true);
+    when(accountDataService.loadFullAccountData(accountId)).thenReturn(response);
+    when(deviceRepository.findAllByMargeAccountId(accountId)).thenReturn(List.of());
+
+    // When
+    Optional<FullAccountResponseApiDto> result =
+        fullAccountService.getFullAccount(accountId, request);
+
+    // Then - Both Spotify accounts added as sources with IDs starting at 10
+    assertThat(result).isPresent();
+    List<SourceApiDto> sources = result.get().getSources().getSource();
+    assertThat(sources).hasSize(2);
+
+    SourceApiDto source1 = sources.get(0);
+    assertThat(source1.getId()).isEqualTo("10");
+    assertThat(source1.getType()).isEqualTo("Audio");
+    assertThat(source1.getSourceproviderid()).isEqualTo("15");
+    assertThat(source1.getUsername()).isEqualTo("user-a");
+    assertThat(source1.getSourcename()).isEqualTo("Alice");
+    assertThat(source1.getCreatedOn()).isEqualTo(createdAt1);
+    assertThat(source1.getUpdatedOn()).isEqualTo(updatedAt1);
+    assertThat(source1.getCredential().getType()).isEqualTo("token");
+    assertThat(source1.getCredential().getValue()).isEqualTo("token-a");
+
+    SourceApiDto source2 = sources.get(1);
+    assertThat(source2.getId()).isEqualTo("11");
+    assertThat(source2.getUsername()).isEqualTo("user-b");
+    assertThat(source2.getSourcename()).isEqualTo("Bob");
+    assertThat(source2.getCredential().getValue()).isEqualTo("token-b");
+  }
+
+  @Test
+  void testPatch_DoesNotDuplicateExistingSpotifySource() throws IOException {
+    // Given
+    String accountId = "test-account-no-dup-spotify";
+    String spotifyUserId = "existing-spotify-user";
+    OffsetDateTime createdAt = OffsetDateTime.parse("2025-01-01T10:00:00+00:00");
+    OffsetDateTime updatedAt = OffsetDateTime.parse("2025-06-01T10:00:00+00:00");
+
+    FullAccountResponseApiDto response =
+        createFullAccountWithSpotifySources(spotifyUserId, "old-token");
+
+    SpotifyAccount account =
+        new SpotifyAccount(spotifyUserId, "Existing User", "new-token", createdAt, updatedAt, null);
+    when(spotifyAccountService.listAllAccounts()).thenReturn(List.of(account));
+
+    when(accountDataService.hasAccountData(accountId)).thenReturn(true);
+    when(accountDataService.loadFullAccountData(accountId)).thenReturn(response);
+    when(deviceRepository.findAllByMargeAccountId(accountId)).thenReturn(List.of());
+
+    // When
+    Optional<FullAccountResponseApiDto> result =
+        fullAccountService.getFullAccount(accountId, request);
+
+    // Then - No duplicate source added; existing one is patched
+    assertThat(result).isPresent();
+    List<SourceApiDto> sources = result.get().getSources().getSource();
+    assertThat(sources).hasSize(1);
+    assertThat(sources.getFirst().getUsername()).isEqualTo(spotifyUserId);
+    assertThat(sources.getFirst().getCredential().getValue()).isEqualTo("new-token");
+  }
+
+  @Test
+  void testPatch_MinimalAccount_AddsSpotifySources() throws IOException {
+    // Given - proxy failure triggers minimal account
+    String accountId = "test-account-minimal-spotify";
+    OffsetDateTime createdAt = OffsetDateTime.parse("2025-02-15T10:00:00+00:00");
+    OffsetDateTime updatedAt = OffsetDateTime.parse("2025-08-01T10:00:00+00:00");
+
+    when(accountDataService.hasAccountData(accountId)).thenReturn(false);
+    when(proxyService.forwardRequest(eq(request), any()))
+        .thenReturn(ResponseEntity.status(HttpStatus.BAD_GATEWAY).build());
+    when(deviceRepository.findAllByMargeAccountId(accountId)).thenReturn(List.of());
+
+    SpotifyAccount account =
+        new SpotifyAccount("spotify-user-x", "Player X", "refresh-x", createdAt, updatedAt, null);
+    when(spotifyAccountService.listAllAccounts()).thenReturn(List.of(account));
+
+    // When
+    Optional<FullAccountResponseApiDto> result =
+        fullAccountService.getFullAccount(accountId, request);
+
+    // Then - Minimal account has TuneIn source + Spotify source
+    assertThat(result).isPresent();
+    List<SourceApiDto> sources = result.get().getSources().getSource();
+    assertThat(sources).hasSize(2);
+
+    // First source is TuneIn
+    assertThat(sources.get(0).getSourceproviderid()).isEqualTo("25");
+
+    // Second source is Spotify
+    SourceApiDto spotifySource = sources.get(1);
+    assertThat(spotifySource.getId()).isEqualTo("10");
+    assertThat(spotifySource.getSourceproviderid()).isEqualTo("15");
+    assertThat(spotifySource.getUsername()).isEqualTo("spotify-user-x");
+    assertThat(spotifySource.getSourcename()).isEqualTo("Player X");
+    assertThat(spotifySource.getCredential().getValue()).isEqualTo("refresh-x");
+    assertThat(spotifySource.getCreatedOn()).isEqualTo(createdAt);
+    assertThat(spotifySource.getUpdatedOn()).isEqualTo(updatedAt);
   }
 
   @Test

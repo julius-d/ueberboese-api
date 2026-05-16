@@ -50,6 +50,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class FullAccountService {
 
+  private static final String SPOTIFY_PROVIDER_ID = String.valueOf(SourceProvider.SPOTIFY.getId());
+
   private final AccountDataService accountDataService;
   private final ProxyService proxyService;
   private final XmlMapper xmlMapper;
@@ -78,6 +80,7 @@ public class FullAccountService {
         FullAccountResponseApiDto response = accountDataService.loadFullAccountData(accountId);
         log.info("Successfully loaded account data from cache for accountId: {}", accountId);
         injectDevicesFromDatabase(response, accountId);
+        injectSpotifySources(response);
         injectRecentsFromDatabase(response, accountId);
         injectPresetsFromDatabase(response, accountId);
         patch(response);
@@ -103,6 +106,7 @@ public class FullAccountService {
           proxyResponse.getStatusCode());
       var minimal = buildMinimalAccount(accountId);
       injectDevicesFromDatabase(minimal, accountId);
+      injectSpotifySources(minimal);
       injectRecentsFromDatabase(minimal, accountId);
       injectPresetsFromDatabase(minimal, accountId);
       patch(minimal);
@@ -126,11 +130,10 @@ public class FullAccountService {
             saveException.getMessage());
       }
 
-      // Inject database devices, recents and presets before patching
       injectDevicesFromDatabase(parsedResponse, accountId);
+      injectSpotifySources(parsedResponse);
       injectRecentsFromDatabase(parsedResponse, accountId);
       injectPresetsFromDatabase(parsedResponse, accountId);
-      // Apply Spotify patches
       patch(parsedResponse);
 
       return Optional.of(parsedResponse);
@@ -280,18 +283,23 @@ public class FullAccountService {
     log.info("Injected presets from database into full account for accountId: {}", accountId);
   }
 
+  private void injectSpotifySources(FullAccountResponseApiDto response) {
+    if (response.getSources() == null) {
+      response.setSources(new SourcesContainerApiDto());
+    }
+    List<SpotifyAccount> spotifyAccounts = spotifyAccountService.listAllAccounts();
+    addMissingSpotifySources(response, spotifyAccounts);
+  }
+
   private void patch(FullAccountResponseApiDto response) {
-    // Get all stored Spotify accounts
     List<SpotifyAccount> spotifyAccounts = spotifyAccountService.listAllAccounts();
 
-    // Create a map for efficient lookup: spotifyUserId -> SpotifyAccount
     Map<String, SpotifyAccount> userIdToAccount =
         spotifyAccounts.stream()
             .collect(Collectors.toMap(SpotifyAccount::spotifyUserId, account -> account));
 
     int patchedCount = 0;
 
-    // Patch top-level sources
     if (response.getSources() != null && response.getSources().getSource() != null) {
       for (SourceApiDto source : response.getSources().getSource()) {
         if (patchSource(source, userIdToAccount)) {
@@ -300,10 +308,8 @@ public class FullAccountService {
       }
     }
 
-    // Patch nested sources in device presets and recents
     if (response.getDevices() != null && response.getDevices().getDevice() != null) {
       for (var device : response.getDevices().getDevice()) {
-        // Patch preset sources
         if (device.getPresets() != null && device.getPresets().getPreset() != null) {
           for (var preset : device.getPresets().getPreset()) {
             if (preset.getSource() != null && patchSource(preset.getSource(), userIdToAccount)) {
@@ -312,7 +318,6 @@ public class FullAccountService {
           }
         }
 
-        // Patch recent sources
         if (device.getRecents() != null && device.getRecents().getRecent() != null) {
           for (var recent : device.getRecents().getRecent()) {
             if (recent.getSource() != null && patchSource(recent.getSource(), userIdToAccount)) {
@@ -325,6 +330,38 @@ public class FullAccountService {
 
     if (patchedCount > 0) {
       log.info("Patched {} Spotify sources with updated credentials and timestamps", patchedCount);
+    }
+  }
+
+  private void addMissingSpotifySources(
+      FullAccountResponseApiDto response, List<SpotifyAccount> spotifyAccounts) {
+    Set<String> existingSpotifyUsernames =
+        response.getSources().getSource() != null
+            ? response.getSources().getSource().stream()
+                .filter(s -> SPOTIFY_PROVIDER_ID.equals(s.getSourceproviderid()))
+                .map(SourceApiDto::getUsername)
+                .filter(Objects::nonNull)
+                .collect(toUnmodifiableSet())
+            : Set.of();
+
+    int nextId = 10;
+    for (SpotifyAccount account : spotifyAccounts) {
+      if (existingSpotifyUsernames.contains(account.spotifyUserId())) {
+        continue;
+      }
+      response
+          .getSources()
+          .addSourceItem(
+              new SourceApiDto()
+                  .id(String.valueOf(nextId++))
+                  .type("Audio")
+                  .sourceproviderid(SPOTIFY_PROVIDER_ID)
+                  .username(account.spotifyUserId())
+                  .sourcename(account.displayName())
+                  .createdOn(account.createdAt())
+                  .updatedOn(account.updatedAt())
+                  .credential(new CredentialApiDto("token", account.refreshToken())));
+      log.info("Added Spotify source for user: {}", account.spotifyUserId());
     }
   }
 
@@ -342,7 +379,7 @@ public class FullAccountService {
             .type("Audio")
             .createdOn(OffsetDateTime.parse("2018-08-11T08:55:41+00:00"))
             .updatedOn(OffsetDateTime.parse("2019-07-20T17:48:31+00:00"))
-            .sourceproviderid(SourceProvider.TUNEIN.getId() + "")
+            .sourceproviderid(String.valueOf(SourceProvider.TUNEIN.getId()))
             .credential(new CredentialApiDto("token", "eyJ...")));
     response.setSources(sources);
     return response;
@@ -356,8 +393,7 @@ public class FullAccountService {
    * @return true if the source was patched, false otherwise
    */
   private boolean patchSource(SourceApiDto source, Map<String, SpotifyAccount> userIdToAccount) {
-    // Check if this is a Spotify source (sourceproviderid == "15")
-    if (!"15".equals(source.getSourceproviderid())) {
+    if (!SPOTIFY_PROVIDER_ID.equals(source.getSourceproviderid())) {
       return false;
     }
 
