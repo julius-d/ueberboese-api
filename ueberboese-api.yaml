@@ -3485,9 +3485,6 @@ components:
     BmxTokenRequest:
       type: object
       description: Token refresh request
-      required:
-        - grant_type
-        - refresh_token
       properties:
         grant_type:
           type: string
