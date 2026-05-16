@@ -1,7 +1,9 @@
 package com.github.juliusd.ueberboeseapi.bmx.report;
 
+import java.time.OffsetDateTime;
+
 public record RadioReportEvent(
-    String timeStamp,
+    OffsetDateTime timeStamp,
     EventType eventType,
     String reason,
     String reasonSubCode,

@@ -12,6 +12,8 @@ import com.github.juliusd.ueberboeseapi.bmx.report.RadioReportStorageService;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -429,6 +431,8 @@ class BmxControllerTest extends TestBase {
     List<RadioReportEvent> session = stored.get("1778563508680");
     assertThat(session).hasSize(1);
     RadioReportEvent report = session.getFirst();
+    assertThat(report.timeStamp())
+        .isEqualTo(OffsetDateTime.of(2026, 5, 13, 9, 1, 19, 0, ZoneOffset.UTC));
     assertThat(report.eventType()).isEqualTo(RadioReportEvent.EventType.START);
     assertThat(report.reason()).isEqualTo("USER_SELECT_PLAYABLE");
     assertThat(report.timeIntoTrack()).isEqualTo(0);
@@ -570,6 +574,7 @@ class BmxControllerTest extends TestBase {
         WireMock.get(urlEqualTo("/Tune.ashx?id=s80044"))
             .willReturn(aResponse().withStatus(200).withBody("https://stream.example.com/radio1")));
 
+    OffsetDateTime before = OffsetDateTime.now(ZoneOffset.UTC);
     String reportingHref =
         given()
             .contentType("application/json")
@@ -580,6 +585,7 @@ class BmxControllerTest extends TestBase {
             .extract()
             .jsonPath()
             .getString("_links.bmx_reporting.href");
+    OffsetDateTime after = OffsetDateTime.now(ZoneOffset.UTC);
 
     given()
         .auth()
@@ -607,8 +613,14 @@ class BmxControllerTest extends TestBase {
         .body("sessions[0].stationId", equalTo("s80044"))
         .body("sessions[0].stationName", equalTo("Radio TEDDY"))
         .body("sessions[0].logoUrl", equalTo("https://cdn-radiotime-logos.tunein.com/s80044q.png"))
+        .body("sessions[0].startedAt", notNullValue())
         .body("sessions[0].events", hasSize(1))
-        .body("sessions[0].events[0].eventType", equalTo("START"));
+        .body("sessions[0].events[0].eventType", equalTo("START"))
+        .body("sessions[0].events[0].timeStamp", equalTo("2026-05-14T19:07:24Z"));
+
+    OffsetDateTime startedAt =
+        radioReportStorageService.getSessionsByListenId().values().iterator().next().startedAt();
+    assertThat(startedAt).isAfterOrEqualTo(before).isBeforeOrEqualTo(after);
   }
 
   @Test

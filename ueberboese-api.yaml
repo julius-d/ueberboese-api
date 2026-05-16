@@ -3516,7 +3516,7 @@ components:
       properties:
         timeStamp:
           type: string
-          description: Timestamp of the event
+          description: Timestamp of the event, ISO 8601 with numeric UTC offset (e.g. +0000)
           example: "2025-10-31T05:38:55+0000"
         eventType:
           type: string

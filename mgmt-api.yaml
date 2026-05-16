@@ -545,7 +545,8 @@ components:
       properties:
         timeStamp:
           type: string
-          example: "2026-05-14T19:07:24+0000"
+          format: date-time
+          example: "2026-05-16T10:16:15+00:00"
         eventType:
           type: string
           example: "START"
@@ -576,6 +577,10 @@ components:
         logoUrl:
           type: string
           example: "https://cdn-radiotime-logos.tunein.com/s80044q.png"
+        startedAt:
+          type: string
+          format: date-time
+          example: "2026-05-16T10:16:15+00:00"
         events:
           type: array
           items:

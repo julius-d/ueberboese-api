@@ -1,6 +1,7 @@
 package com.github.juliusd.ueberboeseapi.bmx.report;
 
 import com.github.juliusd.ueberboeseapi.bmx.BmxProperties;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -20,8 +21,13 @@ public class RadioReportStorageService {
       new LinkedHashMap<>();
 
   public synchronized void startSession(
-      String listenId, String stationId, String stationName, String logoUrl) {
-    sessionsByListenId.put(listenId, new RadioSession(listenId, stationId, stationName, logoUrl));
+      String listenId,
+      String stationId,
+      String stationName,
+      String logoUrl,
+      OffsetDateTime startedAt) {
+    sessionsByListenId.put(
+        listenId, new RadioSession(listenId, stationId, stationName, logoUrl, startedAt));
     evictOldestIfNeeded();
   }
 

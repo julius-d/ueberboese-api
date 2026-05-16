@@ -21,6 +21,9 @@ import com.github.juliusd.ueberboeseapi.generated.dtos.BmxServicesResponseApiDto
 import com.github.juliusd.ueberboeseapi.generated.dtos.BmxStreamApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.BmxTokenResponseApiDto;
 import java.nio.charset.StandardCharsets;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -42,6 +45,12 @@ public class BmxService {
   private final TuneInClient tuneInClient;
   private final BmxProperties urlProperties;
   private final RadioReportStorageService radioReportStorageService;
+
+  private static final DateTimeFormatter REPORT_TS_FORMATTER =
+      new DateTimeFormatterBuilder()
+          .append(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+          .appendOffset("+HHmm", "+0000")
+          .toFormatter();
 
   private final JsonMapper jsonMapper = builder().findAndAddModules().build();
 
@@ -333,7 +342,7 @@ public class BmxService {
     String streamId = UUID.randomUUID().toString();
     String listenId = String.valueOf(System.currentTimeMillis());
     radioReportStorageService.startSession(
-        listenId, stationId, metadata.getName(), metadata.getLogo());
+        listenId, stationId, metadata.getName(), metadata.getLogo(), OffsetDateTime.now());
 
     String reportingHref =
         String.format(
@@ -459,14 +468,21 @@ public class BmxService {
   }
 
   public BmxReportResponseApiDto reportAnalytics(String listenId, BmxReportRequestApiDto report) {
-    log.info("Received analytics report");
+    log.info(
+        "Received analytics report: listenId={}, timeStamp={}",
+        listenId,
+        report != null ? report.getTimeStamp() : null);
     RadioReportEvent.EventType eventType =
         report != null && report.getEventType() != null
             ? RadioReportEvent.EventType.valueOf(report.getEventType().getValue())
             : null;
+    OffsetDateTime ts =
+        report != null && report.getTimeStamp() != null
+            ? OffsetDateTime.parse(report.getTimeStamp(), REPORT_TS_FORMATTER)
+            : null;
     RadioReportEvent event =
         new RadioReportEvent(
-            report != null ? report.getTimeStamp() : null,
+            ts,
             eventType,
             report != null ? report.getReason() : null,
             report != null ? report.getReasonSubCode() : null,

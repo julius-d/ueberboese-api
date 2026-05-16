@@ -105,6 +105,7 @@ public class MgmtController implements AccountManagementApi, EventManagementApi 
         dto.setStationId(session.stationId());
         dto.setStationName(session.stationName());
         dto.setLogoUrl(session.logoUrl());
+        dto.setStartedAt(session.startedAt());
       }
       dto.setEvents(events);
       result.add(dto);
