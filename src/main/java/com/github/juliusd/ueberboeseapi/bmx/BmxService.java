@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -468,26 +469,22 @@ public class BmxService {
   }
 
   public BmxReportResponseApiDto reportAnalytics(String listenId, BmxReportRequestApiDto report) {
+    Objects.requireNonNull(report, "report must not be null");
     log.info(
-        "Received analytics report: listenId={}, timeStamp={}",
-        listenId,
-        report != null ? report.getTimeStamp() : null);
+        "Received analytics report: listenId={}, timeStamp={}", listenId, report.getTimeStamp());
     RadioReportEvent.EventType eventType =
-        report != null && report.getEventType() != null
+        report.getEventType() != null
             ? RadioReportEvent.EventType.valueOf(report.getEventType().getValue())
             : null;
-    OffsetDateTime ts =
-        report != null && report.getTimeStamp() != null
-            ? OffsetDateTime.parse(report.getTimeStamp(), REPORT_TS_FORMATTER)
-            : null;
+    var timeStamp = OffsetDateTime.parse(report.getTimeStamp(), REPORT_TS_FORMATTER);
     RadioReportEvent event =
         new RadioReportEvent(
-            ts,
+            timeStamp,
             eventType,
-            report != null ? report.getReason() : null,
-            report != null ? report.getReasonSubCode() : null,
-            report != null ? report.getTimeIntoTrack() : null,
-            report != null ? report.getPlaybackDelay() : null);
+            report.getReason(),
+            report.getReasonSubCode(),
+            report.getTimeIntoTrack(),
+            report.getPlaybackDelay());
     radioReportStorageService.store(listenId, event);
 
     BmxReportResponseApiDto response = new BmxReportResponseApiDto();

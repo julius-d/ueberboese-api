@@ -1,14 +1,17 @@
 package com.github.juliusd.ueberboeseapi.bmx.report;
 
 import java.time.OffsetDateTime;
+import lombok.Builder;
+import lombok.NonNull;
 
+@Builder(toBuilder = true)
 public record RadioReportEvent(
-    OffsetDateTime timeStamp,
-    EventType eventType,
-    String reason,
+    @NonNull OffsetDateTime timeStamp,
+    @NonNull EventType eventType,
+    @NonNull String reason,
     String reasonSubCode,
-    Integer timeIntoTrack,
-    Integer playbackDelay) {
+    @NonNull Integer timeIntoTrack,
+    @NonNull Integer playbackDelay) {
 
   public enum EventType {
     START,
