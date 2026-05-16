@@ -2,7 +2,7 @@ package com.github.juliusd.ueberboeseapi.mgmt;
 
 import com.github.juliusd.ueberboeseapi.bmx.report.RadioReportEvent;
 import com.github.juliusd.ueberboeseapi.bmx.report.RadioReportStorageService;
-import com.github.juliusd.ueberboeseapi.bmx.report.RadioSession;
+import com.github.juliusd.ueberboeseapi.bmx.report.RadioSessionReport;
 import com.github.juliusd.ueberboeseapi.generated.mgmt.AccountManagementApi;
 import com.github.juliusd.ueberboeseapi.generated.mgmt.EventManagementApi;
 import com.github.juliusd.ueberboeseapi.generated.mgmt.dtos.DeviceEventApiDto;
@@ -16,9 +16,7 @@ import com.github.juliusd.ueberboeseapi.generated.mgmt.dtos.SpeakerApiDto;
 import com.github.juliusd.ueberboeseapi.service.DeviceTrackingService;
 import com.github.juliusd.ueberboeseapi.service.EventStorageService;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -78,42 +76,35 @@ public class MgmtController implements AccountManagementApi, EventManagementApi 
 
   @Override
   public ResponseEntity<RadioReportsApiDto> getRadioReports() {
-    Map<String, RadioSession> sessions = radioReportStorageService.getSessionsByListenId();
-    Map<String, List<RadioReportEvent>> reportsByListenId =
-        radioReportStorageService.getAllByListenId();
-
-    var allListenIds = new LinkedHashSet<String>(sessions.keySet());
-    allListenIds.addAll(reportsByListenId.keySet());
-
-    List<RadioReportSessionApiDto> result = new ArrayList<>();
-    for (String listenId : allListenIds) {
-      var session = sessions.get(listenId);
-      List<RadioReportEventApiDto> events = new ArrayList<>();
-      for (RadioReportEvent r : reportsByListenId.getOrDefault(listenId, List.of())) {
-        RadioReportEventApiDto event = new RadioReportEventApiDto();
-        event.setTimeStamp(r.timeStamp());
-        event.setEventType(r.eventType() != null ? r.eventType().name() : null);
-        event.setReason(r.reason());
-        event.setReasonSubCode(r.reasonSubCode());
-        event.setTimeIntoTrack(r.timeIntoTrack());
-        event.setPlaybackDelay(r.playbackDelay());
-        events.add(event);
-      }
-      RadioReportSessionApiDto dto = new RadioReportSessionApiDto();
-      dto.setListenId(listenId);
-      if (session != null) {
-        dto.setStationId(session.stationId());
-        dto.setStationName(session.stationName());
-        dto.setLogoUrl(session.logoUrl());
-        dto.setStartedAt(session.startedAt());
-      }
-      dto.setEvents(events);
-      result.add(dto);
-    }
-
+    List<RadioReportSessionApiDto> result =
+        radioReportStorageService.getSessionReports().stream().map(this::toDto).toList();
     RadioReportsApiDto response = new RadioReportsApiDto();
     response.setSessions(result);
     return ResponseEntity.ok().header("Content-Type", "application/json").body(response);
+  }
+
+  private RadioReportSessionApiDto toDto(RadioSessionReport report) {
+    RadioReportSessionApiDto dto = new RadioReportSessionApiDto();
+    dto.setListenId(report.listenId());
+    if (report.session() != null) {
+      dto.setStationId(report.session().stationId());
+      dto.setStationName(report.session().stationName());
+      dto.setLogoUrl(report.session().logoUrl());
+      dto.setStartedAt(report.session().startedAt());
+    }
+    dto.setEvents(report.events().stream().map(this::toDto).toList());
+    return dto;
+  }
+
+  private RadioReportEventApiDto toDto(RadioReportEvent r) {
+    RadioReportEventApiDto event = new RadioReportEventApiDto();
+    event.setTimeStamp(r.timeStamp());
+    event.setEventType(r.eventType().name());
+    event.setReason(r.reason());
+    event.setReasonSubCode(r.reasonSubCode());
+    event.setTimeIntoTrack(r.timeIntoTrack());
+    event.setPlaybackDelay(r.playbackDelay());
+    return event;
   }
 
   /** Exception handler for RuntimeException - returns 500 Internal Server Error. */

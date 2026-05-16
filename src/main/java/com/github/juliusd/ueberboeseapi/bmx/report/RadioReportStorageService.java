@@ -4,8 +4,8 @@ import com.github.juliusd.ueberboeseapi.bmx.BmxProperties;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -36,12 +36,17 @@ public class RadioReportStorageService {
     evictOldestIfNeeded();
   }
 
-  public synchronized Map<String, RadioSession> getSessionsByListenId() {
-    return new LinkedHashMap<>(sessionsByListenId);
-  }
-
-  public synchronized Map<String, List<RadioReportEvent>> getAllByListenId() {
-    return new LinkedHashMap<>(reportsByListenId);
+  public synchronized List<RadioSessionReport> getSessionReports() {
+    var allListenIds = new LinkedHashSet<>(sessionsByListenId.keySet());
+    allListenIds.addAll(reportsByListenId.keySet());
+    return allListenIds.stream()
+        .map(
+            id ->
+                new RadioSessionReport(
+                    id,
+                    sessionsByListenId.get(id),
+                    List.copyOf(reportsByListenId.getOrDefault(id, List.of()))))
+        .toList();
   }
 
   public synchronized Optional<RadioSession> getSession(String listenId) {
@@ -54,6 +59,7 @@ public class RadioReportStorageService {
   }
 
   private void evictOldestIfNeeded() {
+    reportsByListenId.keySet().removeIf(id -> !sessionsByListenId.containsKey(id));
     int limit = properties.maxReports();
     while (sessionsByListenId.size() > limit) {
       String oldest = sessionsByListenId.firstEntry().getKey();

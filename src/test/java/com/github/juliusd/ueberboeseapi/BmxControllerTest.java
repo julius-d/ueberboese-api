@@ -9,6 +9,7 @@ import static org.hamcrest.Matchers.*;
 
 import com.github.juliusd.ueberboeseapi.bmx.report.RadioReportEvent;
 import com.github.juliusd.ueberboeseapi.bmx.report.RadioReportStorageService;
+import com.github.juliusd.ueberboeseapi.bmx.report.RadioSessionReport;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
@@ -16,7 +17,6 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Base64;
 import java.util.List;
-import java.util.Map;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -402,6 +402,9 @@ class BmxControllerTest extends TestBase {
 
   @Test
   void reportTuneInAnalytics_shouldStoreReport() {
+    radioReportStorageService.startSession(
+        "1778563508680", "s80044", "Radio TEDDY", null, OffsetDateTime.now(ZoneOffset.UTC));
+
     given()
         .auth()
         .preemptive()
@@ -426,9 +429,9 @@ class BmxControllerTest extends TestBase {
         .then()
         .statusCode(200);
 
-    Map<String, List<RadioReportEvent>> stored = radioReportStorageService.getAllByListenId();
+    List<RadioSessionReport> stored = radioReportStorageService.getSessionReports();
     assertThat(stored).hasSize(1);
-    List<RadioReportEvent> session = stored.get("1778563508680");
+    List<RadioReportEvent> session = stored.getFirst().events();
     assertThat(session).hasSize(1);
     RadioReportEvent report = session.getFirst();
     assertThat(report.timeStamp())
@@ -441,6 +444,9 @@ class BmxControllerTest extends TestBase {
 
   @Test
   void reportTuneInAnalytics_shouldStoreMultipleReportsPerSession() {
+    radioReportStorageService.startSession(
+        "1778785642097", "s80044", "Radio TEDDY", null, OffsetDateTime.now(ZoneOffset.UTC));
+
     given()
         .auth()
         .preemptive()
@@ -489,9 +495,9 @@ class BmxControllerTest extends TestBase {
         .then()
         .statusCode(200);
 
-    Map<String, List<RadioReportEvent>> stored = radioReportStorageService.getAllByListenId();
+    List<RadioSessionReport> stored = radioReportStorageService.getSessionReports();
     assertThat(stored).hasSize(1);
-    List<RadioReportEvent> session = stored.get("1778785642097");
+    List<RadioReportEvent> session = stored.getFirst().events();
     assertThat(session).hasSize(2);
     assertThat(session.get(0).eventType()).isEqualTo(RadioReportEvent.EventType.START);
     assertThat(session.get(1).eventType()).isEqualTo(RadioReportEvent.EventType.STOP);
@@ -499,6 +505,9 @@ class BmxControllerTest extends TestBase {
 
   @Test
   void getRadioReports_shouldReturnStoredReportsGroupedByListenId() {
+    radioReportStorageService.startSession(
+        "1778785642097", "s80044", "Radio TEDDY", null, OffsetDateTime.now(ZoneOffset.UTC));
+
     given()
         .auth()
         .preemptive()
@@ -619,7 +628,7 @@ class BmxControllerTest extends TestBase {
         .body("sessions[0].events[0].timeStamp", equalTo("2026-05-14T19:07:24Z"));
 
     OffsetDateTime startedAt =
-        radioReportStorageService.getSessionsByListenId().values().iterator().next().startedAt();
+        radioReportStorageService.getSessionReports().getFirst().session().startedAt();
     assertThat(startedAt).isAfterOrEqualTo(before).isBeforeOrEqualTo(after);
   }
 
