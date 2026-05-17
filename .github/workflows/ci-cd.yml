@@ -187,7 +187,7 @@ jobs:
         path: sbom
 
     - name: Generate provenance attestations
-      uses: actions/attest-build-provenance@v1
+      uses: actions/attest-build-provenance@v4
       with:
         subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
         subject-digest: ${{ steps.image-digest.outputs.digest }}
