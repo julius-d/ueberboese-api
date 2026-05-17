@@ -67,7 +67,7 @@ jobs:
       run: mvn -B verify --file pom.xml -Drevision=${{ needs.version.outputs.version || '0.0.0' }}
 
     - name: Upload test results
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       if: always()
       with:
         name: test-results
@@ -118,7 +118,7 @@ jobs:
         docker push ${IMAGE_BASE}:${VERSION}-${{ matrix.arch }}
 
     - name: Upload SBOM artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       if: matrix.arch == 'amd64'
       with:
         name: sbom
@@ -181,7 +181,7 @@ jobs:
         echo "digest=sha256:${MANIFEST_DIGEST}" >> $GITHUB_OUTPUT
 
     - name: Download SBOM artifact
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: sbom
         path: sbom
