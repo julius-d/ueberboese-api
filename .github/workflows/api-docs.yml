@@ -31,7 +31,7 @@ jobs:
             -o docs/ueberboese-api-specification.html
 
       - name: Commit documentation
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "docs: update API documentation [skip ci]"
           file_pattern: docs/ueberboese-api-specification.html
