@@ -27,7 +27,6 @@ import com.github.juliusd.ueberboeseapi.recent.RecentService;
 import com.github.juliusd.ueberboeseapi.spotify.SpotifyAccount;
 import com.github.juliusd.ueberboeseapi.spotify.SpotifyAccountService;
 import jakarta.servlet.http.HttpServletRequest;
-import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -38,7 +37,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 /**
@@ -74,79 +72,30 @@ public class FullAccountService {
       String accountId, HttpServletRequest request) {
     log.info("Getting full account data for accountId: {}", accountId);
 
-    // Check if cached data exists
-    if (accountDataService.hasAccountData(accountId)) {
-      try {
-        FullAccountResponseApiDto response = accountDataService.loadFullAccountData(accountId);
-        log.info("Successfully loaded account data from cache for accountId: {}", accountId);
-        injectDevicesFromDatabase(response, accountId);
-        injectSpotifySources(response);
-        injectRecentsFromDatabase(response, accountId);
-        injectPresetsFromDatabase(response, accountId);
-        patch(response);
-        return Optional.of(response);
-      } catch (IOException e) {
-        log.error(
-            "Failed to load account data from cache for accountId: {}, error: {}",
-            accountId,
-            e.getMessage());
-        return Optional.empty();
-      }
+    String clientIp = request.getHeader("X-Forwarded-For");
+    if (clientIp == null || clientIp.isEmpty() || "unknown".equalsIgnoreCase(clientIp)) {
+      clientIp = request.getRemoteAddr();
+    }
+    if (clientIp != null && clientIp.contains(",")) {
+      clientIp = clientIp.split(",")[0].trim();
     }
 
-    // Cache miss - forward request to proxy
-    log.info("Cache miss for accountId: {}, forwarding request to proxy", accountId);
-    ResponseEntity<byte[]> proxyResponse = proxyService.forwardRequest(request, null);
+    log.info("Processing full account for accountId: {} linked to IP: {}", accountId, clientIp);
 
-    // Check if proxy response is successful
-    if (!proxyResponse.getStatusCode().is2xxSuccessful() || proxyResponse.getBody() == null) {
-      log.warn(
-          "Proxy request failed for accountId: {}, status: {}, returning minimal account",
-          accountId,
-          proxyResponse.getStatusCode());
-      var minimal = buildMinimalAccount(accountId);
-      injectDevicesFromDatabase(minimal, accountId);
-      injectSpotifySources(minimal);
-      injectRecentsFromDatabase(minimal, accountId);
-      injectPresetsFromDatabase(minimal, accountId);
-      patch(minimal);
-      return Optional.of(minimal);
-    }
+    var minimal = buildMinimalAccount(accountId);
 
-    // Try to parse and cache the response
-    try {
-      String xmlContent = new String(proxyResponse.getBody());
-      FullAccountResponseApiDto parsedResponse =
-          xmlMapper.readValue(xmlContent, FullAccountResponseApiDto.class);
+    injectDevicesFromDatabase(minimal, accountId, clientIp);
 
-      // Cache the response for future use
-      try {
-        accountDataService.saveFullAccountDataRaw(accountId, xmlContent);
-        log.info("Successfully cached account data for accountId: {}", accountId);
-      } catch (Exception saveException) {
-        log.error(
-            "Failed to cache account data for accountId: {}, continuing with response. Error: {}",
-            accountId,
-            saveException.getMessage());
-      }
+    injectSpotifySources(minimal);
+    injectRecentsFromDatabase(minimal, accountId);
+    injectPresetsFromDatabase(minimal, accountId);
+    patch(minimal);
 
-      injectDevicesFromDatabase(parsedResponse, accountId);
-      injectSpotifySources(parsedResponse);
-      injectRecentsFromDatabase(parsedResponse, accountId);
-      injectPresetsFromDatabase(parsedResponse, accountId);
-      patch(parsedResponse);
-
-      return Optional.of(parsedResponse);
-    } catch (Exception parseException) {
-      log.error(
-          "Failed to parse proxy response for accountId: {}. Error: {}",
-          accountId,
-          parseException.getMessage());
-      return Optional.empty();
-    }
+    return Optional.of(minimal);
   }
 
-  private void injectDevicesFromDatabase(FullAccountResponseApiDto response, String accountId) {
+  private void injectDevicesFromDatabase(
+      FullAccountResponseApiDto response, String accountId, String clientIp) {
     if (response.getDevices() == null) {
       response.setDevices(new DevicesContainerApiDto());
     }
@@ -163,7 +112,22 @@ public class FullAccountService {
     }
 
     List<Device> dbDevices = deviceRepository.findAllByMargeAccountId(accountId);
+
+    boolean ipExistsInDb =
+        dbDevices.stream().anyMatch(d -> d.ipAddress() != null && d.ipAddress().equals(clientIp));
+
+    if (!ipExistsInDb) {
+      log.warn(
+          "Client IP {} not found in database for account {}. Falling back to returning all devices.",
+          clientIp,
+          accountId);
+    }
+
     for (Device device : dbDevices) {
+      if (ipExistsInDb && (device.ipAddress() == null || !device.ipAddress().equals(clientIp))) {
+        continue;
+      }
+
       if (!existingDeviceIds.contains(device.deviceId())) {
         var deviceDto = new DeviceApiDto();
         deviceDto.setDeviceid(device.deviceId());
@@ -173,18 +137,22 @@ public class FullAccountService {
         deviceDto.setUpdatedOn(device.updatedOn());
         deviceDto.setFirmwareVersion(device.firmwareVersion());
         deviceDto.setSerialNumber(device.deviceSerialNumber());
+
         if (device.productCode() != null || device.productSerialNumber() != null) {
           var attachedProduct = new AttachedProductApiDto();
           attachedProduct.setProductCode(device.productCode());
           attachedProduct.setSerialnumber(device.productSerialNumber());
           deviceDto.setAttachedProduct(attachedProduct);
         }
+
         deviceDto.setPresets(new PresetsContainerApiDto());
         deviceDto.setRecents(new RecentsContainerApiDto());
         response.getDevices().addDeviceItem(deviceDto);
+
         log.info(
-            "Injected DB-only device {} into full account for accountId: {}",
+            "Injected device {} (IP: {}) into full account for accountId: {}",
             device.deviceId(),
+            device.ipAddress(),
             accountId);
       }
     }
@@ -234,6 +202,9 @@ public class FullAccountService {
 
   private void injectPresetsFromDatabase(FullAccountResponseApiDto response, String accountId) {
     if (response.getDevices() == null || response.getDevices().getDevice() == null) {
+      log.warn(
+          "Aborting preset injection: devices container or device list is NULL for accountId: {}",
+          accountId);
       return;
     }
 
@@ -380,7 +351,7 @@ public class FullAccountService {
             .createdOn(OffsetDateTime.parse("2018-08-11T08:55:41+00:00"))
             .updatedOn(OffsetDateTime.parse("2019-07-20T17:48:31+00:00"))
             .sourceproviderid(String.valueOf(SourceProvider.TUNEIN.getId()))
-            .credential(new CredentialApiDto("token", "eyJ...")));
+            .credential(new CredentialApiDto("token", "eyJduTune=")));
     response.setSources(sources);
     return response;
   }

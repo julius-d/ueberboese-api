@@ -37,6 +37,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.net.URI;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -290,40 +291,45 @@ public class UeberboeseController implements DefaultApi {
       }
     }
 
-    // Cache miss - forward request to proxy
     log.info(
-        "Cache miss for accountId: {}, deviceId: {}, forwarding request to proxy",
-        accountId,
-        deviceId);
-    ResponseEntity<byte[]> proxyResponse = proxyService.forwardRequest(request, null);
+        "Fetching presets directly from DB for accountId: {}, deviceId: {}", accountId, deviceId);
 
-    // Check if proxy response is successful
-    if (!proxyResponse.getStatusCode().is2xxSuccessful() || proxyResponse.getBody() == null) {
-      log.warn(
-          "Proxy request failed for accountId: {}, deviceId: {}, status: {}",
-          accountId,
-          deviceId,
-          proxyResponse.getStatusCode());
-      return ResponseEntity.status(502)
-          .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
-          .build();
-    }
-
-    // Try to parse the response
     try {
-      String xmlContent = new String(proxyResponse.getBody());
-      PresetsContainerApiDto parsedResponse =
-          xmlMapper.readValue(xmlContent, PresetsContainerApiDto.class);
+      List<Preset> dbPresets = presetService.getPresets(accountId, deviceId);
 
-      return ResponseEntity.status(proxyResponse.getStatusCode())
-          .headers(proxyResponse.getHeaders())
-          .body(parsedResponse);
-    } catch (Exception parseException) {
+      if (dbPresets != null && !dbPresets.isEmpty()) {
+        List<PresetApiDto> dbPresetDtos =
+            presetMapper.convertToApiDtos(dbPresets, new ArrayList<>());
+
+        PresetsContainerApiDto finalPresets = presetMapper.mergePresets(null, dbPresetDtos);
+
+        log.info(
+            "Successfully returning {} presets from DB for device: {}",
+            dbPresetDtos.size(),
+            deviceId);
+        return ResponseEntity.ok()
+            .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
+            .header("Access-Control-Allow-Origin", "*")
+            .header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+            .header(
+                "Access-Control-Allow-Headers",
+                "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization")
+            .header("Access-Control-Expose-Headers", "Authorization")
+            .body(finalPresets);
+      } else {
+        log.warn("No presets found in DB either for device {} and account {}", deviceId, accountId);
+
+        return ResponseEntity.ok()
+            .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
+            .body(new PresetsContainerApiDto());
+      }
+
+    } catch (Exception e) {
       log.error(
-          "Failed to parse proxy response for accountId: {}, deviceId: {}. Error: {}",
+          "Failed to fetch presets from DB fallback for accountId: {}, error: {}",
           accountId,
-          deviceId,
-          parseException.getMessage());
+          e.getMessage(),
+          e);
       return ResponseEntity.status(502)
           .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
           .build();
