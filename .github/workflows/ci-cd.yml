@@ -194,7 +194,7 @@ jobs:
         push-to-registry: false
 
     - name: Generate SBOM attestations
-      uses: actions/attest-sbom@v1
+      uses: actions/attest-sbom@v4
       with:
         subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
         subject-digest: ${{ steps.image-digest.outputs.digest }}
