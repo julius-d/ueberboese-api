@@ -31,7 +31,16 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
     String uri = request.getRequestURI();
     String queryString = request.getQueryString();
     String fullUri = queryString != null ? uri + "?" + queryString : uri;
-    log.info("Request: {} {}", request.getMethod(), fullUri);
+
+    String clientIp = request.getHeader("X-Forwarded-For");
+    if (clientIp == null || clientIp.isEmpty() || "unknown".equalsIgnoreCase(clientIp)) {
+      clientIp = request.getRemoteAddr();
+    }
+    if (clientIp != null && clientIp.contains(",")) {
+      clientIp = clientIp.split(",")[0].trim();
+    }
+
+    log.info("Request from [{}]: {} {}", clientIp, request.getMethod(), fullUri);
 
     boolean isEventReport = uri.matches(".*/v1/scmudc/.*");
     boolean isBmxReport = uri.matches(".*/bmx/.+/v1/report.*");
@@ -41,19 +50,22 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
       ContentCachingRequestWrapper wrappedRequest =
           new ContentCachingRequestWrapper(request, 1024 * 1024);
 
-      // Continue with the filter chain
       filterChain.doFilter(wrappedRequest, response);
 
-      // Log the raw request body after the request has been processed
       byte[] content = wrappedRequest.getContentAsByteArray();
       if (content.length > 0) {
         String rawBody = new String(content, StandardCharsets.UTF_8);
         if (isEventReport) {
-          EVENT_LOG.info("event: {}", rawBody.trim());
+          EVENT_LOG.info("event from [{}]: {}", clientIp, rawBody.trim());
         } else if (isBmxReport) {
-          EVENT_LOG.info("bxm-report: {}", rawBody.trim());
+          EVENT_LOG.info("bxm-report from [{}]: {}", clientIp, rawBody.trim());
         } else if (response.getStatus() >= 400) {
-          log.warn("POST {} failed (HTTP {}): {}", uri, response.getStatus(), rawBody.trim());
+          log.warn(
+              "POST {} from [{}] failed (HTTP {}): {}",
+              uri,
+              clientIp,
+              response.getStatus(),
+              rawBody.trim());
         }
       }
     } else {
