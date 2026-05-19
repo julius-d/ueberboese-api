@@ -3,7 +3,7 @@
     <!-- Default console appender -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{clientIp}] %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
 
@@ -11,7 +11,7 @@
     <appender name="PROXY_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/proxy-requests.log</file>
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{clientIp}] %logger{36} - %msg%n</pattern>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <fileNamePattern>logs/proxy-requests.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
@@ -25,7 +25,7 @@
     <appender name="EVENT_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/event-requests.log</file>
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{clientIp}] %logger{36} - %msg%n</pattern>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <fileNamePattern>logs/event-requests.%d{yyyy-MM-dd}.%i.log</fileNamePattern>

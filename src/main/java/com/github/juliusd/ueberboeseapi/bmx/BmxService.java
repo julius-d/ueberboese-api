@@ -61,7 +61,7 @@ public class BmxService {
    * @return BMX services response with all service definitions
    */
   public BmxServicesResponseApiDto getBmxServices() {
-    log.info("Building BMX services registry");
+    log.debug("Building BMX services registry");
 
     // Create top-level links
     BmxLinksApiDto topLinks = new BmxLinksApiDto();
@@ -91,7 +91,7 @@ public class BmxService {
    * @return BMX services availability response
    */
   public BmxServicesAvailabilityResponseApiDto getBmxServicesAvailability() {
-    log.info("Building BMX services availability");
+    log.debug("Building BMX services availability");
 
     var services =
         List.of(
@@ -316,7 +316,7 @@ public class BmxService {
    * @return Playback response with stream URLs and metadata
    */
   public BmxPlaybackResponseApiDto getTuneInPlayback(String stationId) {
-    log.info("Getting TuneIn playback for stationId: {}", stationId);
+    log.debug("Getting TuneIn playback for stationId: {}", stationId);
 
     // Fetch metadata and stream URLs from TuneIn
     TuneInClient.StationMetadata metadata = tuneInClient.getStationMetadata(stationId);
@@ -389,7 +389,7 @@ public class BmxService {
     response.setName(metadata.getName());
     response.setStreamType(BmxPlaybackResponseApiDto.StreamTypeEnum.LIVE_RADIO);
 
-    log.info("Built TuneIn playback response for station: {}", metadata.getName());
+    log.debug("Built TuneIn playback response for station: {}", metadata.getName());
     return response;
   }
 
@@ -400,7 +400,7 @@ public class BmxService {
    * @return Playback response for custom stream
    */
   public BmxPlaybackResponseApiDto getCustomStreamPlayback(String base64Data) {
-    log.info("Processing custom stream data");
+    log.debug("Processing custom stream data");
 
     try {
       // Decode base64
@@ -442,7 +442,7 @@ public class BmxService {
       response.setName(name != null ? name : "Custom Stream");
       response.setStreamType(BmxPlaybackResponseApiDto.StreamTypeEnum.LIVE_RADIO);
 
-      log.info("Built custom stream playback response for: {}", name);
+      log.debug("Built custom stream playback response for: {}", name);
       return response;
 
     } catch (Exception e) {
@@ -459,7 +459,7 @@ public class BmxService {
    * @return Token response with access token
    */
   public BmxTokenResponseApiDto refreshTuneInToken(String refreshToken) {
-    log.info("Refreshing TuneIn token");
+    log.debug("Refreshing TuneIn token");
 
     // Stub implementation - just return the refresh token as access token
     BmxTokenResponseApiDto response = new BmxTokenResponseApiDto();
@@ -470,7 +470,7 @@ public class BmxService {
 
   public BmxReportResponseApiDto reportAnalytics(String listenId, BmxReportRequestApiDto report) {
     Objects.requireNonNull(report, "report must not be null");
-    log.info(
+    log.debug(
         "Received analytics report: listenId={}, timeStamp={}", listenId, report.getTimeStamp());
     RadioReportEvent.EventType eventType =
         report.getEventType() != null

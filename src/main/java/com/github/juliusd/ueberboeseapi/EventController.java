@@ -20,7 +20,7 @@ public class EventController implements EventsApi {
       String deviceId, DeviceEventsRequestApiDto deviceEventsRequestApiDto) {
     eventStorageService.storeEvent(deviceId, deviceEventsRequestApiDto);
 
-    log.info(
+    log.debug(
         "Stored event for device: {}. Total events for this device: {}",
         deviceId,
         eventStorageService.getEventCount(deviceId));

@@ -42,7 +42,7 @@ public class TuneInClient {
   public StationMetadata getStationMetadata(String stationId) {
     try {
       String url = String.format(urlProperties.describeUrl(), stationId);
-      log.info("Fetching TuneIn station metadata from: {}", url);
+      log.debug("Fetching TuneIn station metadata from: {}", url);
 
       String xmlResponse = webClient.get().uri(url).retrieve().bodyToMono(String.class).block();
 
@@ -62,7 +62,7 @@ public class TuneInClient {
   public java.util.List<String> getStreamUrls(String stationId) {
     try {
       String url = String.format(urlProperties.streamUrl(), stationId);
-      log.info("Fetching TuneIn stream URLs from: {}", url);
+      log.debug("Fetching TuneIn stream URLs from: {}", url);
 
       String response = webClient.get().uri(url).retrieve().bodyToMono(String.class).block();
 
@@ -123,7 +123,8 @@ public class TuneInClient {
       metadata.setCurrentSong(getElementText(station, "current_song"));
       metadata.setCurrentArtist(getElementText(station, "current_artist"));
 
-      log.info("Parsed station metadata: name={}, logo={}", metadata.getName(), metadata.getLogo());
+      log.debug(
+          "Parsed station metadata: name={}, logo={}", metadata.getName(), metadata.getLogo());
       return metadata;
 
     } catch (Exception e) {

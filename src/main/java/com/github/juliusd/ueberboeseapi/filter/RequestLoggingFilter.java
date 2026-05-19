@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.ContentCachingRequestWrapper;
@@ -39,37 +40,46 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
     if (clientIp != null && clientIp.contains(",")) {
       clientIp = clientIp.split(",")[0].trim();
     }
+    if (clientIp == null) {
+      clientIp = "unknown";
+    }
 
-    log.info("Request from [{}]: {} {}", clientIp, request.getMethod(), fullUri);
+    // Put the client IP into the MDC context for Logback to consume globally
+    MDC.put("clientIp", clientIp);
 
-    boolean isEventReport = uri.matches(".*/v1/scmudc/.*");
-    boolean isBmxReport = uri.matches(".*/bmx/.+/v1/report.*");
-    boolean isPost = "POST".equalsIgnoreCase(request.getMethod());
+    try {
+      log.debug("Request: {} {}", request.getMethod(), fullUri);
 
-    if (isEventReport || isBmxReport || isPost) {
-      ContentCachingRequestWrapper wrappedRequest =
-          new ContentCachingRequestWrapper(request, 1024 * 1024);
+      boolean isEventReport = uri.matches(".*/v1/scmudc/.*");
+      boolean isBmxReport = uri.matches(".*/bmx/.+/v1/report.*");
+      boolean isOAuth = uri.matches(".*/oauth.*");
+      boolean isPost = "POST".equalsIgnoreCase(request.getMethod());
 
-      filterChain.doFilter(wrappedRequest, response);
+      if (isEventReport || isBmxReport || isPost || isOAuth) {
+        ContentCachingRequestWrapper wrappedRequest =
+            new ContentCachingRequestWrapper(request, 1024 * 1024);
 
-      byte[] content = wrappedRequest.getContentAsByteArray();
-      if (content.length > 0) {
-        String rawBody = new String(content, StandardCharsets.UTF_8);
-        if (isEventReport) {
-          EVENT_LOG.info("event from [{}]: {}", clientIp, rawBody.trim());
-        } else if (isBmxReport) {
-          EVENT_LOG.info("bxm-report from [{}]: {}", clientIp, rawBody.trim());
-        } else if (response.getStatus() >= 400) {
-          log.warn(
-              "POST {} from [{}] failed (HTTP {}): {}",
-              uri,
-              clientIp,
-              response.getStatus(),
-              rawBody.trim());
+        filterChain.doFilter(wrappedRequest, response);
+
+        byte[] content = wrappedRequest.getContentAsByteArray();
+        if (content.length > 0) {
+          String rawBody = new String(content, StandardCharsets.UTF_8);
+          if (isEventReport) {
+            EVENT_LOG.debug("event: {}", rawBody.trim());
+          } else if (isBmxReport) {
+            EVENT_LOG.debug("bxm-report: {}", rawBody.trim());
+          } else if (isOAuth) {
+            log.debug("OAuth body: {}", rawBody.trim());
+          } else if (response.getStatus() >= 400) {
+            log.warn("POST {} failed (HTTP {}): {}", uri, response.getStatus(), rawBody.trim());
+          }
         }
+      } else {
+        filterChain.doFilter(request, response);
       }
-    } else {
-      filterChain.doFilter(request, response);
+    } finally {
+      // Always clear MDC context at the end of the request thread lifecycle
+      MDC.clear();
     }
   }
 }
