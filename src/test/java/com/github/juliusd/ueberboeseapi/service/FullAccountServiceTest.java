@@ -107,18 +107,28 @@ class FullAccountServiceTest {
     String accountId = "test-account-456";
 
     when(accountDataService.hasAccountData(accountId)).thenReturn(true);
+    // Simulate cache corruption/load failure
     when(accountDataService.loadFullAccountData(accountId))
         .thenThrow(new IOException("Cache read error"));
+
+    // Stub the fallback proxy service request to return a failed state instead of null
+    when(proxyService.forwardRequest(eq(request), any()))
+        .thenReturn(ResponseEntity.status(HttpStatus.BAD_GATEWAY).build());
+
+    when(deviceRepository.findAllByMargeAccountId(accountId)).thenReturn(List.of());
+    when(spotifyAccountService.listAllAccounts()).thenReturn(List.of());
 
     // When
     Optional<FullAccountResponseApiDto> result =
         fullAccountService.getFullAccount(accountId, request);
 
-    // Then
-    assertThat(result).isEmpty();
+    // Then - Because the proxy failed too, it gracefully falls back to a minimal account payload
+    assertThat(result).isPresent();
+    assertThat(result.get().getId()).isEqualTo(accountId);
+    assertThat(result.get().getAccountStatus()).isEqualTo("ACTIVE");
 
-    // Verify proxy was NOT called even though cache load failed
-    verify(proxyService, never()).forwardRequest(any(), any());
+    // Verify proxy WAS called as a fallback option when cache load encountered an error
+    verify(proxyService).forwardRequest(eq(request), any());
   }
 
   @Test
