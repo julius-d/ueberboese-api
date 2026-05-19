@@ -34,7 +34,6 @@ public class SpotifyTokenService {
       OAuthTokenRequestApiDto oauthTokenRequestApiDto) {
     checkProperties();
 
-    // Get the oldest connected Spotify account
     var accounts = spotifyAccountService.listAllAccounts();
     if (accounts.isEmpty()) {
       log.error("No Spotify accounts connected");
@@ -42,23 +41,39 @@ public class SpotifyTokenService {
           "No Spotify accounts connected. Please connect a Spotify account via the management API.");
     }
 
-    // Use the oldest account (last in the list sorted by createdAt descending)
-    var oldestAccount = accounts.getLast();
-    log.info(
-        "Using Spotify account: {} ({})",
-        oldestAccount.displayName(),
-        oldestAccount.spotifyUserId());
+    // Determine which account to use based on the incoming request refresh token
+    SpotifyAccount targetAccount = null;
+    String incomingRefreshToken = oauthTokenRequestApiDto.getRefreshToken();
 
-    if (oldestAccount.refreshToken().equals(oauthTokenRequestApiDto.getRefreshToken())) {
-      log.info("Refresh token match!");
+    if (incomingRefreshToken != null && !incomingRefreshToken.isBlank()) {
+      // Try to find the exact matching account in our database
+      for (SpotifyAccount account : accounts) {
+        if (incomingRefreshToken.equals(account.refreshToken())) {
+          targetAccount = account;
+          log.debug(
+              "Matched incoming refresh token to Spotify account: {} ({})",
+              account.displayName(),
+              account.spotifyUserId());
+          break;
+        }
+      }
+    }
+
+    // Fallback if no explicit match was found
+    if (targetAccount == null) {
+      targetAccount = accounts.getLast();
+      log.info(
+          "No exact refresh token match found. Falling back to oldest account: {} ({})",
+          targetAccount.displayName(),
+          targetAccount.spotifyUserId());
     }
 
     try {
-      // Prepare form data for token refresh
+      // Prepare form data for token refresh using the resolved account
       org.springframework.util.LinkedMultiValueMap<String, String> formData =
           new org.springframework.util.LinkedMultiValueMap<>();
       formData.add("grant_type", "refresh_token");
-      formData.add("refresh_token", oldestAccount.refreshToken());
+      formData.add("refresh_token", targetAccount.refreshToken());
       formData.add("client_id", spotifyAuthProperties.clientId());
       formData.add("client_secret", spotifyAuthProperties.clientSecret());
 
@@ -66,10 +81,21 @@ public class SpotifyTokenService {
       var authorizationCodeCredentials = spotifyOAuthClient.refreshAccessToken(formData);
 
       String actualScope = authorizationCodeCredentials.scope();
-      log.info("Spotify auth refresh request successful with scope {}", actualScope);
+      log.debug("Spotify auth refresh request successful with scope {}", actualScope);
 
       // Validate that all required scopes are present
       validateScopes(actualScope);
+
+      // Check if Spotify returned a brand new or rotated refresh token
+      String latestRefreshToken = authorizationCodeCredentials.refreshToken();
+      if (latestRefreshToken == null || latestRefreshToken.isBlank()) {
+        // If Spotify does not issue a new token, retain the current active one
+        log.debug("No refresh token issued by Spotify, retain the current active one");
+        latestRefreshToken = targetAccount.refreshToken();
+      }
+
+      // Persist the (potentially rotated) token and refresh the 'updatedAt' timestamp
+      spotifyAccountService.updateRefreshToken(targetAccount.spotifyUserId(), latestRefreshToken);
 
       return authorizationCodeCredentials;
     } catch (RuntimeException e) {
