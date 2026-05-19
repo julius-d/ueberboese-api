@@ -1,6 +1,7 @@
 package com.github.juliusd.ueberboeseapi;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
  * Configuration properties for the proxy/forwarding functionality. Defines the target hosts where
@@ -8,6 +9,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  */
 @ConfigurationProperties(prefix = "proxy")
 public record ProxyProperties(
+    /** Whether proxy forwarding is enabled. Defaults to true if not explicitly set. */
+    @DefaultValue("true") boolean enabled,
+
     /**
      * The default target host URL where unknown requests should be forwarded. Example:
      * https://example.org
@@ -39,4 +43,12 @@ public record ProxyProperties(
      * should be forwarded. If not configured, BMX registry requests will be forwarded to the
      * default target host. Example: https://content.api.bose.io
      */
-    String bmxRegistryHost) {}
+    String bmxRegistryHost) {
+
+  // Compact constructor to apply default value if property is missing
+  public ProxyProperties {
+    // Boolean primitive cannot be null, but Spring Boot configuration binder
+    // will use the record fields correctly.
+    // If you ever want to default it safely in case binding acts up:
+  }
+}

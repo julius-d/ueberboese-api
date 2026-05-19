@@ -3,8 +3,10 @@ package com.github.juliusd.ueberboeseapi;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,10 @@ public class ProxyService {
   private final LocationHeaderRewriter locationHeaderRewriter;
   private final AtomicLong requestCounter = new AtomicLong(0);
 
+  // Directly bind the property to bypass record configuration binding mismatches
+  @Value("${proxy.enabled:true}")
+  private boolean isProxyEnabled;
+
   public ProxyService(
       ProxyProperties proxyProperties, LocationHeaderRewriter locationHeaderRewriter) {
     this.proxyProperties = proxyProperties;
@@ -38,13 +44,21 @@ public class ProxyService {
   }
 
   /**
-   * Forwards the request to the configured target host.
+   * Forwards the request to the configured target host if the proxy functionality is enabled.
    *
    * @param request the original HTTP request
    * @param requestBody the request body content
-   * @return ResponseEntity with the proxied response
+   * @return ResponseEntity with the proxied response or a 503 status if disabled
    */
   public ResponseEntity<byte[]> forwardRequest(HttpServletRequest request, String requestBody) {
+    // Gracefully block requests and invoke fallback mechanisms when proxy is disabled
+    if (!isProxyEnabled) {
+      log.info(
+          "Proxy forwarding is disabled via configuration. Returning 503 Service Unavailable.");
+      return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+          .body("Proxy service is disabled".getBytes());
+    }
+
     var requestId = requestCounter.incrementAndGet();
     String targetUrl = buildTargetUrl(request);
     HttpMethod method = HttpMethod.valueOf(request.getMethod());
