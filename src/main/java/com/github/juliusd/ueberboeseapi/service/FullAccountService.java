@@ -41,10 +41,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-/**
- * Service for managing full account data operations. Handles caching, proxy forwarding, and XML
- * parsing for account data requests.
- */
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -62,35 +58,34 @@ public class FullAccountService {
   private final PresetMapper presetMapper;
   private final DeviceRepository deviceRepository;
 
-  /**
-   * Retrieves full account data for the given account ID. First checks the cache, and if not found,
-   * forwards the request to the proxy service.
-   *
-   * @param accountId The account ID to retrieve data for
-   * @param request The HTTP servlet request (needed for proxy forwarding)
-   * @return Optional containing the account data if successful, empty otherwise
-   */
   public Optional<FullAccountResponseApiDto> getFullAccount(
       String accountId, HttpServletRequest request) {
     log.info("Getting full account data for accountId: {}", accountId);
+
+    // 1. Bepaal het IP-adres van de beller
+    String clientIp = request.getHeader("X-Forwarded-For");
+    if (clientIp == null || clientIp.isEmpty() || "unknown".equalsIgnoreCase(clientIp)) {
+      clientIp = request.getRemoteAddr();
+    }
+    if (clientIp != null && clientIp.contains(",")) {
+      clientIp = clientIp.split(",")[0].trim();
+    }
+
+    log.info("Processing full account for accountId: {} linked to IP: {}", accountId, clientIp);
 
     // Check if cached data exists
     if (accountDataService.hasAccountData(accountId)) {
       try {
         FullAccountResponseApiDto response = accountDataService.loadFullAccountData(accountId);
         log.info("Successfully loaded account data from cache for accountId: {}", accountId);
-        injectDevicesFromDatabase(response, accountId);
-        injectSpotifySources(response);
-        injectRecentsFromDatabase(response, accountId);
-        injectPresetsFromDatabase(response, accountId);
-        patch(response);
+
+        processAndInjectData(response, accountId, clientIp);
         return Optional.of(response);
       } catch (IOException e) {
         log.error(
             "Failed to load account data from cache for accountId: {}, error: {}",
             accountId,
             e.getMessage());
-        return Optional.empty();
       }
     }
 
@@ -105,11 +100,7 @@ public class FullAccountService {
           accountId,
           proxyResponse.getStatusCode());
       var minimal = buildMinimalAccount(accountId);
-      injectDevicesFromDatabase(minimal, accountId);
-      injectSpotifySources(minimal);
-      injectRecentsFromDatabase(minimal, accountId);
-      injectPresetsFromDatabase(minimal, accountId);
-      patch(minimal);
+      processAndInjectData(minimal, accountId, clientIp);
       return Optional.of(minimal);
     }
 
@@ -119,23 +110,17 @@ public class FullAccountService {
       FullAccountResponseApiDto parsedResponse =
           xmlMapper.readValue(xmlContent, FullAccountResponseApiDto.class);
 
-      // Cache the response for future use
       try {
         accountDataService.saveFullAccountDataRaw(accountId, xmlContent);
         log.info("Successfully cached account data for accountId: {}", accountId);
       } catch (Exception saveException) {
         log.error(
-            "Failed to cache account data for accountId: {}, continuing with response. Error: {}",
+            "Failed to cache account data for accountId: {}, continuing. Error: {}",
             accountId,
             saveException.getMessage());
       }
 
-      injectDevicesFromDatabase(parsedResponse, accountId);
-      injectSpotifySources(parsedResponse);
-      injectRecentsFromDatabase(parsedResponse, accountId);
-      injectPresetsFromDatabase(parsedResponse, accountId);
-      patch(parsedResponse);
-
+      processAndInjectData(parsedResponse, accountId, clientIp);
       return Optional.of(parsedResponse);
     } catch (Exception parseException) {
       log.error(
@@ -143,6 +128,56 @@ public class FullAccountService {
           accountId,
           parseException.getMessage());
       return Optional.empty();
+    }
+  }
+
+  /**
+   * Helper methode om alle database injecties, Spotify patches én de IP-sortering uit te voeren.
+   */
+  private void processAndInjectData(
+      FullAccountResponseApiDto response, String accountId, String clientIp) {
+    injectDevicesFromDatabase(response, accountId);
+    injectSpotifySources(response);
+    injectRecentsFromDatabase(response, accountId);
+    injectPresetsFromDatabase(response, accountId);
+    patch(response);
+
+    // Zorg dat het actieve apparaat (op basis van IP) als ALLEREERSTE in de XML-lijst komt te staan
+    prioritizeDeviceByIp(response, clientIp);
+  }
+
+  /** Sorteert de apparatenlijst zodat het apparaat met het matchende IP-adres vooraan staat. */
+  private void prioritizeDeviceByIp(FullAccountResponseApiDto response, String clientIp) {
+    if (response.getDevices() == null
+        || response.getDevices().getDevice() == null
+        || response.getDevices().getDevice().isEmpty()) {
+      return;
+    }
+
+    List<DeviceApiDto> devices = response.getDevices().getDevice();
+    DeviceApiDto matchingDevice = null;
+
+    // Zoek naar het apparaat dat het request doet
+    for (DeviceApiDto device : devices) {
+      if (clientIp != null && clientIp.equals(device.getIpaddress())) {
+        matchingDevice = device;
+        break;
+      }
+    }
+
+    if (matchingDevice != null) {
+      log.info(
+          "Prioritizing device {} (IP: {}) to the front of the XML list.",
+          matchingDevice.getDeviceid(),
+          clientIp);
+
+      // Haal het actieve apparaat uit de huidige positie en zet hem op index 0
+      devices.remove(matchingDevice);
+      devices.add(0, matchingDevice);
+    } else {
+      log.debug(
+          "No registered device matches the calling client IP: {}. Leaving XML order unchanged.",
+          clientIp);
     }
   }
 
@@ -234,6 +269,9 @@ public class FullAccountService {
 
   private void injectPresetsFromDatabase(FullAccountResponseApiDto response, String accountId) {
     if (response.getDevices() == null || response.getDevices().getDevice() == null) {
+      log.warn(
+          "Aborting preset injection: devices container or device list is NULL for accountId: {}",
+          accountId);
       return;
     }
 
@@ -380,7 +418,7 @@ public class FullAccountService {
             .createdOn(OffsetDateTime.parse("2018-08-11T08:55:41+00:00"))
             .updatedOn(OffsetDateTime.parse("2019-07-20T17:48:31+00:00"))
             .sourceproviderid(String.valueOf(SourceProvider.TUNEIN.getId()))
-            .credential(new CredentialApiDto("token", "eyJ...")));
+            .credential(new CredentialApiDto("token", "eyJduTune=")));
     response.setSources(sources);
     return response;
   }

@@ -164,7 +164,7 @@ class UeberboeseControllerProxyTest extends TestBase {
          <sources>
            <source id="1" type="Audio">
              <createdOn>2018-08-11T08:55:41.000+00:00</createdOn>
-             <credential type="token">eyJ...</credential>
+             <credential type="token">eyJduTune=</credential>
              <name/>
              <sourceproviderid>25</sourceproviderid>
              <sourcename/>
