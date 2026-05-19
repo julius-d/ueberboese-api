@@ -27,7 +27,9 @@ import com.github.juliusd.ueberboeseapi.recent.RecentService;
 import com.github.juliusd.ueberboeseapi.spotify.SpotifyAccount;
 import com.github.juliusd.ueberboeseapi.spotify.SpotifyAccountService;
 import jakarta.servlet.http.HttpServletRequest;
+import java.io.IOException;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,12 +39,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-/**
- * Service for managing full account data operations. Handles caching, proxy forwarding, and XML
- * parsing for account data requests.
- */
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -60,18 +59,11 @@ public class FullAccountService {
   private final PresetMapper presetMapper;
   private final DeviceRepository deviceRepository;
 
-  /**
-   * Retrieves full account data for the given account ID. First checks the cache, and if not found,
-   * forwards the request to the proxy service.
-   *
-   * @param accountId The account ID to retrieve data for
-   * @param request The HTTP servlet request (needed for proxy forwarding)
-   * @return Optional containing the account data if successful, empty otherwise
-   */
   public Optional<FullAccountResponseApiDto> getFullAccount(
       String accountId, HttpServletRequest request) {
     log.info("Getting full account data for accountId: {}", accountId);
 
+    // 1. Bepaal het IP-adres van de beller
     String clientIp = request.getHeader("X-Forwarded-For");
     if (clientIp == null || clientIp.isEmpty() || "unknown".equalsIgnoreCase(clientIp)) {
       clientIp = request.getRemoteAddr();
@@ -82,20 +74,96 @@ public class FullAccountService {
 
     log.info("Processing full account for accountId: {} linked to IP: {}", accountId, clientIp);
 
-    var minimal = buildMinimalAccount(accountId);
+    // Check if cached data exists
+    if (accountDataService.hasAccountData(accountId)) {
+      try {
+        FullAccountResponseApiDto response = accountDataService.loadFullAccountData(accountId);
+        log.info("Successfully loaded account data from cache for accountId: {}", accountId);
+        
+        processAndInjectData(response, accountId, clientIp);
+        return Optional.of(response);
+      } catch (IOException e) {
+        log.error("Failed to load account data from cache for accountId: {}, error: {}", accountId, e.getMessage());
+      }
+    }
 
-    injectDevicesFromDatabase(minimal, accountId, clientIp);
+    // Cache miss - forward request to proxy
+    log.info("Cache miss for accountId: {}, forwarding request to proxy", accountId);
+    ResponseEntity<byte[]> proxyResponse = proxyService.forwardRequest(request, null);
 
-    injectSpotifySources(minimal);
-    injectRecentsFromDatabase(minimal, accountId);
-    injectPresetsFromDatabase(minimal, accountId);
-    patch(minimal);
+    // Check if proxy response is successful
+    if (!proxyResponse.getStatusCode().is2xxSuccessful() || proxyResponse.getBody() == null) {
+      log.warn("Proxy request failed for accountId: {}, status: {}, returning minimal account", accountId, proxyResponse.getStatusCode());
+      var minimal = buildMinimalAccount(accountId);
+      processAndInjectData(minimal, accountId, clientIp);
+      return Optional.of(minimal);
+    }
 
-    return Optional.of(minimal);
+    // Try to parse and cache the response
+    try {
+      String xmlContent = new String(proxyResponse.getBody());
+      FullAccountResponseApiDto parsedResponse = xmlMapper.readValue(xmlContent, FullAccountResponseApiDto.class);
+
+      try {
+        accountDataService.saveFullAccountDataRaw(accountId, xmlContent);
+        log.info("Successfully cached account data for accountId: {}", accountId);
+      } catch (Exception saveException) {
+        log.error("Failed to cache account data for accountId: {}, continuing. Error: {}", accountId, saveException.getMessage());
+      }
+
+      processAndInjectData(parsedResponse, accountId, clientIp);
+      return Optional.of(parsedResponse);
+    } catch (Exception parseException) {
+      log.error("Failed to parse proxy response for accountId: {}. Error: {}", accountId, parseException.getMessage());
+      return Optional.empty();
+    }
   }
 
-  private void injectDevicesFromDatabase(
-      FullAccountResponseApiDto response, String accountId, String clientIp) {
+  /**
+   * Helper methode om alle database injecties, Spotify patches én de IP-sortering uit te voeren.
+   */
+  private void processAndInjectData(FullAccountResponseApiDto response, String accountId, String clientIp) {
+    injectDevicesFromDatabase(response, accountId);
+    injectSpotifySources(response);
+    injectRecentsFromDatabase(response, accountId);
+    injectPresetsFromDatabase(response, accountId);
+    patch(response);
+    
+    // Zorg dat het actieve apparaat (op basis van IP) als ALLEREERSTE in de XML-lijst komt te staan
+    prioritizeDeviceByIp(response, clientIp);
+  }
+
+  /**
+   * Sorteert de apparatenlijst zodat het apparaat met het matchende IP-adres vooraan staat.
+   */
+  private void prioritizeDeviceByIp(FullAccountResponseApiDto response, String clientIp) {
+    if (response.getDevices() == null || response.getDevices().getDevice() == null || response.getDevices().getDevice().isEmpty()) {
+      return;
+    }
+
+    List<DeviceApiDto> devices = response.getDevices().getDevice();
+    DeviceApiDto matchingDevice = null;
+
+    // Zoek naar het apparaat dat het request doet
+    for (DeviceApiDto device : devices) {
+      if (clientIp != null && clientIp.equals(device.getIpaddress())) {
+        matchingDevice = device;
+        break;
+      }
+    }
+
+    if (matchingDevice != null) {
+      log.info("Prioritizing device {} (IP: {}) to the front of the XML list.", matchingDevice.getDeviceid(), clientIp);
+      
+      // Haal het actieve apparaat uit de huidige positie en zet hem op index 0
+      devices.remove(matchingDevice);
+      devices.add(0, matchingDevice);
+    } else {
+      log.debug("No registered device matches the calling client IP: {}. Leaving XML order unchanged.", clientIp);
+    }
+  }
+
+  private void injectDevicesFromDatabase(FullAccountResponseApiDto response, String accountId) {
     if (response.getDevices() == null) {
       response.setDevices(new DevicesContainerApiDto());
     }
@@ -112,22 +180,7 @@ public class FullAccountService {
     }
 
     List<Device> dbDevices = deviceRepository.findAllByMargeAccountId(accountId);
-
-    boolean ipExistsInDb =
-        dbDevices.stream().anyMatch(d -> d.ipAddress() != null && d.ipAddress().equals(clientIp));
-
-    if (!ipExistsInDb) {
-      log.warn(
-          "Client IP {} not found in database for account {}. Falling back to returning all devices.",
-          clientIp,
-          accountId);
-    }
-
     for (Device device : dbDevices) {
-      if (ipExistsInDb && (device.ipAddress() == null || !device.ipAddress().equals(clientIp))) {
-        continue;
-      }
-
       if (!existingDeviceIds.contains(device.deviceId())) {
         var deviceDto = new DeviceApiDto();
         deviceDto.setDeviceid(device.deviceId());
@@ -137,22 +190,18 @@ public class FullAccountService {
         deviceDto.setUpdatedOn(device.updatedOn());
         deviceDto.setFirmwareVersion(device.firmwareVersion());
         deviceDto.setSerialNumber(device.deviceSerialNumber());
-
         if (device.productCode() != null || device.productSerialNumber() != null) {
           var attachedProduct = new AttachedProductApiDto();
           attachedProduct.setProductCode(device.productCode());
           attachedProduct.setSerialnumber(device.productSerialNumber());
           deviceDto.setAttachedProduct(attachedProduct);
         }
-
         deviceDto.setPresets(new PresetsContainerApiDto());
         deviceDto.setRecents(new RecentsContainerApiDto());
         response.getDevices().addDeviceItem(deviceDto);
-
         log.info(
-            "Injected device {} (IP: {}) into full account for accountId: {}",
+            "Injected DB-only device {} into full account for accountId: {}",
             device.deviceId(),
-            device.ipAddress(),
             accountId);
       }
     }
