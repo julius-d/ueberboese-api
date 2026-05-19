@@ -29,7 +29,6 @@ import com.github.juliusd.ueberboeseapi.spotify.SpotifyAccountService;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -79,11 +78,14 @@ public class FullAccountService {
       try {
         FullAccountResponseApiDto response = accountDataService.loadFullAccountData(accountId);
         log.info("Successfully loaded account data from cache for accountId: {}", accountId);
-        
+
         processAndInjectData(response, accountId, clientIp);
         return Optional.of(response);
       } catch (IOException e) {
-        log.error("Failed to load account data from cache for accountId: {}, error: {}", accountId, e.getMessage());
+        log.error(
+            "Failed to load account data from cache for accountId: {}, error: {}",
+            accountId,
+            e.getMessage());
       }
     }
 
@@ -93,7 +95,10 @@ public class FullAccountService {
 
     // Check if proxy response is successful
     if (!proxyResponse.getStatusCode().is2xxSuccessful() || proxyResponse.getBody() == null) {
-      log.warn("Proxy request failed for accountId: {}, status: {}, returning minimal account", accountId, proxyResponse.getStatusCode());
+      log.warn(
+          "Proxy request failed for accountId: {}, status: {}, returning minimal account",
+          accountId,
+          proxyResponse.getStatusCode());
       var minimal = buildMinimalAccount(accountId);
       processAndInjectData(minimal, accountId, clientIp);
       return Optional.of(minimal);
@@ -102,19 +107,26 @@ public class FullAccountService {
     // Try to parse and cache the response
     try {
       String xmlContent = new String(proxyResponse.getBody());
-      FullAccountResponseApiDto parsedResponse = xmlMapper.readValue(xmlContent, FullAccountResponseApiDto.class);
+      FullAccountResponseApiDto parsedResponse =
+          xmlMapper.readValue(xmlContent, FullAccountResponseApiDto.class);
 
       try {
         accountDataService.saveFullAccountDataRaw(accountId, xmlContent);
         log.info("Successfully cached account data for accountId: {}", accountId);
       } catch (Exception saveException) {
-        log.error("Failed to cache account data for accountId: {}, continuing. Error: {}", accountId, saveException.getMessage());
+        log.error(
+            "Failed to cache account data for accountId: {}, continuing. Error: {}",
+            accountId,
+            saveException.getMessage());
       }
 
       processAndInjectData(parsedResponse, accountId, clientIp);
       return Optional.of(parsedResponse);
     } catch (Exception parseException) {
-      log.error("Failed to parse proxy response for accountId: {}. Error: {}", accountId, parseException.getMessage());
+      log.error(
+          "Failed to parse proxy response for accountId: {}. Error: {}",
+          accountId,
+          parseException.getMessage());
       return Optional.empty();
     }
   }
@@ -122,22 +134,23 @@ public class FullAccountService {
   /**
    * Helper methode om alle database injecties, Spotify patches én de IP-sortering uit te voeren.
    */
-  private void processAndInjectData(FullAccountResponseApiDto response, String accountId, String clientIp) {
+  private void processAndInjectData(
+      FullAccountResponseApiDto response, String accountId, String clientIp) {
     injectDevicesFromDatabase(response, accountId);
     injectSpotifySources(response);
     injectRecentsFromDatabase(response, accountId);
     injectPresetsFromDatabase(response, accountId);
     patch(response);
-    
+
     // Zorg dat het actieve apparaat (op basis van IP) als ALLEREERSTE in de XML-lijst komt te staan
     prioritizeDeviceByIp(response, clientIp);
   }
 
-  /**
-   * Sorteert de apparatenlijst zodat het apparaat met het matchende IP-adres vooraan staat.
-   */
+  /** Sorteert de apparatenlijst zodat het apparaat met het matchende IP-adres vooraan staat. */
   private void prioritizeDeviceByIp(FullAccountResponseApiDto response, String clientIp) {
-    if (response.getDevices() == null || response.getDevices().getDevice() == null || response.getDevices().getDevice().isEmpty()) {
+    if (response.getDevices() == null
+        || response.getDevices().getDevice() == null
+        || response.getDevices().getDevice().isEmpty()) {
       return;
     }
 
@@ -153,13 +166,18 @@ public class FullAccountService {
     }
 
     if (matchingDevice != null) {
-      log.info("Prioritizing device {} (IP: {}) to the front of the XML list.", matchingDevice.getDeviceid(), clientIp);
-      
+      log.info(
+          "Prioritizing device {} (IP: {}) to the front of the XML list.",
+          matchingDevice.getDeviceid(),
+          clientIp);
+
       // Haal het actieve apparaat uit de huidige positie en zet hem op index 0
       devices.remove(matchingDevice);
       devices.add(0, matchingDevice);
     } else {
-      log.debug("No registered device matches the calling client IP: {}. Leaving XML order unchanged.", clientIp);
+      log.debug(
+          "No registered device matches the calling client IP: {}. Leaving XML order unchanged.",
+          clientIp);
     }
   }
 
