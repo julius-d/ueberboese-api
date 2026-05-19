@@ -166,7 +166,6 @@ public class FullAccountService {
     } else {
       prioritizeDeviceByIp(response, clientIp);
     }
-
   }
 
   /**
