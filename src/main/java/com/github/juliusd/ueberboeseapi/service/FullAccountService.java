@@ -38,6 +38,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -58,11 +59,15 @@ public class FullAccountService {
   private final PresetMapper presetMapper;
   private final DeviceRepository deviceRepository;
 
+  // Inject flag directly to control standalone behavior natively
+  @Value("${proxy.enabled:true}")
+  private boolean isProxyEnabled;
+
   public Optional<FullAccountResponseApiDto> getFullAccount(
       String accountId, HttpServletRequest request) {
     log.info("Getting full account data for accountId: {}", accountId);
 
-    // 1. Bepaal het IP-adres van de beller
+    // 1. Determine client IP address
     String clientIp = request.getHeader("X-Forwarded-For");
     if (clientIp == null || clientIp.isEmpty() || "unknown".equalsIgnoreCase(clientIp)) {
       clientIp = request.getRemoteAddr();
@@ -73,7 +78,7 @@ public class FullAccountService {
 
     log.info("Processing full account for accountId: {} linked to IP: {}", accountId, clientIp);
 
-    // Check if cached data exists
+    // 2. Check if cached data exists
     if (accountDataService.hasAccountData(accountId)) {
       try {
         FullAccountResponseApiDto response = accountDataService.loadFullAccountData(accountId);
@@ -89,16 +94,25 @@ public class FullAccountService {
       }
     }
 
-    // Cache miss - forward request to proxy
+    // 3. Short-circuit directly to minimal account if proxy forwarding is explicitly disabled
+    if (!isProxyEnabled) {
+      log.info(
+          "Cache miss for accountId: {} and proxy is disabled. Falling back straight to minimal account.",
+          accountId);
+      var minimal = buildMinimalAccount(accountId);
+      processAndInjectData(minimal, accountId, clientIp);
+      return Optional.of(minimal);
+    }
+
+    // 4. Cache miss - forward request to proxy
     log.info("Cache miss for accountId: {}, forwarding request to proxy", accountId);
     ResponseEntity<byte[]> proxyResponse = proxyService.forwardRequest(request, null);
 
     // Check if proxy response is successful
-    if (!proxyResponse.getStatusCode().is2xxSuccessful() || proxyResponse.getBody() == null) {
-      log.warn(
-          "Proxy request failed for accountId: {}, status: {}, returning minimal account",
-          accountId,
-          proxyResponse.getStatusCode());
+    if (proxyResponse == null
+        || !proxyResponse.getStatusCode().is2xxSuccessful()
+        || proxyResponse.getBody() == null) {
+      log.warn("Proxy request failed for accountId: {}, returning minimal account", accountId);
       var minimal = buildMinimalAccount(accountId);
       processAndInjectData(minimal, accountId, clientIp);
       return Optional.of(minimal);
