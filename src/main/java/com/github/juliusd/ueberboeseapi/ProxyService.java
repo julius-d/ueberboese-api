@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -20,7 +21,7 @@ import reactor.core.publisher.Mono;
  */
 @Service
 @Slf4j
-public class ProxyService {
+public class ProxyService implements CommandLineRunner {
 
   private final WebClient webClient;
   private final ProxyProperties proxyProperties;
@@ -41,6 +42,18 @@ public class ProxyService {
                 configurer ->
                     configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024)) // 10MB buffer
             .build();
+  }
+
+  /** Automatically runs once at server startup to log the active state of the proxy service. */
+  @Override
+  public void run(String... args) {
+    if (isProxyEnabled) {
+      log.info(
+          "Bose proxy service enabled. Default Upstream Target: {}", proxyProperties.targetHost());
+    } else {
+      log.info(
+          "Bose proxy service disabled. Outbound calls will short-circuit to internal fallbacks.");
+    }
   }
 
   /**
