@@ -24,6 +24,10 @@ services:
       - "8081:8081"      # Management/Actuator endpoints
     environment:
       - TZ=Europe/Berlin
+      # Memory increase options
+      # -XX:MaxDirectMemorySize=256m: Raises the Netty direct memory allocation pool from ~10MB to 256MB, giving the TLS handshakes plenty of headroom.
+      # -Xmx512m: Ensures the standard Java Heap size is safely bounded alongside the new direct memory allocation.
+      - JAVA_TOOL_OPTIONS=-XX:MaxDirectMemorySize=256m -Xmx512m
       # Spotify OAuth is disabled by default, you need it only for Spotify presets
       - UEBERBOESE_OAUTH_ENABLED=true
       # Spotify API authentication (required for OAuth token refresh)
