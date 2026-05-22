@@ -44,6 +44,50 @@ public class SpotifyAccountService {
   }
 
   /**
+   * Updates the refresh token and updatedAt timestamp for an existing Spotify account, but ONLY if
+   * the refresh token has actually changed.
+   *
+   * @param spotifyUserId The Spotify user ID
+   * @param newRefreshToken The new refresh token to store
+   */
+  public void updateRefreshToken(String spotifyUserId, String newRefreshToken) {
+    log.debug("Checking refresh token update requirements for userId: {}", spotifyUserId);
+
+    repository
+        .findById(spotifyUserId)
+        .ifPresentOrElse(
+            existingAccount -> {
+              // Check if the token has actually changed
+              if (existingAccount.refreshToken().equals(newRefreshToken)) {
+                log.debug(
+                    "Refresh token for userId: {} has not changed. Skipping database write to optimize performance.",
+                    spotifyUserId);
+                return;
+              }
+
+              // If changed (or rotated by Spotify), persist the new token
+              OffsetDateTime now = OffsetDateTime.now();
+              SpotifyAccount updatedAccount =
+                  new SpotifyAccount(
+                      existingAccount.spotifyUserId(),
+                      existingAccount.displayName(),
+                      newRefreshToken,
+                      existingAccount.createdAt(),
+                      now,
+                      existingAccount.version());
+
+              repository.save(updatedAccount);
+              log.info(
+                  "Refresh token rotated! Successfully updated Spotify refresh token in database for userId: {}",
+                  spotifyUserId);
+            },
+            () ->
+                log.warn(
+                    "Key rotation skipped: No existing Spotify account found for userId: {}",
+                    spotifyUserId));
+  }
+
+  /**
    * Retrieves a Spotify account by Spotify user ID.
    *
    * @param spotifyUserId The Spotify user ID
@@ -55,7 +99,7 @@ public class SpotifyAccountService {
     Optional<SpotifyAccount> account = repository.findById(spotifyUserId);
 
     if (account.isPresent()) {
-      log.info("Successfully loaded Spotify account for accountId: {}", spotifyUserId);
+      log.debug("Successfully loaded Spotify account for accountId: {}", spotifyUserId);
     } else {
       log.debug("Spotify account not found for userId: {}", spotifyUserId);
     }
@@ -83,7 +127,7 @@ public class SpotifyAccountService {
 
     List<SpotifyAccount> accounts = repository.findAllByOrderByCreatedAtDesc();
 
-    log.info("Found {} Spotify account(s)", accounts.size());
+    log.debug("Found {} Spotify account(s)", accounts.size());
     return accounts;
   }
 }
