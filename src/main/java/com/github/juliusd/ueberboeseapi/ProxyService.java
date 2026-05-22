@@ -3,8 +3,11 @@ package com.github.juliusd.ueberboeseapi;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -18,12 +21,16 @@ import reactor.core.publisher.Mono;
  */
 @Service
 @Slf4j
-public class ProxyService {
+public class ProxyService implements CommandLineRunner {
 
   private final WebClient webClient;
   private final ProxyProperties proxyProperties;
   private final LocationHeaderRewriter locationHeaderRewriter;
   private final AtomicLong requestCounter = new AtomicLong(0);
+
+  // Directly bind the property to bypass record configuration binding mismatches
+  @Value("${proxy.enabled:true}")
+  private boolean isProxyEnabled;
 
   public ProxyService(
       ProxyProperties proxyProperties, LocationHeaderRewriter locationHeaderRewriter) {
@@ -37,14 +44,34 @@ public class ProxyService {
             .build();
   }
 
+  /** Automatically runs once at server startup to log the active state of the proxy service. */
+  @Override
+  public void run(String... args) {
+    if (isProxyEnabled) {
+      log.info(
+          "Bose proxy service enabled. Default Upstream Target: {}", proxyProperties.targetHost());
+    } else {
+      log.info(
+          "Bose proxy service disabled. Outbound calls will short-circuit to internal fallbacks.");
+    }
+  }
+
   /**
-   * Forwards the request to the configured target host.
+   * Forwards the request to the configured target host if the proxy functionality is enabled.
    *
    * @param request the original HTTP request
    * @param requestBody the request body content
-   * @return ResponseEntity with the proxied response
+   * @return ResponseEntity with the proxied response or a 503 status if disabled
    */
   public ResponseEntity<byte[]> forwardRequest(HttpServletRequest request, String requestBody) {
+    // Gracefully block requests and invoke fallback mechanisms when proxy is disabled
+    if (!isProxyEnabled) {
+      log.info(
+          "Proxy forwarding is disabled via configuration. Returning 503 Service Unavailable.");
+      return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+          .body("Proxy service is disabled".getBytes());
+    }
+
     var requestId = requestCounter.incrementAndGet();
     String targetUrl = buildTargetUrl(request);
     HttpMethod method = HttpMethod.valueOf(request.getMethod());

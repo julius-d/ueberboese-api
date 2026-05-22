@@ -36,6 +36,8 @@ services:
       # Management API Basic Auth credentials (change these!)
       - UEBERBOESE_MGMT_USERNAME=admin
       - UEBERBOESE_MGMT_PASSWORD=your-secure-password
+      # Disable PROXY since Bose Shutdown
+      - PROXY_ENABLED=false
     volumes:
       # REQUIRED: Persist cached account data across container restarts
       - ~/ueberboese-data:/data:rw
@@ -362,6 +364,7 @@ curl http://localhost:8081/actuator/health
 | `UEBERBOESE_BMX_BASE_URL`           | `http://localhost:8080`           | Base URL for BMX services (used in service registry)                             |
 | `SERVER_PORT`                       | `8080`                            | Port the main application runs on                                                |
 | `MANAGEMENT_SERVER_PORT`            | `8081`                            | Port for actuator/management endpoints                                           |
+| `PROXY_ENABLED`                     | `true`                            | Enable/Disable proxyService mechanism (can be false since shutdown)              |
 
 ### Persistent Data
 

@@ -38,6 +38,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -58,11 +59,18 @@ public class FullAccountService {
   private final PresetMapper presetMapper;
   private final DeviceRepository deviceRepository;
 
+  // Inject flag directly to control standalone behavior natively
+  @Value("${proxy.enabled:true}")
+  private boolean isProxyEnabled;
+
+  @Value("${debug.isolate.matching.ip:false}")
+  private boolean isolateMatchingIp;
+
   public Optional<FullAccountResponseApiDto> getFullAccount(
       String accountId, HttpServletRequest request) {
     log.info("Getting full account data for accountId: {}", accountId);
 
-    // 1. Bepaal het IP-adres van de beller
+    // 1. Determine client IP address
     String clientIp = request.getHeader("X-Forwarded-For");
     if (clientIp == null || clientIp.isEmpty() || "unknown".equalsIgnoreCase(clientIp)) {
       clientIp = request.getRemoteAddr();
@@ -73,7 +81,7 @@ public class FullAccountService {
 
     log.info("Processing full account for accountId: {} linked to IP: {}", accountId, clientIp);
 
-    // Check if cached data exists
+    // 2. Check if cached data exists
     if (accountDataService.hasAccountData(accountId)) {
       try {
         FullAccountResponseApiDto response = accountDataService.loadFullAccountData(accountId);
@@ -89,16 +97,25 @@ public class FullAccountService {
       }
     }
 
-    // Cache miss - forward request to proxy
+    // 3. Short-circuit directly to minimal account if proxy forwarding is explicitly disabled
+    if (!isProxyEnabled) {
+      log.info(
+          "Cache miss for accountId: {} and proxy is disabled. Falling back straight to minimal account.",
+          accountId);
+      var minimal = buildMinimalAccount(accountId);
+      processAndInjectData(minimal, accountId, clientIp);
+      return Optional.of(minimal);
+    }
+
+    // 4. Cache miss - forward request to proxy
     log.info("Cache miss for accountId: {}, forwarding request to proxy", accountId);
     ResponseEntity<byte[]> proxyResponse = proxyService.forwardRequest(request, null);
 
     // Check if proxy response is successful
-    if (!proxyResponse.getStatusCode().is2xxSuccessful() || proxyResponse.getBody() == null) {
-      log.warn(
-          "Proxy request failed for accountId: {}, status: {}, returning minimal account",
-          accountId,
-          proxyResponse.getStatusCode());
+    if (proxyResponse == null
+        || !proxyResponse.getStatusCode().is2xxSuccessful()
+        || proxyResponse.getBody() == null) {
+      log.warn("Proxy request failed for accountId: {}, returning minimal account", accountId);
       var minimal = buildMinimalAccount(accountId);
       processAndInjectData(minimal, accountId, clientIp);
       return Optional.of(minimal);
@@ -132,7 +149,7 @@ public class FullAccountService {
   }
 
   /**
-   * Helper methode om alle database injecties, Spotify patches én de IP-sortering uit te voeren.
+   * Helper method to perform all database injections, Spotify patches, and IP-sorting/isolation.
    */
   private void processAndInjectData(
       FullAccountResponseApiDto response, String accountId, String clientIp) {
@@ -142,11 +159,58 @@ public class FullAccountService {
     injectPresetsFromDatabase(response, accountId);
     patch(response);
 
-    // Zorg dat het actieve apparaat (op basis van IP) als ALLEREERSTE in de XML-lijst komt te staan
-    prioritizeDeviceByIp(response, clientIp);
+    // If the debug flag is enabled, isolate the list to a single matching device.
+    // Otherwise, fallback to the original behavior of prioritizing the active device to the front.
+    if (isolateMatchingIp) {
+      isolateDeviceByIp(response, clientIp);
+    } else {
+      prioritizeDeviceByIp(response, clientIp);
+    }
   }
 
-  /** Sorteert de apparatenlijst zodat het apparaat met het matchende IP-adres vooraan staat. */
+  /**
+   * TEMPORARY DEBUG METHOD: Removes all devices from the XML payload EXCEPT the one matching the
+   * caller's IP.
+   */
+  private void isolateDeviceByIp(FullAccountResponseApiDto response, String clientIp) {
+    if (response.getDevices() == null
+        || response.getDevices().getDevice() == null
+        || response.getDevices().getDevice().isEmpty()) {
+      return;
+    }
+
+    List<DeviceApiDto> devices = response.getDevices().getDevice();
+    DeviceApiDto matchingDevice = null;
+
+    // Search for the device that initiated the request
+    for (DeviceApiDto device : devices) {
+      if (clientIp != null && clientIp.equals(device.getIpaddress())) {
+        matchingDevice = device;
+        break;
+      }
+    }
+
+    if (matchingDevice != null) {
+      log.info(
+          "Found matching device {} for IP: {}. Removing all other devices from XML.",
+          matchingDevice.getDeviceid(),
+          clientIp);
+
+      // Clear the container list entirely and retain only the matching device object
+      devices.clear();
+      devices.add(matchingDevice);
+    } else {
+      log.warn(
+          "No registered device matches client IP: {}. Leaving XML list intact ({}) to prevent blank response.",
+          clientIp,
+          devices.size());
+    }
+  }
+
+  /**
+   * Sorts the device container list so the device matching the active client IP is sorted to index
+   * 0.
+   */
   private void prioritizeDeviceByIp(FullAccountResponseApiDto response, String clientIp) {
     if (response.getDevices() == null
         || response.getDevices().getDevice() == null
@@ -157,7 +221,6 @@ public class FullAccountService {
     List<DeviceApiDto> devices = response.getDevices().getDevice();
     DeviceApiDto matchingDevice = null;
 
-    // Zoek naar het apparaat dat het request doet
     for (DeviceApiDto device : devices) {
       if (clientIp != null && clientIp.equals(device.getIpaddress())) {
         matchingDevice = device;
@@ -171,7 +234,6 @@ public class FullAccountService {
           matchingDevice.getDeviceid(),
           clientIp);
 
-      // Haal het actieve apparaat uit de huidige positie en zet hem op index 0
       devices.remove(matchingDevice);
       devices.add(0, matchingDevice);
     } else {

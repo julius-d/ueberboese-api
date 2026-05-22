@@ -42,6 +42,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class FullAccountServiceTest {
@@ -76,6 +77,9 @@ class FullAccountServiceTest {
             presetService,
             presetMapper,
             deviceRepository);
+
+    ReflectionTestUtils.setField(fullAccountService, "isProxyEnabled", true);
+    ReflectionTestUtils.setField(fullAccountService, "isolateMatchingIp", false);
   }
 
   @Test
