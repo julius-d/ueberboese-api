@@ -1,4 +1,5 @@
 # Überböse Api 🔈🎶
+
 **Überböse:** /ˈyːbɐˌbøːzə/ *(german) adjective - extremely or supremely evil; beyond ordinary wickedness.*
 
 Bose has stopped supporting its consumer streaming boxes called SoundTouch on May 6, 2026 ☹️
@@ -10,7 +11,6 @@ From their last [announcement](https://www.bose.com/soundtouch-end-of-life):
 >- Presets (preset buttons on the product and in the app)
 >- Browsing or playing music services directly from the SoundTouch app
 >- Stereo pairing for SoundTouch 10
-
 
 This projects helps you overcome these limitations with a self-hosted server that replaces the Bose streaming HTTP API.
 

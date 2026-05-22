@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Java 21
+- Java 25
 - Maven 3.6+
 - Docker (optional, for local container testing)
 
@@ -16,7 +16,7 @@ mvn generate-sources
 mvn test
 
 # Start the application
-mvn spring-boot:run
+UEBERBOESE_DATA_DIRECTORY=./data mvn spring-boot:run
 ```
 
 The application will be available at `http://localhost:8080`.
@@ -40,7 +40,6 @@ mvn spring-boot:build-image
 # Run the container (expose both main and management ports)
 docker run -p 8080:8080 -p 8081:8081 ueberboese-api:0.0.1-SNAPSHOT
 ```
-
 
 ### CI/CD Pipeline
 
@@ -148,7 +147,6 @@ echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
 docker pull ghcr.io/julius-d/ueberboese-api:latest
 docker run -p 8080:8080 -p 8081:8081 ghcr.io/julius-d/ueberboese-api:latest
 ```
-
 
 ### Testing
 

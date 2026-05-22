@@ -1301,7 +1301,7 @@ paths:
       description: |
         Endpoint called by Bose SoundTouch devices to submit customer support diagnostic data.
         Reports device information, firmware version, product details, and network diagnostic data.
-        I believe the call is triggered when opening CS pages in the Bose Soundtuch app.
+        I believe the call is triggered when opening CS pages in the Bose SoundTouch app.
       operationId: customerSupport
       security:
         - BearerAuth: []

@@ -6,6 +6,7 @@ import com.github.juliusd.ueberboeseapi.generated.dtos.PresetsContainerApiDto;
 import com.github.juliusd.ueberboeseapi.generated.dtos.SourceApiDto;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -14,18 +15,17 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class PresetMapper {
+
   public List<PresetApiDto> convertToApiDtos(List<Preset> presets, List<SourceApiDto> sources) {
     return presets.stream().map(preset -> convertToApiDto(preset, sources)).toList();
   }
 
   private PresetApiDto convertToApiDto(Preset preset, List<SourceApiDto> sources) {
-
     SourceApiDto source =
         sources.stream()
             .filter(it -> it.getId().equals(preset.sourceId()))
             .findFirst()
             .orElseGet(() -> createMockSource(preset));
-
     // Create preset item
     PresetApiDto presetItem = new PresetApiDto();
     presetItem.setButtonNumber(preset.buttonNumber());
@@ -37,7 +37,6 @@ public class PresetMapper {
     presetItem.setUpdatedOn(preset.updatedOn());
     presetItem.setSource(source);
     presetItem.setUsername(source.getUsername() != null ? source.getUsername() : "");
-
     return presetItem;
   }
 
@@ -92,12 +91,10 @@ public class PresetMapper {
   public PresetsContainerApiDto mergePresets(
       PresetsContainerApiDto xmlPresets, List<PresetApiDto> dbPresets) {
     PresetsContainerApiDto result = new PresetsContainerApiDto();
-
     // Build a map of DB presets by buttonNumber
     Map<Integer, PresetApiDto> dbPresetsByButton =
         dbPresets.stream()
             .collect(Collectors.toMap(PresetApiDto::getButtonNumber, preset -> preset));
-
     // Start with XML presets (if any)
     List<PresetApiDto> allPresets = new ArrayList<>();
     if (xmlPresets != null && xmlPresets.getPreset() != null) {
@@ -108,16 +105,12 @@ public class PresetMapper {
         }
       }
     }
-
     // Add all DB presets (they override XML)
     allPresets.addAll(dbPresets);
-
     // Sort by buttonNumber for consistent ordering
-    allPresets.sort((a, b) -> Integer.compare(a.getButtonNumber(), b.getButtonNumber()));
-
+    allPresets.sort(Comparator.comparingInt(PresetApiDto::getButtonNumber));
     // Add to container
     allPresets.forEach(result::addPresetItem);
-
     return result;
   }
 }
