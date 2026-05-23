@@ -28,6 +28,7 @@ public class DeviceTrackingService {
   public record PowerOnData(
       @NonNull String deviceId,
       @NonNull String ipAddress,
+      String margeAccountId,
       String firmwareVersion,
       String deviceSerialNumber,
       String productCode,
@@ -59,6 +60,10 @@ public class DeviceTrackingService {
               if (data.ipAddress() != null
                   && !Objects.equals(existingDevice.ipAddress(), data.ipAddress())) {
                 updatedDeviceBuilder.ipAddress(data.ipAddress()).updatedOn(now);
+              }
+              if (data.margeAccountId() != null
+                  && !Objects.equals(existingDevice.margeAccountId(), data.margeAccountId())) {
+                updatedDeviceBuilder.margeAccountId(data.margeAccountId()).updatedOn(now);
               }
               if (data.firmwareVersion() != null
                   && !Objects.equals(existingDevice.firmwareVersion(), data.firmwareVersion())) {
@@ -92,6 +97,7 @@ public class DeviceTrackingService {
                       .deviceId(data.deviceId())
                       .name(null)
                       .ipAddress(data.ipAddress())
+                      .margeAccountId(data.margeAccountId())
                       .firmwareVersion(data.firmwareVersion())
                       .deviceSerialNumber(data.deviceSerialNumber())
                       .productCode(data.productCode())
@@ -118,11 +124,19 @@ public class DeviceTrackingService {
         .map(
             device ->
                 new DeviceInfo(
-                    device.deviceId(), device.ipAddress(), device.firstSeen(), device.lastSeen()))
+                    device.deviceId(),
+                    device.ipAddress(),
+                    device.margeAccountId(),
+                    device.firstSeen(),
+                    device.lastSeen()))
         .toList();
   }
 
   /** Data class representing information about a tracked device. */
   public record DeviceInfo(
-      String deviceId, String ipAddress, OffsetDateTime firstSeen, OffsetDateTime lastSeen) {}
+      String deviceId,
+      String ipAddress,
+      String margeAccountId,
+      OffsetDateTime firstSeen,
+      OffsetDateTime lastSeen) {}
 }

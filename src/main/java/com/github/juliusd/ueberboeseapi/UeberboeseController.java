@@ -42,7 +42,9 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -773,5 +775,29 @@ public class UeberboeseController implements DefaultApi {
       }
     }
     return createMockSource(sourceId);
+  }
+
+  @GetMapping(value = "/mgmt/devices", produces = MediaType.APPLICATION_XML_VALUE)
+  public ResponseEntity<FullAccountResponseApiDto> getAllDevices() {
+    log.info("Request received to fetch all database devices with global sources as XML");
+    return fullAccountService
+        .getAllDevicesAccount()
+        .map(
+            data ->
+                ResponseEntity.ok()
+                    .header("Content-Type", MediaType.APPLICATION_XML_VALUE)
+                    .header("METHOD_NAME", "getAllDevices")
+                    .header("Access-Control-Allow-Origin", "*")
+                    .header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+                    .header(
+                        "Access-Control-Allow-Headers",
+                        "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization")
+                    .header("Access-Control-Expose-Headers", "Authorization")
+                    .body(data))
+        .orElseGet(
+            () ->
+                ResponseEntity.status(502)
+                    .header("Content-Type", MediaType.APPLICATION_XML_VALUE)
+                    .build());
   }
 }
