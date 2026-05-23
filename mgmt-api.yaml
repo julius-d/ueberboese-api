@@ -17,7 +17,7 @@ paths:
       tags:
         - Spotify Management
       responses:
-        '200':
+        "200":
           description: Successfully initialized Spotify OAuth flow
           content:
             application/json:
@@ -36,24 +36,24 @@ paths:
                   summary: Successful response
                   value:
                     redirectUrl: "https://accounts.spotify.com/authorize?client_id=abc123&response_type=code&redirect_uri=https%3A%2F%2Fapi.example.com%2Fcallback&scope=user-read-private%20user-read-email"
-        '400':
+        "400":
           description: Bad request - Invalid input
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 invalidReturnUrl:
                   summary: Invalid return URL format
                   value:
                     error: "Invalid return URL format"
                     message: "The provided returnUrl is not a valid URI"
-        '500':
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 serverError:
                   summary: Server error
@@ -79,7 +79,7 @@ paths:
             type: string
             example: "AQBxVGqZ9..."
       responses:
-        '200':
+        "200":
           description: Successfully confirmed and stored Spotify authentication
           content:
             application/json:
@@ -103,12 +103,12 @@ paths:
                     success: true
                     message: "Spotify account connected successfully"
                     accountId: "spotify_user_abc123"
-        '400':
+        "400":
           description: Bad request - Invalid or missing authorization code
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 missingCode:
                   summary: Missing authorization code
@@ -120,24 +120,24 @@ paths:
                   value:
                     error: "Invalid code"
                     message: "The provided authorization code is invalid or expired"
-        '401':
+        "401":
           description: Unauthorized - Failed to authenticate with Spotify
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 authFailed:
                   summary: Authentication failed
                   value:
                     error: "Authentication failed"
                     message: "Failed to exchange authorization code with Spotify"
-        '500':
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 serverError:
                   summary: Server error
@@ -193,7 +193,7 @@ paths:
                 value:
                   uri: "spotify:episode:512ojhOuo1ktJprKbVcKyQ"
       responses:
-        '200':
+        "200":
           description: Successfully retrieved entity information
           content:
             application/json:
@@ -221,12 +221,12 @@ paths:
                   value:
                     name: "My Private Playlist"
                     imageUrl: null
-        '400':
+        "400":
           description: Invalid URI format or unsupported entity type
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 invalidFormat:
                   summary: Invalid URI format
@@ -238,24 +238,24 @@ paths:
                   value:
                     error: "Unsupported entity type"
                     message: "Only track, album, artist, playlist, show, and episode URIs are supported"
-        '404':
+        "404":
           description: Entity not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 notFound:
                   summary: Entity not found
                   value:
                     error: "Not found"
                     message: "The specified Spotify entity could not be found"
-        '500':
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 serverError:
                   summary: Server error
@@ -273,12 +273,12 @@ paths:
       tags:
         - Spotify Management
       responses:
-        '200':
+        "200":
           description: Successfully retrieved list of Spotify accounts
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ListSpotifyAccounts200Response'
+                $ref: "#/components/schemas/ListSpotifyAccounts200Response"
               examples:
                 withAccounts:
                   summary: Response with multiple accounts
@@ -294,12 +294,12 @@ paths:
                   summary: Response with no accounts
                   value:
                     accounts: []
-        '500':
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 serverError:
                   summary: Server error
@@ -325,12 +325,12 @@ paths:
             type: string
             example: "6921042"
       responses:
-        '200':
+        "200":
           description: Successfully retrieved list of speakers
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ListSpeakers200Response'
+                $ref: "#/components/schemas/ListSpeakers200Response"
               examples:
                 withSpeakers:
                   summary: Response with multiple speakers
@@ -342,18 +342,73 @@ paths:
                   summary: Response with no speakers
                   value:
                     speakers: []
-        '404':
+        "404":
           description: Account not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 notFound:
                   summary: Account not found
                   value:
                     error: "Not found"
                     message: "Account data not found for the specified account ID"
+
+/mgmt/devices:
+  get:
+    summary: Fetch all database devices with global sources
+    description: |
+      Aggregates all registered database devices alongside their active global source provider mappings 
+      and serializes the complete tree into a structured XML payload without requiring an accountId.
+    operationId: getAllDevicesAsXml
+    tags:
+      - Device Management
+    responses:
+      "200":
+        description: Successfully retrieved all devices as XML
+        content:
+          application/xml:
+            schema:
+              $ref: "#/components/schemas/AccountInventoryExport"
+            examples:
+              success:
+                summary: Example XML topography response from hardware
+                value: |
+                  <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                  <account id="global_inventory">
+                      <accountStatus>ACTIVE</accountStatus>
+                      <devices>
+                          <device deviceid="000000000000">
+                              <name>Device_Location_1</name>
+                              <ipaddress>10.0.0.100</ipaddress>
+                              <firmwareVersion>1.0.0.00000.0000000</firmwareVersion>
+                              <margeAccountId>Device_Location_1</margeAccountId>
+                              <presets>
+                                  <preset buttonNumber="1">
+                                      <name>Example Radio Station</name>
+                                      <contentItemType>stationurl</contentItemType>
+                                      <location>/v1/playback/station/s0000</location>
+                                      <containerArt>https://example.com/images/logo.jpg</containerArt>
+                                      <source id="1" type="Audio">
+                                          <sourceproviderid>10</sourceproviderid>
+                                          <sourcename>TUNEIN</sourcename>
+                                      </source>
+                                  </preset>
+                              </presets>
+                          </device>
+                      </devices>
+                      <sources>
+                          <source id="11" type="Audio">
+                              <sourceproviderid>15</sourceproviderid>
+                              <sourcename>user1</sourcename>
+                              <username>john_doe_user</username>
+                              <credential type="token">TOKEN_PLACEHOLDER_AQA...</credential>
+                          </source>
+                      </sources>
+                  </account>
+      "500":
+        description: Internal server error while marshalling XML
 
   /mgmt/devices/{deviceId}/events:
     get:
@@ -373,12 +428,12 @@ paths:
             type: string
             example: "587A628A4042"
       responses:
-        '200':
+        "200":
           description: Successfully retrieved list of events
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetDeviceEvents200Response'
+                $ref: "#/components/schemas/GetDeviceEvents200Response"
               examples:
                 withEvents:
                   summary: Response with events
@@ -398,12 +453,12 @@ paths:
                   summary: Response with no events
                   value:
                     events: []
-        '500':
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 serverError:
                   summary: Server error
@@ -420,12 +475,12 @@ paths:
       tags:
         - Event Management
       responses:
-        '200':
+        "200":
           description: Successfully retrieved radio reports
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RadioReports'
+                $ref: "#/components/schemas/RadioReports"
 
 components:
   schemas:
@@ -478,7 +533,7 @@ components:
           type: array
           description: List of connected Spotify accounts
           items:
-            $ref: '#/components/schemas/SpotifyAccountListItem'
+            $ref: "#/components/schemas/SpotifyAccountListItem"
 
     Speaker:
       type: object
@@ -499,7 +554,7 @@ components:
           type: array
           description: List of speakers/devices
           items:
-            $ref: '#/components/schemas/Speaker'
+            $ref: "#/components/schemas/Speaker"
 
     GetDeviceEvents200Response:
       type: object
@@ -510,7 +565,7 @@ components:
           type: array
           description: List of device events (pure events without envelope or device info)
           items:
-            $ref: '#/components/schemas/DeviceEvent'
+            $ref: "#/components/schemas/DeviceEvent"
 
     DeviceEvent:
       type: object
@@ -584,7 +639,7 @@ components:
         events:
           type: array
           items:
-            $ref: '#/components/schemas/RadioReportEvent'
+            $ref: "#/components/schemas/RadioReportEvent"
 
     RadioReports:
       type: object
@@ -592,7 +647,158 @@ components:
         sessions:
           type: array
           items:
-            $ref: '#/components/schemas/RadioReportSession'
+            $ref: "#/components/schemas/RadioReportSession"
+
+    AccountInventoryExport:
+      type: object
+      xml:
+        name: account
+      properties:
+        id:
+          type: string
+          example: "global_inventory"
+          xml:
+            attribute: true
+        accountStatus:
+          type: string
+          example: "ACTIVE"
+        devices:
+          type: object
+          xml:
+            name: devices
+          properties:
+            device:
+              type: array
+              items:
+                $ref: "#/components/schemas/DeviceXmlNode"
+        sources:
+          type: object
+          xml:
+            name: sources
+          properties:
+            source:
+              type: array
+              items:
+                $ref: "#/components/schemas/GlobalSourceXmlNode"
+
+    DeviceXmlNode:
+      type: object
+      xml:
+        name: device
+      properties:
+        deviceid:
+          type: string
+          example: "000000000000"
+          xml:
+            attribute: true
+        name:
+          type: string
+          example: "Device_Location_1"
+        ipaddress:
+          type: string
+          example: "10.0.0.100"
+        margeAccountId:
+          type: string
+          example: "Device_Location_1"
+        firmwareVersion:
+          type: string
+          example: "1.0.0.00000.0000000"
+        presets:
+          type: object
+          xml:
+            name: presets
+          properties:
+            preset:
+              type: array
+              items:
+                $ref: "#/components/schemas/PresetXmlNode"
+
+    PresetXmlNode:
+      type: object
+      xml:
+        name: preset
+      properties:
+        buttonNumber:
+          type: integer
+          example: 1
+          xml:
+            attribute: true
+        name:
+          type: string
+          example: "Example Radio Station"
+        contentItemType:
+          type: string
+          example: "stationurl"
+        location:
+          type: string
+          example: "/v1/playback/station/s0000"
+        containerArt:
+          type: string
+          example: "https://example.com/images/logo.jpg"
+        source:
+          $ref: "#/components/schemas/SourceInfoXmlNode"
+
+    SourceInfoXmlNode:
+      type: object
+      xml:
+        name: source
+      properties:
+        id:
+          type: string
+          example: "1"
+          xml:
+            attribute: true
+        type:
+          type: string
+          example: "Audio"
+          xml:
+            attribute: true
+        sourceproviderid:
+          type: string
+          example: "10"
+        sourcename:
+          type: string
+          example: "TUNEIN"
+
+    GlobalSourceXmlNode:
+      type: object
+      xml:
+        name: source
+      properties:
+        id:
+          type: string
+          example: "11"
+          xml:
+            attribute: true
+        type:
+          type: string
+          example: "Audio"
+          xml:
+            attribute: true
+        sourceproviderid:
+          type: string
+          example: "15"
+        sourcename:
+          type: string
+          example: "user1"
+        username:
+          type: string
+          example: "john_doe_user"
+        credential:
+          type: object
+          xml:
+            name: credential
+          properties:
+            type:
+              type: string
+              example: "token"
+              xml:
+                attribute: true
+            value:
+              type: string
+              example: "TOKEN_PLACEHOLDER_AQA..."
+              xml:
+                content: true
 
 tags:
   - name: Spotify Management
@@ -601,3 +807,5 @@ tags:
     description: Endpoints for managing account data and devices
   - name: Event Management
     description: Endpoints for managing device events
+  - name: Device Management
+    description: Endpoints for managing devices
