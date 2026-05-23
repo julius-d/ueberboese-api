@@ -355,60 +355,60 @@ paths:
                     error: "Not found"
                     message: "Account data not found for the specified account ID"
 
-/mgmt/devices:
-  get:
-    summary: Fetch all database devices with global sources
-    description: |
-      Aggregates all registered database devices alongside their active global source provider mappings 
-      and serializes the complete tree into a structured XML payload without requiring an accountId.
-    operationId: getAllDevicesAsXml
-    tags:
-      - Device Management
-    responses:
-      "200":
-        description: Successfully retrieved all devices as XML
-        content:
-          application/xml:
-            schema:
-              $ref: "#/components/schemas/AccountInventoryExport"
-            examples:
-              success:
-                summary: Example XML topography response from hardware
-                value: |
-                  <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-                  <account id="global_inventory">
-                      <accountStatus>ACTIVE</accountStatus>
-                      <devices>
-                          <device deviceid="000000000000">
-                              <name>Device_Location_1</name>
-                              <ipaddress>10.0.0.100</ipaddress>
-                              <firmwareVersion>1.0.0.00000.0000000</firmwareVersion>
-                              <margeAccountId>Device_Location_1</margeAccountId>
-                              <presets>
-                                  <preset buttonNumber="1">
-                                      <name>Example Radio Station</name>
-                                      <contentItemType>stationurl</contentItemType>
-                                      <location>/v1/playback/station/s0000</location>
-                                      <containerArt>https://example.com/images/logo.jpg</containerArt>
-                                      <source id="1" type="Audio">
-                                          <sourceproviderid>10</sourceproviderid>
-                                          <sourcename>TUNEIN</sourcename>
-                                      </source>
-                                  </preset>
-                              </presets>
-                          </device>
-                      </devices>
-                      <sources>
-                          <source id="11" type="Audio">
-                              <sourceproviderid>15</sourceproviderid>
-                              <sourcename>user1</sourcename>
-                              <username>john_doe_user</username>
-                              <credential type="token">TOKEN_PLACEHOLDER_AQA...</credential>
-                          </source>
-                      </sources>
-                  </account>
-      "500":
-        description: Internal server error while marshalling XML
+  /mgmt/devices:
+    get:
+      summary: Fetch all database devices with global sources
+      description: |
+        Aggregates all registered database devices alongside their active global source provider mappings 
+        and serializes the complete tree into a structured XML payload without requiring an accountId.
+      operationId: getAllDevicesAsXml
+      tags:
+        - Device Management
+      responses:
+        "200":
+          description: Successfully retrieved all devices as XML
+          content:
+            application/xml:
+              schema:
+                $ref: "#/components/schemas/AccountInventoryExport"
+              examples:
+                success:
+                  summary: Example XML topography response from hardware
+                  value: |
+                    <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                    <account id="global_inventory">
+                        <accountStatus>ACTIVE</accountStatus>
+                        <devices>
+                            <device deviceid="000000000000">
+                                <name>Device_Location_1</name>
+                                <ipaddress>10.0.0.100</ipaddress>
+                                <firmwareVersion>1.0.0.00000.0000000</firmwareVersion>
+                                <margeAccountId>Device_Location_1</margeAccountId>
+                                <presets>
+                                    <preset buttonNumber="1">
+                                        <name>Example Radio Station</name>
+                                        <contentItemType>stationurl</contentItemType>
+                                        <location>/v1/playback/station/s0000</location>
+                                        <containerArt>https://example.com/images/logo.jpg</containerArt>
+                                        <source id="1" type="Audio">
+                                            <sourceproviderid>10</sourceproviderid>
+                                            <sourcename>TUNEIN</sourcename>
+                                        </source>
+                                    </preset>
+                                </presets>
+                            </device>
+                        </devices>
+                        <sources>
+                            <source id="11" type="Audio">
+                                <sourceproviderid>15</sourceproviderid>
+                                <sourcename>user1</sourcename>
+                                <username>john_doe_user</username>
+                                <credential type="token">TOKEN_PLACEHOLDER_AQA...</credential>
+                            </source>
+                        </sources>
+                    </account>
+        "500":
+          description: Internal server error while marshalling XML
 
   /mgmt/devices/{deviceId}/events:
     get:
