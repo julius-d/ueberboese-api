@@ -50,6 +50,7 @@ class UeberboeseExperimentalControllerTest extends TestBase {
                 <serialnumber>123SERIA1</serialnumber>
               </attachedProduct>
               <createdOn>2018-08-11T08:55:25.000+00:00</createdOn>
+              <margeAccountId>6921042</margeAccountId>
               <firmwareVersion>27.0.6.46330.5043500 epdbuild.trunk.hepdswbld04.2022-08-04T11:20:29</firmwareVersion>
               <ipaddress>192.168.178.2</ipaddress>
               <name>Foobar</name>

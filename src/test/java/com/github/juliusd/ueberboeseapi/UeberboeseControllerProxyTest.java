@@ -110,6 +110,7 @@ class UeberboeseControllerProxyTest extends TestBase {
            <device deviceid="DEVICE_BOSE_DOWN">
              <attachedProduct/>
              <createdOn>2025-01-01T10:00:00.000+00:00</createdOn>
+             <margeAccountId>9999999</margeAccountId>
              <firmwareVersion/>
              <ipaddress>192.168.1.77</ipaddress>
              <name>Living Room Speaker</name>
