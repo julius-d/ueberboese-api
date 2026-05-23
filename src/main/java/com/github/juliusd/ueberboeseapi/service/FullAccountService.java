@@ -149,6 +149,23 @@ public class FullAccountService {
   }
 
   /**
+   * Aggregates all database devices, global sources, presets, and recents into a single unified
+   * inventory payload without isolating by client IP.
+   *
+   * @return An Optional containing the completely populated FullAccountResponseApiDto.
+   */
+  public Optional<FullAccountResponseApiDto> getAllDevicesAccount() {
+    log.info("Aggregating global inventory via minimal account generation pipeline");
+
+    var minimal = buildMinimalAccount("global_inventory");
+    injectDevicesFromDatabase(minimal, null);
+    injectSpotifySources(minimal);
+    injectPresetsFromDatabase(minimal, null);
+    patch(minimal);
+    return Optional.of(minimal);
+  }
+
+  /**
    * Helper method to perform all database injections, Spotify patches, and IP-sorting/isolation.
    */
   private void processAndInjectData(
@@ -259,13 +276,21 @@ public class FullAccountService {
       existingDeviceIds = Set.of();
     }
 
-    List<Device> dbDevices = deviceRepository.findAllByMargeAccountId(accountId);
+    List<Device> dbDevices;
+    if (accountId == null) {
+      log.info("Account ID is null. Loading all devices from database for global inventory.");
+      dbDevices = deviceRepository.findAllByOrderByLastSeenDesc();
+    } else {
+      log.info("Loading devices linked to accountId: {}", accountId);
+      dbDevices = deviceRepository.findAllByMargeAccountId(accountId);
+    }
     for (Device device : dbDevices) {
       if (!existingDeviceIds.contains(device.deviceId())) {
         var deviceDto = new DeviceApiDto();
         deviceDto.setDeviceid(device.deviceId());
         deviceDto.setName(device.name());
         deviceDto.setIpaddress(device.ipAddress());
+        deviceDto.setMargeAccountId(device.margeAccountId());
         deviceDto.setCreatedOn(device.firstSeen());
         deviceDto.setUpdatedOn(device.updatedOn());
         deviceDto.setFirmwareVersion(device.firmwareVersion());
@@ -279,10 +304,6 @@ public class FullAccountService {
         deviceDto.setPresets(new PresetsContainerApiDto());
         deviceDto.setRecents(new RecentsContainerApiDto());
         response.getDevices().addDeviceItem(deviceDto);
-        log.info(
-            "Injected DB-only device {} into full account for accountId: {}",
-            device.deviceId(),
-            accountId);
       }
     }
   }
@@ -354,9 +375,10 @@ public class FullAccountService {
     // For each device, inject and merge presets from database
     for (var device : response.getDevices().getDevice()) {
       String deviceId = device.getDeviceid();
+      String deviceAccountId = device.getMargeAccountId();
 
       // Fetch presets from database for this device
-      List<Preset> dbPresets = presetService.getPresets(accountId, deviceId);
+      List<Preset> dbPresets = presetService.getPresets(deviceAccountId, deviceId);
       List<PresetApiDto> dbPresetDtos = presetMapper.convertToApiDtos(dbPresets, sources);
 
       // Replace mock sources in presets with actual sources from the account
@@ -377,7 +399,7 @@ public class FullAccountService {
           "Injected {} DB presets into device {} for accountId: {}",
           dbPresets.size(),
           deviceId,
-          accountId);
+          deviceAccountId);
     }
 
     log.info("Injected presets from database into full account for accountId: {}", accountId);
