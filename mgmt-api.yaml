@@ -785,20 +785,10 @@ components:
           type: string
           example: "john_doe_user"
         credential:
-          type: object
+          type: string
+          example: "TOKEN_PLACEHOLDER_AQA..."
           xml:
             name: credential
-          properties:
-            type:
-              type: string
-              example: "token"
-              xml:
-                attribute: true
-            value:
-              type: string
-              example: "TOKEN_PLACEHOLDER_AQA..."
-              xml:
-                content: true
 
 tags:
   - name: Spotify Management
