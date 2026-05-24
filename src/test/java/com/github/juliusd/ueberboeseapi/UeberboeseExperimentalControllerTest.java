@@ -227,6 +227,7 @@ class UeberboeseExperimentalControllerTest extends TestBase {
                 <serialnumber>7878SERI001</serialnumber>
               </attachedProduct>
               <createdOn>2020-01-25T09:21:42.000+00:00</createdOn>
+              <margeAccountId/>
               <firmwareVersion>27.0.6.46330.5043500 epdbuild.trunk.hepdswbld04.2022-08-04T11:20:29</firmwareVersion>
               <ipaddress>192.168.178.3</ipaddress>
               <name>SoundTouch 20</name>
