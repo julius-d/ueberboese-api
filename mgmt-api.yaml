@@ -359,7 +359,7 @@ paths:
     get:
       summary: Fetch all database devices with global sources
       description: |
-        Aggregates all registered database devices alongside their active global source provider mappings 
+        Aggregates all registered database devices alongside their active global source provider mappings
         and serializes the complete tree into a structured XML payload without requiring an accountId.
       operationId: getAllDevicesAsXml
       tags:
