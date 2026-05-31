@@ -444,7 +444,6 @@ public class FullAccountService {
                 .collect(toUnmodifiableSet())
             : Set.of();
 
-    int nextId = 10;
     for (SpotifyAccount account : spotifyAccounts) {
       if (existingSpotifyUsernames.contains(account.spotifyUserId())) {
         continue;
@@ -453,7 +452,7 @@ public class FullAccountService {
           .getSources()
           .addSourceItem(
               new SourceApiDto()
-                  .id(String.valueOf(nextId++))
+                  .id(String.valueOf(account.id() + 1000)) // Increment with 1000 to avoid collision with existing sources
                   .type("Audio")
                   .sourceproviderid(SPOTIFY_PROVIDER_ID)
                   .username(account.spotifyUserId())

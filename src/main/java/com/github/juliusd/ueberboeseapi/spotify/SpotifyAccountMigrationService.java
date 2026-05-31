@@ -98,6 +98,7 @@ public class SpotifyAccountMigrationService implements ApplicationRunner {
       // Migrate to database
       SpotifyAccount account =
           new SpotifyAccount(
+              null,
               jsonAccount.spotifyUserId(),
               jsonAccount.displayName(),
               jsonAccount.refreshToken(),

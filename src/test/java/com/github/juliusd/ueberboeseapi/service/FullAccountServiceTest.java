@@ -404,6 +404,7 @@ class FullAccountServiceTest {
     // Mock SpotifyAccountService to return matching account
     SpotifyAccount spotifyAccount =
         new SpotifyAccount(
+            null,
             spotifyUserId,
             "Test User",
             newRefreshToken,
@@ -450,7 +451,13 @@ class FullAccountServiceTest {
     // Mock SpotifyAccountService to return accounts
     SpotifyAccount spotifyAccount =
         new SpotifyAccount(
-            "user123", "Test User", "new-token", OffsetDateTime.now(), OffsetDateTime.now(), null);
+            null,
+            "user123",
+            "Test User",
+            "new-token",
+            OffsetDateTime.now(),
+            OffsetDateTime.now(),
+            null);
     when(spotifyAccountService.listAllAccounts()).thenReturn(List.of(spotifyAccount));
 
     // Mock account data service
@@ -484,7 +491,13 @@ class FullAccountServiceTest {
     // Mock SpotifyAccountService to return different account
     SpotifyAccount differentAccount =
         new SpotifyAccount(
-            "different-user", "Different User", "different-token", createdAt, updatedAt, null);
+            null,
+            "different-user",
+            "Different User",
+            "different-token",
+            createdAt,
+            updatedAt,
+            null);
     when(spotifyAccountService.listAllAccounts()).thenReturn(List.of(differentAccount));
 
     // Mock account data service
@@ -580,6 +593,7 @@ class FullAccountServiceTest {
     // Mock SpotifyAccountService to return matching account
     SpotifyAccount spotifyAccount =
         new SpotifyAccount(
+            null,
             spotifyUserId,
             "Test User",
             "new-token",
@@ -633,10 +647,10 @@ class FullAccountServiceTest {
     OffsetDateTime updatedTimestamp3 = OffsetDateTime.now().minusDays(2);
     SpotifyAccount account1 =
         new SpotifyAccount(
-            "user1", "User 1", "new-token1", OffsetDateTime.now(), updatedTimestamp1, null);
+            null, "user1", "User 1", "new-token1", OffsetDateTime.now(), updatedTimestamp1, null);
     SpotifyAccount account3 =
         new SpotifyAccount(
-            "user3", "User 3", "new-token3", OffsetDateTime.now(), updatedTimestamp3, null);
+            null, "user3", "User 3", "new-token3", OffsetDateTime.now(), updatedTimestamp3, null);
     when(spotifyAccountService.listAllAccounts()).thenReturn(List.of(account1, account3));
 
     when(accountDataService.hasAccountData(accountId)).thenReturn(true);
@@ -856,6 +870,7 @@ class FullAccountServiceTest {
     // Mock SpotifyAccountService
     SpotifyAccount spotifyAccount =
         new SpotifyAccount(
+            null,
             spotifyUserId,
             "Test User",
             newRefreshToken,
@@ -889,7 +904,7 @@ class FullAccountServiceTest {
     var spotifyAccountUpdatedAt = now.minusDays(2);
     var spotifyAccount =
         new SpotifyAccount(
-            SPOTIFY_USER_ID, "Test User", newRefreshToken, now, spotifyAccountUpdatedAt, 1L);
+            null, SPOTIFY_USER_ID, "Test User", newRefreshToken, now, spotifyAccountUpdatedAt, 1L);
     when(spotifyAccountService.listAllAccounts()).thenReturn(List.of(spotifyAccount));
 
     var fullAccount = createFullAccountDto(accountId);
@@ -1004,6 +1019,7 @@ class FullAccountServiceTest {
     // Mock SpotifyAccountService
     SpotifyAccount spotifyAccount =
         new SpotifyAccount(
+            null,
             spotifyUserId,
             "Test User",
             newRefreshToken,
@@ -1095,9 +1111,9 @@ class FullAccountServiceTest {
     response.setDevices(new DevicesContainerApiDto());
 
     SpotifyAccount account1 =
-        new SpotifyAccount("user-a", "Alice", "token-a", createdAt1, updatedAt1, null);
+        new SpotifyAccount(null, "user-a", "Alice", "token-a", createdAt1, updatedAt1, null);
     SpotifyAccount account2 =
-        new SpotifyAccount("user-b", "Bob", "token-b", createdAt2, updatedAt2, null);
+        new SpotifyAccount(null, "user-b", "Bob", "token-b", createdAt2, updatedAt2, null);
     when(spotifyAccountService.listAllAccounts()).thenReturn(List.of(account1, account2));
 
     when(accountDataService.hasAccountData(accountId)).thenReturn(true);
@@ -1143,7 +1159,8 @@ class FullAccountServiceTest {
         createFullAccountWithSpotifySources(spotifyUserId, "old-token");
 
     SpotifyAccount account =
-        new SpotifyAccount(spotifyUserId, "Existing User", "new-token", createdAt, updatedAt, null);
+        new SpotifyAccount(
+            null, spotifyUserId, "Existing User", "new-token", createdAt, updatedAt, null);
     when(spotifyAccountService.listAllAccounts()).thenReturn(List.of(account));
 
     when(accountDataService.hasAccountData(accountId)).thenReturn(true);
@@ -1175,7 +1192,8 @@ class FullAccountServiceTest {
     when(deviceRepository.findAllByMargeAccountId(accountId)).thenReturn(List.of());
 
     SpotifyAccount account =
-        new SpotifyAccount("spotify-user-x", "Player X", "refresh-x", createdAt, updatedAt, null);
+        new SpotifyAccount(
+            null, "spotify-user-x", "Player X", "refresh-x", createdAt, updatedAt, null);
     when(spotifyAccountService.listAllAccounts()).thenReturn(List.of(account));
 
     // When

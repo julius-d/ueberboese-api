@@ -278,9 +278,9 @@ class SpotifyMgmtControllerTest extends TestBase {
     OffsetDateTime time1 = OffsetDateTime.parse("2025-12-23T10:30:00Z");
     OffsetDateTime time2 = OffsetDateTime.parse("2025-12-22T14:15:00Z");
     spotifyAccountRepository.save(
-        new SpotifyAccount("user1", "John Doe", "refresh_token_1", time1, time1, null));
+        new SpotifyAccount(null, "user1", "John Doe", "refresh_token_1", time1, time1, null));
     spotifyAccountRepository.save(
-        new SpotifyAccount("user2", "Jane Smith", "refresh_token_2", time2, time2, null));
+        new SpotifyAccount(null, "user2", "Jane Smith", "refresh_token_2", time2, time2, null));
 
     // When / Then
     given()
@@ -773,6 +773,7 @@ class SpotifyMgmtControllerTest extends TestBase {
     // Create a Spotify account in DB
     spotifyAccountRepository.save(
         new SpotifyAccount(
+            null,
             "test_user",
             "Test User",
             "test_refresh_token",

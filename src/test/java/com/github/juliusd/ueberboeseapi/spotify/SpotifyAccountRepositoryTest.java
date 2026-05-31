@@ -18,7 +18,7 @@ class SpotifyAccountRepositoryTest extends TestBase {
     // Given
     OffsetDateTime now = OffsetDateTime.now();
     SpotifyAccount account =
-        new SpotifyAccount("user123", "Test User", "refresh_token", now, now, null);
+        new SpotifyAccount(null, "user123", "Test User", "refresh_token", now, now, null);
 
     // When
     SpotifyAccount saved = repository.save(account);
@@ -33,11 +33,11 @@ class SpotifyAccountRepositoryTest extends TestBase {
     // Given
     OffsetDateTime now = OffsetDateTime.now();
     SpotifyAccount account =
-        new SpotifyAccount("user456", "Test User 2", "refresh_token", now, now, null);
+        new SpotifyAccount(null, "user456", "Test User 2", "refresh_token", now, now, null);
     repository.save(account);
 
     // When
-    Optional<SpotifyAccount> found = repository.findById("user456");
+    Optional<SpotifyAccount> found = repository.findBySpotifyUserId("user456");
 
     // Then
     assertThat(found).isPresent();
@@ -48,7 +48,7 @@ class SpotifyAccountRepositoryTest extends TestBase {
   @Test
   void findById_shouldReturnEmptyWhenNotExists() {
     // When
-    Optional<SpotifyAccount> found = repository.findById("nonexistent");
+    Optional<SpotifyAccount> found = repository.findBySpotifyUserId("nonexistent");
 
     // Then
     assertThat(found).isEmpty();
@@ -59,7 +59,7 @@ class SpotifyAccountRepositoryTest extends TestBase {
     // Given
     OffsetDateTime now = OffsetDateTime.now();
     SpotifyAccount account =
-        new SpotifyAccount("user789", "Test User 3", "refresh_token", now, now, null);
+        new SpotifyAccount(null, "user789", "Test User 3", "refresh_token", now, now, null);
     repository.save(account);
 
     // When
@@ -82,15 +82,17 @@ class SpotifyAccountRepositoryTest extends TestBase {
   void findAllByOrderByCreatedAtDesc_shouldReturnAccountsInCorrectOrder() throws Exception {
     // Given
     OffsetDateTime now = OffsetDateTime.now();
-    SpotifyAccount account1 = new SpotifyAccount("user1", "User 1", "token1", now, now, null);
+    SpotifyAccount account1 = new SpotifyAccount(null, "user1", "User 1", "token1", now, now, null);
     repository.save(account1);
 
     OffsetDateTime now2 = now.plusSeconds(10);
-    SpotifyAccount account2 = new SpotifyAccount("user2", "User 2", "token2", now2, now2, null);
+    SpotifyAccount account2 =
+        new SpotifyAccount(null, "user2", "User 2", "token2", now2, now2, null);
     repository.save(account2);
 
     OffsetDateTime now3 = now2.plusSeconds(10);
-    SpotifyAccount account3 = new SpotifyAccount("user3", "User 3", "token3", now3, now3, null);
+    SpotifyAccount account3 =
+        new SpotifyAccount(null, "user3", "User 3", "token3", now3, now3, null);
     repository.save(account3);
 
     // When
@@ -109,17 +111,18 @@ class SpotifyAccountRepositoryTest extends TestBase {
     // Given
     OffsetDateTime now = OffsetDateTime.now();
     SpotifyAccount original =
-        new SpotifyAccount("user_update", "Original Name", "token1", now, now, null);
+        new SpotifyAccount(null, "user_update", "Original Name", "token1", now, now, null);
     SpotifyAccount saved = repository.save(original);
 
     // When - save with same ID but different data
     OffsetDateTime now2 = OffsetDateTime.now();
     SpotifyAccount updated =
-        new SpotifyAccount("user_update", "Updated Name", "token2", now, now2, saved.version());
+        new SpotifyAccount(
+            null, "user_update", "Updated Name", "token2", now, now2, saved.version());
     repository.save(updated);
 
     // Then
-    Optional<SpotifyAccount> found = repository.findById("user_update");
+    Optional<SpotifyAccount> found = repository.findBySpotifyUserId("user_update");
     assertThat(found).isPresent();
     assertThat(found.get().displayName()).isEqualTo("Updated Name");
     assertThat(found.get().refreshToken()).isEqualTo("token2");

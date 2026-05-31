@@ -31,12 +31,12 @@ public class SpotifyAccountService {
     OffsetDateTime now = OffsetDateTime.now();
 
     // Check if account exists to preserve createdAt and version
-    Optional<SpotifyAccount> existing = repository.findById(spotifyUserId);
+    Optional<SpotifyAccount> existing = repository.findBySpotifyUserId(spotifyUserId);
     OffsetDateTime createdAt = existing.map(SpotifyAccount::createdAt).orElse(now);
     Long version = existing.map(SpotifyAccount::version).orElse(null);
 
     SpotifyAccount account =
-        new SpotifyAccount(spotifyUserId, displayName, refreshToken, createdAt, now, version);
+        new SpotifyAccount(null, spotifyUserId, displayName, refreshToken, createdAt, now, version);
 
     repository.save(account);
     log.info("Successfully saved Spotify account for accountId: {}", spotifyUserId);
@@ -54,7 +54,7 @@ public class SpotifyAccountService {
     log.debug("Checking refresh token update requirements for userId: {}", spotifyUserId);
 
     repository
-        .findById(spotifyUserId)
+        .findBySpotifyUserId(spotifyUserId)
         .ifPresentOrElse(
             existingAccount -> {
               // Check if the token has actually changed
@@ -69,6 +69,7 @@ public class SpotifyAccountService {
               OffsetDateTime now = OffsetDateTime.now();
               SpotifyAccount updatedAccount =
                   new SpotifyAccount(
+                      null,
                       existingAccount.spotifyUserId(),
                       existingAccount.displayName(),
                       newRefreshToken,
@@ -96,7 +97,7 @@ public class SpotifyAccountService {
   public Optional<SpotifyAccount> getAccountBySpotifyUserId(String spotifyUserId) {
     log.debug("Attempting to load Spotify account for userId: {}", spotifyUserId);
 
-    Optional<SpotifyAccount> account = repository.findById(spotifyUserId);
+    Optional<SpotifyAccount> account = repository.findBySpotifyUserId(spotifyUserId);
 
     if (account.isPresent()) {
       log.debug("Successfully loaded Spotify account for accountId: {}", spotifyUserId);
