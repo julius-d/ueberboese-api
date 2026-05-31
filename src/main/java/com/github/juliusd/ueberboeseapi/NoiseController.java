@@ -1,5 +1,6 @@
 package com.github.juliusd.ueberboeseapi;
 
+import com.github.juliusd.ueberboeseapi.generated.dtos.AccountResponseApiDto;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,30 +17,21 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Slf4j
 public class NoiseController {
 
-  /**
-   * Handles the speaker's initial registration call. Never-paired devices call GET
-   * /?serialnumber=<SN> to discover their accountId. We return the serial number itself as the
-   * accountId so the speaker stores it as margeAccountUUID and then calls GET
-   * /streaming/account/{id}/full to fetch its sources.
-   */
   @GetMapping(
       value = "/",
       params = "serialnumber",
       produces = "application/vnd.bose.streaming-v1.2+xml")
-  public ResponseEntity<byte[]> indexWithSerialNumber(
+  public ResponseEntity<AccountResponseApiDto> indexWithSerialNumber(
       @RequestParam("serialnumber") String serialNumber) {
-    String xml =
-        "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
-            + "<account id=\""
-            + serialNumber
-            + "\">"
-            + "<accountStatus>ACTIVE</accountStatus>"
-            + "<mode>global</mode>"
-            + "<preferredLanguage>en</preferredLanguage>"
-            + "</account>";
+    AccountResponseApiDto account =
+        new AccountResponseApiDto()
+            .id(serialNumber)
+            .accountStatus("ACTIVE")
+            .mode("global")
+            .preferredLanguage("en");
     return ResponseEntity.ok()
         .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
-        .body(xml.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        .body(account);
   }
 
   @GetMapping("/")

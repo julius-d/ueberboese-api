@@ -43,6 +43,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -65,6 +66,9 @@ public class UeberboeseController implements DefaultApi {
   private final SpeakerProvisioningService speakerProvisioningService;
 
   @Autowired private HttpServletRequest request;
+
+  @Value("${ueberboese.auto-provisioning.enabled:true}")
+  private boolean autoProvisioningEnabled;
 
   @Override
   public ResponseEntity<RecentItemResponseApiDto> addRecentItem(
@@ -507,7 +511,9 @@ public class UeberboeseController implements DefaultApi {
             .productSerialNumber(product.getSerialnumber());
       }
       deviceTrackingService.recordDevicePowerOn(powerOnDataBuilder.build());
-      speakerProvisioningService.provisionIfNeeded(deviceId, ipAddress);
+      if (autoProvisioningEnabled) {
+        speakerProvisioningService.provisionIfNeeded(deviceId, ipAddress);
+      }
 
       log.info("Successfully processed power_on for device: {} at IP: {}", deviceId, ipAddress);
 
