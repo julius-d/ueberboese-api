@@ -107,4 +107,91 @@ class MgmtControllerTest extends TestBase {
         .then()
         .statusCode(401);
   }
+
+  @Test
+  void listAccountIds_shouldReturnDistinctListOfAccountIds() {
+    // Given
+    OffsetDateTime now = OffsetDateTime.now();
+
+    deviceRepository.save(
+        Device.builder()
+            .deviceId("d1")
+            .margeAccountId("6921042")
+            .ipAddress("10.0.0.1")
+            .firstSeen(now)
+            .lastSeen(now)
+            .build());
+    deviceRepository.save(
+        Device.builder()
+            .deviceId("d2")
+            .margeAccountId("6921042")
+            .ipAddress("10.0.0.2")
+            .firstSeen(now)
+            .lastSeen(now)
+            .build()); // Dubbel ID
+    deviceRepository.save(
+        Device.builder()
+            .deviceId("d3")
+            .margeAccountId("0")
+            .ipAddress("10.0.0.3")
+            .firstSeen(now)
+            .lastSeen(now)
+            .build());
+    deviceRepository.save(
+        Device.builder()
+            .deviceId("d4")
+            .margeAccountId("7543119")
+            .ipAddress("10.0.0.4")
+            .firstSeen(now)
+            .lastSeen(now)
+            .build());
+    deviceRepository.save(
+        Device.builder()
+            .deviceId("d5")
+            .margeAccountId(null)
+            .ipAddress("10.0.0.5")
+            .firstSeen(now)
+            .lastSeen(now)
+            .build()); // Null mag niet mee
+
+    // When
+    Response response =
+        given()
+            .auth()
+            .basic("admin", "test-password-123")
+            .accept(ContentType.JSON)
+            .when()
+            .get("/mgmt/accounts");
+
+    // Then
+    response
+        .then()
+        .statusCode(200)
+        .contentType("application/json")
+        .body("accountIds", hasSize(3)) // "6921042", "0", en "7543119"
+        .body("accountIds", containsInAnyOrder("6921042", "0", "7543119"));
+  }
+
+  @Test
+  void listAccountIds_shouldReturnEmptyListWhenNoAccountsExist() {
+    // Given - Geen devices in database
+
+    // When / Then
+    given()
+        .auth()
+        .basic("admin", "test-password-123")
+        .accept(ContentType.JSON)
+        .when()
+        .get("/mgmt/accounts")
+        .then()
+        .statusCode(200)
+        .contentType("application/json")
+        .body("accountIds", hasSize(0));
+  }
+
+  @Test
+  void listAccountIds_shouldRequireAuthentication() {
+    // When / Then
+    given().accept(ContentType.JSON).when().get("/mgmt/accounts").then().statusCode(401);
+  }
 }
