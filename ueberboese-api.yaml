@@ -20,7 +20,7 @@ paths:
       security:
         - BearerAuth: []
       responses:
-        "200":
+        '200':
           description: Successful response with list of source providers
           headers:
             Content-Type:
@@ -30,30 +30,30 @@ paths:
             ETag:
               schema:
                 type: string
-                example: "1762017390476"
+                example: '1762017390476'
           content:
             application/vnd.bose.streaming-v1.2+xml:
               schema:
-                $ref: "#/components/schemas/SourceProvidersResponse"
+                $ref: '#/components/schemas/SourceProvidersResponse'
               example: |
-                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
                 <sourceProviders>
-                  <sourceprovider id="1">
+                  <sourceprovider id='1'>
                     <createdOn>2012-09-19T12:43:00.000+00:00</createdOn>
                     <name>PANDORA</name>
                     <updatedOn>2012-09-19T12:43:00.000+00:00</updatedOn>
                   </sourceprovider>
-                  <sourceprovider id="15">
+                  <sourceprovider id='15'>
                     <createdOn>2014-03-17T15:30:27.000+00:00</createdOn>
                     <name>SPOTIFY</name>
                     <updatedOn>2014-03-17T15:30:27.000+00:00</updatedOn>
                   </sourceprovider>
                 </sourceProviders>
-        "401":
+        '401':
           description: Unauthorized - Invalid or missing Bearer token
-        "403":
+        '403':
           description: Forbidden - Valid token but insufficient permissions
-        "500":
+        '500':
           description: Internal server error
 
   /streaming/account/{accountId}/device/{deviceId}/recent:
@@ -64,16 +64,16 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/accountId"
-        - $ref: "#/components/parameters/deviceId"
+        - $ref: '#/components/parameters/accountId'
+        - $ref: '#/components/parameters/deviceId'
       requestBody:
         required: true
         content:
           application/vnd.bose.streaming-v1.2+xml:
             schema:
-              $ref: "#/components/schemas/RecentItemRequest"
+              $ref: '#/components/schemas/RecentItemRequest'
             example: |
-              <?xml version="1.0" encoding="UTF-8" ?>
+              <?xml version='1.0' encoding='UTF-8' ?>
               <recent>
                 <lastplayedat>2025-11-01T17:32:59+00:00</lastplayedat>
                 <sourceid>19989313</sourceid>
@@ -82,7 +82,7 @@ paths:
                 <contentItemType>stationurl</contentItemType>
               </recent>
       responses:
-        "201":
+        '201':
           description: Recent item created successfully
           headers:
             Content-Type:
@@ -96,18 +96,18 @@ paths:
           content:
             application/vnd.bose.streaming-v1.2+xml:
               schema:
-                $ref: "#/components/schemas/RecentItemResponse"
+                $ref: '#/components/schemas/RecentItemResponse'
               example: |
-                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-                <recent id="2244536342">
+                <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+                <recent id='2244536342'>
                   <contentItemType>stationurl</contentItemType>
                   <createdOn>2018-11-27T18:20:01.000+00:00</createdOn>
                   <lastplayedat>2025-11-01T17:32:59.000+00:00</lastplayedat>
                   <location>/v1/playback/station/s80044</location>
                   <name>Radio TEDDY</name>
-                  <source id="19989313" type="Audio">
+                  <source id='19989313' type='Audio'>
                     <createdOn>2018-08-11T08:55:41.000+00:00</createdOn>
-                    <credential type="token">eyDu=</credential>
+                    <credential type='token'>eyDu=</credential>
                     <name></name>
                     <sourceproviderid>25</sourceproviderid>
                     <sourcename></sourcename>
@@ -118,15 +118,15 @@ paths:
                   <sourceid>19989313</sourceid>
                   <updatedOn>2025-11-01T17:33:00.574+00:00</updatedOn>
                 </recent>
-        "400":
+        '400':
           description: Bad request - Invalid request body or parameters
-        "401":
+        '401':
           description: Unauthorized - Invalid or missing Bearer token
-        "403":
+        '403':
           description: Forbidden - Valid token but insufficient permissions
-        "404":
+        '404':
           description: Not found - Account or device not found
-        "500":
+        '500':
           description: Internal server error
 
   /streaming/account/{accountId}/device/{deviceId}/recents:
@@ -137,10 +137,10 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/accountId"
-        - $ref: "#/components/parameters/deviceId"
+        - $ref: '#/components/parameters/accountId'
+        - $ref: '#/components/parameters/deviceId'
       responses:
-        "200":
+        '200':
           description: Successful response with list of recent items
           headers:
             Content-Type:
@@ -150,23 +150,23 @@ paths:
             ETag:
               schema:
                 type: string
-                example: "1765724977209"
+                example: '1765724977209'
           content:
             application/vnd.bose.streaming-v1.2+xml:
               schema:
-                $ref: "#/components/schemas/RecentsContainer"
+                $ref: '#/components/schemas/RecentsContainer'
               example: |
-                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
                 <recents>
-                  <recent id="2560855517">
+                  <recent id='2560855517'>
                     <contentItemType>tracklisturl</contentItemType>
                     <createdOn>2025-12-13T17:14:28.000+00:00</createdOn>
                     <lastplayedat>2025-12-14T14:15:59.000+00:00</lastplayedat>
                     <location>/playback/container/c3BvdGlmeTphbGJ1bTowZ3BGWVZNbVV6VkVxeVAyeUh3cEha</location>
                     <name>Ghostsitter 23 - Das Haus im Moor</name>
-                    <source id="19989621" type="Audio">
+                    <source id='19989621' type='Audio'>
                       <createdOn>2018-08-11T09:52:31.000+00:00</createdOn>
-                      <credential type="token_version_3">mockToken123=</credential>
+                      <credential type='token_version_3'>mockToken123=</credential>
                       <name>mockuser123</name>
                       <sourceproviderid>15</sourceproviderid>
                       <sourcename>mock@example.com</sourcename>
@@ -177,15 +177,15 @@ paths:
                     <sourceid>19989621</sourceid>
                     <updatedOn>2025-12-14T14:16:05.000+00:00</updatedOn>
                   </recent>
-                  <recent id="2244536335">
+                  <recent id='2244536335'>
                     <contentItemType>stationurl</contentItemType>
                     <createdOn>2018-11-27T18:20:01.000+00:00</createdOn>
                     <lastplayedat>2025-12-14T12:32:00.000+00:00</lastplayedat>
                     <location>/v1/playback/station/s80044</location>
                     <name>Radio TEDDY</name>
-                    <source id="19989313" type="Audio">
+                    <source id='19989313' type='Audio'>
                       <createdOn>2018-08-11T08:55:41.000+00:00</createdOn>
-                      <credential type="token">eyJmock=</credential>
+                      <credential type='token'>eyJmock=</credential>
                       <name></name>
                       <sourceproviderid>25</sourceproviderid>
                       <sourcename></sourcename>
@@ -197,13 +197,13 @@ paths:
                     <updatedOn>2025-12-14T12:32:05.000+00:00</updatedOn>
                   </recent>
                 </recents>
-        "401":
+        '401':
           description: Unauthorized - Invalid or missing Bearer token
-        "403":
+        '403':
           description: Forbidden - Valid token but insufficient permissions
-        "404":
+        '404':
           description: Not found - Account or device not found
-        "500":
+        '500':
           description: Internal server error
 
   /streaming/account/{accountId}/device/{deviceId}/recent/{recentId}:
@@ -214,17 +214,17 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/accountId"
-        - $ref: "#/components/parameters/deviceId"
+        - $ref: '#/components/parameters/accountId'
+        - $ref: '#/components/parameters/deviceId'
         - name: recentId
           in: path
           required: true
           description: Recent item identifier
           schema:
             type: string
-            example: "2557568761"
+            example: '2557568761'
       responses:
-        "200":
+        '200':
           description: Successful response with recent item details
           headers:
             Content-Type:
@@ -234,18 +234,18 @@ paths:
           content:
             application/vnd.bose.streaming-v1.2+xml:
               schema:
-                $ref: "#/components/schemas/RecentItemResponse"
+                $ref: '#/components/schemas/RecentItemResponse'
               example: |
-                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-                <recent id="3332">
+                <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+                <recent id='3332'>
                   <contentItemType>tracklisturl</contentItemType>
                   <createdOn>2025-11-08T21:07:34.000+00:00</createdOn>
                   <lastplayedat>2025-11-08T21:15:53.000+00:00</lastplayedat>
                   <location>/playback/container/c3BvdGlmeTp0cmFjazo0QnQ0VDRjM1c4UElrZEZuQVNLbXk5</location>
                   <name>Zähne putzen</name>
-                  <source id="19989621" type="Audio">
+                  <source id='19989621' type='Audio'>
                     <createdOn>2018-08-11T09:52:31.000+00:00</createdOn>
-                    <credential type="token_version_3">mockToken789xyz=</credential>
+                    <credential type='token_version_3'>mockToken789xyz=</credential>
                     <name>mockuser789xyz</name>
                     <sourceproviderid>15</sourceproviderid>
                     <sourcename>user@example.com</sourcename>
@@ -256,13 +256,13 @@ paths:
                   <sourceid>19989621</sourceid>
                   <updatedOn>2025-11-08T21:15:55.000+00:00</updatedOn>
                 </recent>
-        "401":
+        '401':
           description: Unauthorized - Invalid or missing Bearer token
-        "403":
+        '403':
           description: Forbidden - Valid token but insufficient permissions
-        "404":
+        '404':
           description: Not found - Account, device, or recent item not found
-        "500":
+        '500':
           description: Internal server error
 
   /streaming/account/{accountId}/device/{deviceId}/presets:
@@ -273,10 +273,10 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/accountId"
-        - $ref: "#/components/parameters/deviceId"
+        - $ref: '#/components/parameters/accountId'
+        - $ref: '#/components/parameters/deviceId'
       responses:
-        "200":
+        '200':
           description: Successful response with list of presets
           headers:
             Content-Type:
@@ -286,23 +286,23 @@ paths:
             ETag:
               schema:
                 type: string
-                example: "1736199076279"
+                example: '1736199076279'
           content:
             application/vnd.bose.streaming-v1.2+xml:
               schema:
-                $ref: "#/components/schemas/PresetsContainer"
+                $ref: '#/components/schemas/PresetsContainer'
               example: |
-                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
                 <presets>
-                  <preset buttonNumber="1">
+                  <preset buttonNumber='1'>
                     <containerArt>http://cdn-radiotime-logos.tunein.com/s80044q.png</containerArt>
                     <contentItemType>stationurl</contentItemType>
                     <createdOn>2018-11-26T18:40:45.000+00:00</createdOn>
                     <location>/v1/playback/station/s80044</location>
                     <name>Radio TEDDY</name>
-                    <source id="19989313" type="Audio">
+                    <source id='19989313' type='Audio'>
                       <createdOn>2018-08-11T08:55:41.000+00:00</createdOn>
-                      <credential type="token">eyJzZXJpYWwiOiAiZjUwY2JjZGItN2IxMi00NjJmLWE5ZTctZGEzMTg5NDcwMTU4In0=</credential>
+                      <credential type='token'>eyJzZXJpYWwiOiAiZjUwY2JjZGItN2IxMi00NjJmLWE5ZTctZGEzMTg5NDcwMTU4In0=</credential>
                       <name></name>
                       <sourceproviderid>25</sourceproviderid>
                       <sourcename></sourcename>
@@ -313,15 +313,15 @@ paths:
                     <updatedOn>2018-11-26T18:40:45.000+00:00</updatedOn>
                     <username>Radio TEDDY</username>
                   </preset>
-                  <preset buttonNumber="2">
+                  <preset buttonNumber='2'>
                     <containerArt>https://mosaic.scdn.co/300/ab67616d0000b2732a4bc05d6d23b6a9a309e8f8ab67616d0000b2733d3c35cdbf9c51eefeaed7a7ab67616d0000b2738271a54c70aaae53e3da0c09ab67616d0000b273c4ec45569fc2db1edc44a465</containerArt>
                     <contentItemType>tracklisturl</contentItemType>
                     <createdOn>2018-11-14T18:27:39.000+00:00</createdOn>
                     <location>/playback/container/c3BvdGlmeTpwbGF5bGlzdDoyM1NNZHlPSEE2S2t6SG9QT0o1S1E5</location>
                     <name>Radio Mix</name>
-                    <source id="19989621" type="Audio">
+                    <source id='19989621' type='Audio'>
                       <createdOn>2018-08-11T09:52:31.000+00:00</createdOn>
-                      <credential type="token_version_3">AQCfoupV5pdDJvqVjVdOF5tUOvyB3mKqeUGyZgqSYk4imOvta8p4dJnCHCNZANz-x0O-W2aQ15ML38pyx1CdvNSdOjGPwg0IlYYfPKWgoS07kmdEfRpf1Vur-OIx46KF56pjsA</credential>
+                      <credential type='token_version_3'>AQCfoupV5pdDJvqVjVdOF5tUOvyB3mKqeUGyZgqSYk4imOvta8p4dJnCHCNZANz-x0O-W2aQ15ML38pyx1CdvNSdOjGPwg0IlYYfPKWgoS07kmdEfRpf1Vur-OIx46KF56pjsA</credential>
                       <name>mock5zt8py3wuxy123xa431ge</name>
                       <sourceproviderid>15</sourceproviderid>
                       <sourcename>user@example.com</sourcename>
@@ -332,15 +332,15 @@ paths:
                     <updatedOn>2021-02-21T20:19:16.000+00:00</updatedOn>
                     <username>Radio Mix</username>
                   </preset>
-                  <preset buttonNumber="3">
+                  <preset buttonNumber='3'>
                     <containerArt>http://cdn-profiles.tunein.com/s25111/images/logoq.jpg?t=1</containerArt>
                     <contentItemType>stationurl</contentItemType>
                     <createdOn>2018-11-26T18:41:18.000+00:00</createdOn>
                     <location>/v1/playback/station/s25111</location>
                     <name>radioeins vom rbb</name>
-                    <source id="19989313" type="Audio">
+                    <source id='19989313' type='Audio'>
                       <createdOn>2018-08-11T08:55:41.000+00:00</createdOn>
-                      <credential type="token">eyJzZXJpYWwiOiAiZjUwY2JjZGItN2IxMi00NjJmLWE5ZTctZGEzMTg5NDcwMTU4In0=</credential>
+                      <credential type='token'>eyJzZXJpYWwiOiAiZjUwY2JjZGItN2IxMi00NjJmLWE5ZTctZGEzMTg5NDcwMTU4In0=</credential>
                       <name></name>
                       <sourceproviderid>25</sourceproviderid>
                       <sourcename></sourcename>
@@ -351,15 +351,15 @@ paths:
                     <updatedOn>2018-11-26T18:41:18.000+00:00</updatedOn>
                     <username>radioeins vom rbb</username>
                   </preset>
-                  <preset buttonNumber="4">
+                  <preset buttonNumber='4'>
                     <containerArt>https://mosaic.scdn.co/300/ab67616d0000b2735ca387be0b44d742bcee3317ab67616d0000b273627072ee659b0f3aaa0f537aab67616d0000b27364b153e7f4b060d9735c7d76ab67616d0000b2738ba1aaf88b157453fe12482d</containerArt>
                     <contentItemType>tracklisturl</contentItemType>
                     <createdOn>2018-11-26T18:47:06.000+00:00</createdOn>
                     <location>/playback/container/c3BvdGlmeTpwbGF5bGlzdDoyd0JCOGIzUWhDWXd5T0d2dE9id3dI</location>
                     <name>Saisonal Simone Sommerland</name>
-                    <source id="19989621" type="Audio">
+                    <source id='19989621' type='Audio'>
                       <createdOn>2018-08-11T09:52:31.000+00:00</createdOn>
-                      <credential type="token_version_3">AQCfoupV5pdDJvqVjVdOF5tUOvyB3mKqeUGyZgqSYk4imOvta8p4dJnCHCNZANz-x0O-W2aQ15ML38pyx1CdvNSdOjGPwg0IlYYfPKWgoS07kmdEfRpf1Vur-OIx46KF56pjsA</credential>
+                      <credential type='token_version_3'>AQCfoupV5pdDJvqVjVdOF5tUOvyB3mKqeUGyZgqSYk4imOvta8p4dJnCHCNZANz-x0O-W2aQ15ML38pyx1CdvNSdOjGPwg0IlYYfPKWgoS07kmdEfRpf1Vur-OIx46KF56pjsA</credential>
                       <name>mock5zt8py3wuxy123xa431ge</name>
                       <sourceproviderid>15</sourceproviderid>
                       <sourcename>user@example.com</sourcename>
@@ -370,15 +370,15 @@ paths:
                     <updatedOn>2022-11-17T19:35:37.000+00:00</updatedOn>
                     <username>Saisonal Simone Sommerland</username>
                   </preset>
-                  <preset buttonNumber="5">
+                  <preset buttonNumber='5'>
                     <containerArt></containerArt>
                     <contentItemType>tracklisturl</contentItemType>
                     <createdOn>2018-11-14T18:27:23.000+00:00</createdOn>
                     <location>/playback/container/c3BvdGlmeTpwbGF5bGlzdDozN2k5ZFFaRjFFNG1zazBURmdzeVRG</location>
                     <name>Ed Sheeran Radio</name>
-                    <source id="20260226" type="Audio">
+                    <source id='20260226' type='Audio'>
                       <createdOn>2018-09-16T19:18:46.000+00:00</createdOn>
-                      <credential type="token_version_3">AQAHZ3A2USJzLX8CUEUPqIHOPpQihPpwcVO-0h2-g5-7SWRtIFfoQadeVu1Ud0TgVDkee7PyFnJbJUubZkrpv3A9jLaEeY991wSkXGG-EM_IlwvkRpASmwT3nbyixpVkSDw</credential>
+                      <credential type='token_version_3'>AQAHZ3A2USJzLX8CUEUPqIHOPpQihPpwcVO-0h2-g5-7SWRtIFfoQadeVu1Ud0TgVDkee7PyFnJbJUubZkrpv3A9jLaEeY991wSkXGG-EM_IlwvkRpASmwT3nbyixpVkSDw</credential>
                       <name>bldfvhhzdsyw2d4cy3melcaco</name>
                       <sourceproviderid>15</sourceproviderid>
                       <sourcename>otheruser@example.com</sourcename>
@@ -389,15 +389,15 @@ paths:
                     <updatedOn>2020-01-26T12:45:13.000+00:00</updatedOn>
                     <username>Ed Sheeran Radio</username>
                   </preset>
-                  <preset buttonNumber="6">
+                  <preset buttonNumber='6'>
                     <containerArt>https://image-cdn-fa.spotifycdn.com/image/ab67706c0000da843b38733ef58fbd3530776a42</containerArt>
                     <contentItemType>tracklisturl</contentItemType>
                     <createdOn>2018-08-11T09:53:48.000+00:00</createdOn>
                     <location>/playback/container/c3BvdGlmeTpwbGF5bGlzdDoybjZXMnA1QzBNQUQ5YTR6NXhUVDdu</location>
                     <name>Komplett Entspannt</name>
-                    <source id="19989621" type="Audio">
+                    <source id='19989621' type='Audio'>
                       <createdOn>2018-08-11T09:52:31.000+00:00</createdOn>
-                      <credential type="token_version_3">AQCfoupV5pdDJvqVjVdOF5tUOvyB3mKqeUGyZgqSYk4imOvta8p4dJnCHCNZANz-x0O-W2aQ15ML38pyx1CdvNSdOjGPwg0IlYYfPKWgoS07kmdEfRpf1Vur-OIx46KF56pjsA</credential>
+                      <credential type='token_version_3'>AQCfoupV5pdDJvqVjVdOF5tUOvyB3mKqeUGyZgqSYk4imOvta8p4dJnCHCNZANz-x0O-W2aQ15ML38pyx1CdvNSdOjGPwg0IlYYfPKWgoS07kmdEfRpf1Vur-OIx46KF56pjsA</credential>
                       <name>mock5zt8py3wuxy123xa431ge</name>
                       <sourceproviderid>15</sourceproviderid>
                       <sourcename>user@example.com</sourcename>
@@ -409,13 +409,13 @@ paths:
                     <username>Komplett Entspannt</username>
                   </preset>
                 </presets>
-        "401":
+        '401':
           description: Unauthorized - Invalid or missing Bearer token
-        "403":
+        '403':
           description: Forbidden - Valid token but insufficient permissions
-        "404":
+        '404':
           description: Not found - Account or device not found
-        "500":
+        '500':
           description: Internal server error
 
   /streaming/account/{accountId}/device/{deviceId}/preset/{buttonNumber}:
@@ -426,8 +426,8 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/accountId"
-        - $ref: "#/components/parameters/deviceId"
+        - $ref: '#/components/parameters/accountId'
+        - $ref: '#/components/parameters/deviceId'
         - name: buttonNumber
           in: path
           required: true
@@ -440,10 +440,10 @@ paths:
         content:
           application/vnd.bose.streaming-v1.2+xml:
             schema:
-              $ref: "#/components/schemas/PresetUpdateRequest"
+              $ref: '#/components/schemas/PresetUpdateRequest'
             example: |
-              <?xml version="1.0" encoding="UTF-8" ?>
-              <preset buttonNumber="2">
+              <?xml version='1.0' encoding='UTF-8' ?>
+              <preset buttonNumber='2'>
                 <sourceid>19989621</sourceid>
                 <name>Radio Mix</name>
                 <username>Radio Mix</username>
@@ -452,7 +452,7 @@ paths:
                 <containerArt>https://image-cdn-ak.spotifycdn.com/image/ab67706c0000da84993ee084406c4089ad8f4b2a</containerArt>
               </preset>
       responses:
-        "200":
+        '200':
           description: Preset updated successfully
           headers:
             Content-Type:
@@ -466,18 +466,18 @@ paths:
           content:
             application/vnd.bose.streaming-v1.2+xml:
               schema:
-                $ref: "#/components/schemas/PresetUpdateResponse"
+                $ref: '#/components/schemas/PresetUpdateResponse'
               example: |
-                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-                <preset buttonNumber="2">
+                <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+                <preset buttonNumber='2'>
                   <containerArt>https://image-cdn-ak.spotifycdn.com/image/ab67706c0000da84993ee084406c4089ad8f4b2a</containerArt>
                   <contentItemType>tracklisturl</contentItemType>
                   <createdOn>2018-11-14T18:27:39.000+00:00</createdOn>
                   <location>/playback/container/c3BvdGlmeTpwbGF5bGlzdDoyM1NNZHlPSEE2S2t6SG9QT0o1S1E5</location>
                   <name>Radio Mix</name>
-                  <source id="19989621" type="Audio">
+                  <source id='19989621' type='Audio'>
                     <createdOn>2018-08-11T09:52:31.000+00:00</createdOn>
-                    <credential type="token_version_3">mockToken456xyz=</credential>
+                    <credential type='token_version_3'>mockToken456xyz=</credential>
                     <name>mockuser5zt8py3wuxy123</name>
                     <sourceproviderid>15</sourceproviderid>
                     <sourcename>user@example.com</sourcename>
@@ -488,11 +488,11 @@ paths:
                   <updatedOn>2025-12-28T16:38:41.000+00:00</updatedOn>
                   <username>Radio Mix</username>
                 </preset>
-        "400":
+        '400':
           description: Bad request - Invalid request body or parameters
-        "404":
+        '404':
           description: Not found - Account or device not found
-        "500":
+        '500':
           description: Internal server error
     delete:
       summary: Delete device preset
@@ -501,8 +501,8 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/accountId"
-        - $ref: "#/components/parameters/deviceId"
+        - $ref: '#/components/parameters/accountId'
+        - $ref: '#/components/parameters/deviceId'
         - name: buttonNumber
           in: path
           required: true
@@ -512,16 +512,16 @@ paths:
             minimum: 1
             maximum: 6
       responses:
-        "200":
+        '200':
           description: Preset deleted successfully (empty response)
           headers:
             Content-Type:
               schema:
                 type: string
                 example: application/vnd.bose.streaming-v1.2+xml
-        "401":
+        '401':
           description: Unauthorized - Invalid or missing Bearer token
-        "404":
+        '404':
           description: Not found - Preset not found
           headers:
             Content-Type:
@@ -531,9 +531,9 @@ paths:
           content:
             application/vnd.bose.streaming-v1.2+xml:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: '#/components/schemas/ErrorResponse'
               example: |
-                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
                 <status>
                   <message>Not found</message>
                   <status-code>404</status-code>
@@ -545,8 +545,8 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/accountId"
-        - $ref: "#/components/parameters/deviceId"
+        - $ref: '#/components/parameters/accountId'
+        - $ref: '#/components/parameters/deviceId'
         - name: buttonNumber
           in: path
           required: true
@@ -557,7 +557,7 @@ paths:
             maximum: 6
             example: 4
       responses:
-        "200":
+        '200':
           description: Preset retrieved successfully
           headers:
             Content-Type:
@@ -567,18 +567,18 @@ paths:
           content:
             application/vnd.bose.streaming-v1.2+xml:
               schema:
-                $ref: "#/components/schemas/PresetUpdateResponse"
+                $ref: '#/components/schemas/PresetUpdateResponse'
               example: |
-                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-                <preset buttonNumber="4">
+                <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+                <preset buttonNumber='4'>
                   <containerArt>https://mosaic.scdn.co/300/mockimageurl</containerArt>
                   <contentItemType>tracklisturl</contentItemType>
                   <createdOn>2018-11-26T18:47:06.000+00:00</createdOn>
                   <location>/playback/container/c3BvdGlmeTpwbGF5bGlzdDoyd0JCOGIzUWhDWXd5T0d2dE9id3dI</location>
                   <name>Seasonal Mix</name>
-                  <source id="19989621" type="Audio">
+                  <source id='19989621' type='Audio'>
                     <createdOn>2018-08-11T09:52:31.000+00:00</createdOn>
-                    <credential type="token_version_3">mockToken789xyz=</credential>
+                    <credential type='token_version_3'>mockToken789xyz=</credential>
                     <name>mockuser789xyz</name>
                     <sourceproviderid>15</sourceproviderid>
                     <sourcename>user@example.com</sourcename>
@@ -589,14 +589,14 @@ paths:
                   <updatedOn>2022-11-17T19:35:37.000+00:00</updatedOn>
                   <username>mockuser789xyz</username>
                 </preset>
-        "404":
+        '404':
           description: Preset not found
           content:
             application/vnd.bose.streaming-v1.2+xml:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: '#/components/schemas/ErrorResponse'
               example: |
-                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
                 <status>
                   <message>Not found</message>
                   <status-code>404</status-code>
@@ -610,9 +610,9 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/accountId"
+        - $ref: '#/components/parameters/accountId'
       responses:
-        "200":
+        '200':
           description: Successful response with full account details
           headers:
             Content-Type:
@@ -626,14 +626,14 @@ paths:
           content:
             application/vnd.bose.streaming-v1.2+xml:
               schema:
-                $ref: "#/components/schemas/FullAccountResponse"
-        "401":
+                $ref: '#/components/schemas/FullAccountResponse'
+        '401':
           description: Unauthorized - Invalid or missing Bearer token
-        "403":
+        '403':
           description: Forbidden - Valid token but insufficient permissions
-        "404":
+        '404':
           description: Not found - Account not found
-        "500":
+        '500':
           description: Internal server error
 
   /streaming/account/{accountId}/device/{deviceId}:
@@ -644,22 +644,22 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/accountId"
-        - $ref: "#/components/parameters/deviceId"
+        - $ref: '#/components/parameters/accountId'
+        - $ref: '#/components/parameters/deviceId'
       requestBody:
         required: true
         content:
           application/vnd.bose.streaming-v1.2+xml:
             schema:
-              $ref: "#/components/schemas/DeviceUpdateRequest"
+              $ref: '#/components/schemas/DeviceUpdateRequest'
             example: |
-              <?xml version="1.0" encoding="UTF-8" ?>
-              <device deviceid="587A628A4042">
+              <?xml version='1.0' encoding='UTF-8' ?>
+              <device deviceid='587A628A4042'>
                 <name>Test Device</name>
                 <macaddress>587A628A4042</macaddress>
               </device>
       responses:
-        "200":
+        '200':
           description: Device updated successfully
           headers:
             Content-Type:
@@ -677,24 +677,24 @@ paths:
           content:
             application/vnd.bose.streaming-v1.2+xml:
               schema:
-                $ref: "#/components/schemas/DeviceUpdateResponse"
+                $ref: '#/components/schemas/DeviceUpdateResponse'
               example: |
-                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-                <device deviceid="587A628A4042">
+                <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+                <device deviceid='587A628A4042'>
                   <createdOn>2018-08-11T08:55:25.000+00:00</createdOn>
                   <ipaddress>192.168.178.33</ipaddress>
                   <name>Test Device</name>
                   <updatedOn>2026-01-02T11:12:09.074+00:00</updatedOn>
                 </device>
-        "400":
+        '400':
           description: Bad request - Invalid request body or parameters
-        "401":
+        '401':
           description: Unauthorized - Invalid or missing Bearer token
-        "403":
+        '403':
           description: Forbidden - Valid token but insufficient permissions
-        "404":
+        '404':
           description: Not found - Account or device not found
-        "500":
+        '500':
           description: Internal server error
     delete:
       summary: Remove device from account
@@ -713,10 +713,10 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/accountId"
-        - $ref: "#/components/parameters/deviceId"
+        - $ref: '#/components/parameters/accountId'
+        - $ref: '#/components/parameters/deviceId'
       responses:
-        "200":
+        '200':
           description: Device removed successfully (empty response)
           headers:
             Content-Type:
@@ -731,7 +731,7 @@ paths:
               schema:
                 type: string
                 example: removeDevice
-        "400":
+        '400':
           description: Device does not exist
           headers:
             Content-Type:
@@ -741,14 +741,14 @@ paths:
           content:
             application/vnd.bose.streaming-v1.2+xml:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: '#/components/schemas/ErrorResponse'
               example: |
-                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
                 <status>
                   <message>Device does not exist </message>
                   <status-code>4012</status-code>
                 </status>
-        "401":
+        '401':
           description: Unauthorized - Invalid or missing Bearer token
 
   /streaming/account/{accountId}/device/:
@@ -773,21 +773,21 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/accountId"
+        - $ref: '#/components/parameters/accountId'
       requestBody:
         required: true
         content:
           application/vnd.bose.streaming-v1.2+xml:
             schema:
-              $ref: "#/components/schemas/DeviceUpdateRequest"
+              $ref: '#/components/schemas/DeviceUpdateRequest'
             example: |
-              <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-              <device deviceid="587A628A4042">
+              <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+              <device deviceid='587A628A4042'>
                 <name>Kitchen</name>
                 <macaddress>587A628A4042</macaddress>
               </device>
       responses:
-        "201":
+        '201':
           description: Device registered successfully
           headers:
             Content-Type:
@@ -809,23 +809,23 @@ paths:
           content:
             application/vnd.bose.streaming-v1.2+xml:
               schema:
-                $ref: "#/components/schemas/DeviceUpdateResponse"
+                $ref: '#/components/schemas/DeviceUpdateResponse'
               example: |
-                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-                <device deviceid="587A628A4042">
+                <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+                <device deviceid='587A628A4042'>
                   <createdOn>2018-08-11T08:55:25.000+00:00</createdOn>
                   <ipaddress></ipaddress>
                   <name>Kitchen</name>
                   <updatedOn>2026-01-02T11:12:09.074+00:00</updatedOn>
                 </device>
-        "401":
+        '401':
           description: Unauthorized - Invalid or missing Bearer token
           content:
             application/vnd.bose.streaming-v1.2+xml:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: '#/components/schemas/ErrorResponse'
               example: |
-                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
                 <status>
                   <message>Not Authorized</message>
                   <status-code>401</status-code>
@@ -841,9 +841,9 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/accountId"
+        - $ref: '#/components/parameters/accountId'
       responses:
-        "200":
+        '200':
           description: Unclear, empty response
           headers:
             Content-Type:
@@ -870,14 +870,14 @@ paths:
         content:
           application/vnd.bose.streaming-v1.2+xml:
             schema:
-              $ref: "#/components/schemas/PowerOnRequest"
+              $ref: '#/components/schemas/PowerOnRequest'
             example: |
-              <?xml version="1.0" encoding="UTF-8" ?>
+              <?xml version='1.0' encoding='UTF-8' ?>
               <device-data>
-                <device id="587A628A4042">
+                <device id='587A628A4042'>
                   <serialnumber>P123456789101123456789</serialnumber>
                   <firmware-version>27.0.6.46330.5043500 epdbuild.trunk.hepdswbld04.2022-08-04T11:20:29</firmware-version>
-                  <product product_code="SoundTouch 10 sm2" type="5">
+                  <product product_code='SoundTouch 10 sm2' type='5'>
                     <serialnumber>069236P81556160AE</serialnumber>
                   </product>
                 </device>
@@ -891,23 +891,23 @@ paths:
                   </macaddresses><ip-address>192.168.178.50</ip-address>
                   <network-connection-type>Wireless</network-connection-type>
                   </device-landscape><network-landscape>
-                  <network-data xmlns="http://www.Bose.com/Schemas/2012-12/NetworkMonitor/" />
+                  <network-data xmlns='http://www.Bose.com/Schemas/2012-12/NetworkMonitor/' />
                   </network-landscape>
                 </diagnostic-data>
               </device-data>
       responses:
-        "200":
+        '200':
           description: Successfully recorded device power on event
           headers:
             Content-Type:
               schema:
                 type: string
                 example: application/vnd.bose.streaming-v1.2+xml
-        "400":
+        '400':
           description: Bad request - Invalid request body
-        "401":
+        '401':
           description: Unauthorized - Invalid or missing Bearer token
-        "500":
+        '500':
           description: Server Error
 
   /streaming/account/{accountId}/group/:
@@ -920,15 +920,15 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/accountId"
+        - $ref: '#/components/parameters/accountId'
       requestBody:
         required: true
         content:
           application/vnd.bose.streaming-v1.2+xml:
             schema:
-              $ref: "#/components/schemas/GroupRequest"
+              $ref: '#/components/schemas/GroupRequest'
             example: |
-              <?xml version="1.0" encoding="UTF-8"?>
+              <?xml version='1.0' encoding='UTF-8'?>
               <group>
                 <masterDeviceId>587A628A4042</masterDeviceId>
                 <name>Living Room Stereo</name>
@@ -944,7 +944,7 @@ paths:
                 </roles>
               </group>
       responses:
-        "201":
+        '201':
           description: Group created successfully
           headers:
             Content-Type:
@@ -954,10 +954,10 @@ paths:
           content:
             application/vnd.bose.streaming-v1.2+xml:
               schema:
-                $ref: "#/components/schemas/GroupResponse"
+                $ref: '#/components/schemas/GroupResponse'
               example: |
-                <?xml version="1.0" encoding="UTF-8"?>
-                <group id="1225842">
+                <?xml version='1.0' encoding='UTF-8'?>
+                <group id='1225842'>
                   <masterDeviceId>587A628A4042</masterDeviceId>
                   <name>Living Room Stereo</name>
                   <roles>
@@ -971,21 +971,21 @@ paths:
                     </groupRole>
                   </roles>
                 </group>
-        "400":
+        '400':
           description: Bad request - Device already in group
           content:
             application/vnd.bose.streaming-v1.2+xml:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: '#/components/schemas/ErrorResponse'
               example: |
-                <?xml version="1.0" encoding="UTF-8"?>
+                <?xml version='1.0' encoding='UTF-8'?>
                 <error>
                   <status-code>4041</status-code>
                   <message>Device 587A628A4042 already belongs to a group</message>
                 </error>
-        "401":
+        '401':
           description: Unauthorized - Invalid or missing Bearer token
-        "500":
+        '500':
           description: Internal server error
 
   /streaming/account/{accountId}/group/{groupId}:
@@ -998,37 +998,37 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/accountId"
+        - $ref: '#/components/parameters/accountId'
         - name: groupId
           in: path
           required: true
           description: Unique identifier of the group to delete
           schema:
             type: string
-          example: "1225842"
+          example: '1225842'
       responses:
-        "200":
+        '200':
           description: Group deleted successfully (empty response body)
           headers:
             Content-Type:
               schema:
                 type: string
                 example: application/vnd.bose.streaming-v1.2+xml
-        "400":
+        '400':
           description: Bad request - Group not found
           content:
             application/vnd.bose.streaming-v1.2+xml:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: '#/components/schemas/ErrorResponse'
               example: |
-                <?xml version="1.0" encoding="UTF-8"?>
+                <?xml version='1.0' encoding='UTF-8'?>
                 <status>
                   <message>Device Group not found </message>
                   <status-code>4040</status-code>
                 </status>
-        "401":
+        '401':
           description: Unauthorized - Invalid or missing Bearer token
-        "500":
+        '500':
           description: Internal server error
 
     put:
@@ -1040,28 +1040,28 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/accountId"
+        - $ref: '#/components/parameters/accountId'
         - name: groupId
           in: path
           required: true
           description: Unique identifier of the group to update
           schema:
             type: string
-          example: "1225842"
+          example: '1225842'
       requestBody:
         required: true
         content:
           application/vnd.bose.streaming-v1.2+xml:
             schema:
-              $ref: "#/components/schemas/GroupUpdateRequest"
+              $ref: '#/components/schemas/GroupUpdateRequest'
             example: |
-              <?xml version="1.0" encoding="UTF-8"?>
+              <?xml version='1.0' encoding='UTF-8'?>
               <group>
                 <masterDeviceId>44EAD8A18888</masterDeviceId>
                 <name>Updated Stereo</name>
               </group>
       responses:
-        "200":
+        '200':
           description: Group updated successfully
           headers:
             Content-Type:
@@ -1071,10 +1071,10 @@ paths:
           content:
             application/vnd.bose.streaming-v1.2+xml:
               schema:
-                $ref: "#/components/schemas/GroupResponse"
+                $ref: '#/components/schemas/GroupResponse'
               example: |
-                <?xml version="1.0" encoding="UTF-8"?>
-                <group id="1225842">
+                <?xml version='1.0' encoding='UTF-8'?>
+                <group id='1225842'>
                   <masterDeviceId>44EAD8A18888</masterDeviceId>
                   <name>Updated Stereo</name>
                   <roles>
@@ -1088,25 +1088,25 @@ paths:
                     </groupRole>
                   </roles>
                 </group>
-        "400":
+        '400':
           description: Bad request - Group not found
           content:
             application/vnd.bose.streaming-v1.2+xml:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: '#/components/schemas/ErrorResponse'
               examples:
                 groupNotFound:
                   summary: Group not found
                   value: |
-                    <?xml version="1.0" encoding="UTF-8"?>
+                    <?xml version='1.0' encoding='UTF-8'?>
                     <status>
                       <message>Device Group not found </message>
                       <status-code>4040</status-code>
                     </status>
 
-        "401":
+        '401':
           description: Unauthorized - Invalid or missing Bearer token
-        "500":
+        '500':
           description: Internal server error
 
   /streaming/account/{accountId}/device/{deviceId}/group/:
@@ -1121,10 +1121,10 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/accountId"
-        - $ref: "#/components/parameters/deviceId"
+        - $ref: '#/components/parameters/accountId'
+        - $ref: '#/components/parameters/deviceId'
       responses:
-        "200":
+        '200':
           description: |
             Successful response.
             Returns full group information if device is in a group,
@@ -1137,13 +1137,13 @@ paths:
           content:
             application/vnd.bose.streaming-v1.2+xml:
               schema:
-                $ref: "#/components/schemas/GroupResponse"
+                $ref: '#/components/schemas/GroupResponse'
               examples:
                 deviceInGroup:
                   summary: Device is in a group
                   value: |
-                    <?xml version="1.0" encoding="UTF-8"?>
-                    <group id="1225842">
+                    <?xml version='1.0' encoding='UTF-8'?>
+                    <group id='1225842'>
                       <masterDeviceId>587A628A4042</masterDeviceId>
                       <name>Living Room Stereo</name>
                       <roles>
@@ -1160,24 +1160,24 @@ paths:
                 deviceNotInGroup:
                   summary: Device is not in a group
                   value: |
-                    <?xml version="1.0" encoding="UTF-8" standalone="yes"?><group/>
-        "400":
+                    <?xml version='1.0' encoding='UTF-8' standalone='yes'?><group/>
+        '400':
           description: Bad request - Device does not exist
           content:
             application/vnd.bose.streaming-v1.2+xml:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: '#/components/schemas/ErrorResponse'
               example: |
-                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
                 <status>
                   <message>Device does not exist</message>
                   <status-code>4012</status-code>
                 </status>
-        "401":
+        '401':
           description: Unauthorized - Invalid or missing Bearer token
-        "403":
+        '403':
           description: Forbidden - Valid token but insufficient permissions
-        "500":
+        '500':
           description: Internal server error
 
   /oauth/device/{deviceId}/music/musicprovider/{providerId}/token/{tokenType}:
@@ -1196,34 +1196,34 @@ paths:
           description: Device identifier
           schema:
             type: string
-            example: "587A628A4042"
+            example: '587A628A4042'
         - name: providerId
           in: path
           required: true
           description: Music provider identifier (e.g., 15 for Spotify)
           schema:
             type: string
-            example: "15"
+            example: '15'
         - name: tokenType
           in: path
           required: true
           description: Token type identifier
           schema:
             type: string
-            example: "cs3"
+            example: 'cs3'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/OAuthTokenRequest"
+              $ref: '#/components/schemas/OAuthTokenRequest'
             example:
-              code: ""
-              grant_type: "refresh_token"
-              redirect_uri: ""
-              refresh_token: "AQC-x0O-W2aVur-OIA"
+              code: ''
+              grant_type: 'refresh_token'
+              redirect_uri: ''
+              refresh_token: 'AQC-x0O-W2aVur-OIA'
       responses:
-        "200":
+        '200':
           description: Token refreshed successfully
           headers:
             Content-Type:
@@ -1233,29 +1233,29 @@ paths:
             Content-Length:
               schema:
                 type: string
-                example: "633"
+                example: '633'
             Connection:
               schema:
                 type: string
-                example: "keep-alive"
+                example: 'keep-alive'
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OAuthTokenResponse"
+                $ref: '#/components/schemas/OAuthTokenResponse'
               example:
-                access_token: "123fooAccessExampleToken"
-                token_type: "Bearer"
+                access_token: '123fooAccessExampleToken'
+                token_type: 'Bearer'
                 expires_in: 3600
-                scope: "playlist-read-private playlist-read-collaborative streaming user-library-read user-library-modify playlist-modify-private playlist-modify-public user-read-email user-read-private user-top-read"
-        "400":
+                scope: 'playlist-read-private playlist-read-collaborative streaming user-library-read user-library-modify playlist-modify-private playlist-modify-public user-read-email user-read-private user-top-read'
+        '400':
           description: Bad request - Invalid request body or parameters
-        "401":
+        '401':
           description: Unauthorized - Invalid or missing Bearer token
-        "403":
+        '403':
           description: Forbidden - Valid token but insufficient permissions
-        "404":
+        '404':
           description: Not found - Device or provider not found
-        "500":
+        '500':
           description: Internal server error
 
   /streaming/software/update/account/{accountId}:
@@ -1268,9 +1268,9 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/accountId"
+        - $ref: '#/components/parameters/accountId'
       responses:
-        "200":
+        '200':
           description: Successful response with software update information
           headers:
             Content-Type:
@@ -1280,19 +1280,19 @@ paths:
           content:
             application/vnd.bose.streaming-v1.2+xml:
               schema:
-                $ref: "#/components/schemas/SoftwareUpdateResponse"
+                $ref: '#/components/schemas/SoftwareUpdateResponse'
               example: |
-                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
                 <software_update>
                   <softwareUpdateLocation></softwareUpdateLocation>
                 </software_update>
-        "401":
+        '401':
           description: Unauthorized - Invalid or missing Bearer token
-        "403":
+        '403':
           description: Forbidden - Valid token but insufficient permissions
-        "404":
+        '404':
           description: Not found - Account not found
-        "500":
+        '500':
           description: Internal server error
 
   /streaming/support/customersupport:
@@ -1310,22 +1310,22 @@ paths:
         content:
           application/vnd.bose.streaming-v1.2+xml:
             schema:
-              $ref: "#/components/schemas/CustomerSupportRequest"
+              $ref: '#/components/schemas/CustomerSupportRequest'
             example: |
-              <?xml version="1.0" encoding="UTF-8" ?><device-data><device id="587A628A4042"><serialnumber>P123456789101123456789</serialnumber><firmware-version>27.0.6.46330.5043500 epdbuild.trunk.hepdswbld04.2022-08-04T11:20:29</firmware-version><product product_code="SoundTouch 10 sm2" type="5"><serialnumber>069236P81556160AE</serialnumber></product></device><diagnostic-data><device-landscape><rssi>Good</rssi><gateway-ip-address>192.168.1.1</gateway-ip-address><macaddresses><macaddress>587A628A4042</macaddress><macaddress>40BD32BAB0EB</macaddress></macaddresses><ip-address>192.168.1.100</ip-address><network-connection-type>Wireless</network-connection-type></device-landscape><network-landscape><network-data xmlns="http://www.Bose.com/Schemas/2012-12/NetworkMonitor/" /></network-landscape></diagnostic-data></device-data>
+              <?xml version='1.0' encoding='UTF-8' ?><device-data><device id='587A628A4042'><serialnumber>P123456789101123456789</serialnumber><firmware-version>27.0.6.46330.5043500 epdbuild.trunk.hepdswbld04.2022-08-04T11:20:29</firmware-version><product product_code='SoundTouch 10 sm2' type='5'><serialnumber>069236P81556160AE</serialnumber></product></device><diagnostic-data><device-landscape><rssi>Good</rssi><gateway-ip-address>192.168.1.1</gateway-ip-address><macaddresses><macaddress>587A628A4042</macaddress><macaddress>40BD32BAB0EB</macaddress></macaddresses><ip-address>192.168.1.100</ip-address><network-connection-type>Wireless</network-connection-type></device-landscape><network-landscape><network-data xmlns='http://www.Bose.com/Schemas/2012-12/NetworkMonitor/' /></network-landscape></diagnostic-data></device-data>
       responses:
-        "200":
+        '200':
           description: Successfully received customer support data
           headers:
             Content-Type:
               schema:
                 type: string
                 example: application/vnd.bose.streaming-v1.2+xml
-        "400":
+        '400':
           description: Bad request - Invalid request body
-        "401":
+        '401':
           description: Unauthorized - Invalid or missing Bearer token
-        "500":
+        '500':
           description: Server Error
 
   /streaming/device/{deviceId}/streaming_token:
@@ -1340,23 +1340,23 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/deviceId"
+        - $ref: '#/components/parameters/deviceId'
       responses:
-        "200":
+        '200':
           description: Token refreshed successfully
           headers:
             Authorization:
               schema:
                 type: string
-                example: "1a2312e/423f243f+31f/qwe43r3"
+                example: '1a2312e/423f243f+31f/qwe43r3'
               description: Refreshed Bearer token
-        "401":
+        '401':
           description: Unauthorized - Invalid or missing Bearer token
-        "403":
+        '403':
           description: Forbidden - Valid token but insufficient permissions
-        "404":
+        '404':
           description: Not found - Device not found
-        "500":
+        '500':
           description: Internal server error
 
   /v1/blacklist/{deviceId}:
@@ -1372,9 +1372,9 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/deviceId"
+        - $ref: '#/components/parameters/deviceId'
       responses:
-        "404":
+        '404':
           description: Device not found in blacklist (expected response)
 
   /v1/scmudc/{deviceId}:
@@ -1419,68 +1419,68 @@ paths:
 
         **art-changed**
         ```json
-        { "type": "art-changed", "data": { "art-status": "SHOW_DEFAULT_IMAGE", "art-uri": "" } }
-        { "type": "art-changed", "data": { "art-status": "IMAGE_PRESENT", "art-uri": "https://example.com/art.jpg" } }
-        { "type": "art-changed", "data": { "art-status": "", "art-uri": "" } }
+        { 'type': 'art-changed', 'data': { 'art-status': 'SHOW_DEFAULT_IMAGE', 'art-uri': '' } }
+        { 'type': 'art-changed', 'data': { 'art-status': 'IMAGE_PRESENT', 'art-uri': 'https://example.com/art.jpg' } }
+        { 'type': 'art-changed', 'data': { 'art-status': '', 'art-uri': '' } }
         ```
 
         **aux-pressed**
         ```json
-        { "type": "aux-pressed", "data": { "buttonId": "AUX_INPUT", "origin": "ir-remote" } }
+        { 'type': 'aux-pressed', 'data': { 'buttonId': 'AUX_INPUT', 'origin': 'ir-remote' } }
         ```
 
         **balance-changed**
         ```json
-        { "type": "balance-changed",
-          "data": { "balance": 0 } }
+        { 'type': 'balance-changed',
+          'data': { 'balance': 0 } }
         ```
 
         **bass-changed**
         ```json
-        { "type": "bass-changed", "data": { "bass": -1 } }
+        { 'type': 'bass-changed', 'data': { 'bass': -1 } }
         ```
 
         **clock-changed**
         ```json
-        { "type": "clock-changed",
-          "data": { "brightness": 100, "enabled": "true", "timeformat": 24, "timezone": "Europe/Berlin", "useroffset": 0, "usertime": 0 } }
-        { "type": "clock-changed",
-          "data": { "brightness": 70, "enabled": "true", "timeformat": 12, "timezone": "", "useroffset": 0, "usertime": 0 } }
+        { 'type': 'clock-changed',
+          'data': { 'brightness': 100, 'enabled': 'true', 'timeformat': 24, 'timezone': 'Europe/Berlin', 'useroffset': 0, 'usertime': 0 } }
+        { 'type': 'clock-changed',
+          'data': { 'brightness': 70, 'enabled': 'true', 'timeformat': 12, 'timezone': '', 'useroffset': 0, 'usertime': 0 } }
         ```
 
         **dislike-pressed**
         ```json
-        { "type": "dislike-pressed", "data": { "buttonId": "THUMBS_DOWN", "origin": "ir-remote" } }
+        { 'type': 'dislike-pressed', 'data': { 'buttonId': 'THUMBS_DOWN', 'origin': 'ir-remote' } }
         ```
 
         **favorite-changed**
         ```json
-        { "type": "favorite-changed", "data": { "favorite-value": "true" } }
-        { "type": "favorite-changed", "data": { "favorite-value": "false" } }
+        { 'type': 'favorite-changed', 'data': { 'favorite-value': 'true' } }
+        { 'type': 'favorite-changed', 'data': { 'favorite-value': 'false' } }
         ```
 
         **item-started**
 
         Spotify track playing:
         ```json
-        { "type": "item-started",
-          "data": {
-            "play-state": "PLAY_STATE", "repeat-state": "REPEAT_OFF", "shuffle-state": "SHUFFLE_OFF",
-            "contentItem": "<base64-encoded-ContentItem-xml>",
-            "nowPlaying": {
-              "source": "SPOTIFY", "sourceAccount": "SpotifyConnectUserName",
-              "playStatus": "PLAY_STATE", "deviceID": "DEVICE_A",
-              "track": { "text": "Kapitel 20: Abenteuer Afrika - Folge 96" },
-              "trackID": "spotify:track:XXXXXXXXXXXXXXXXXXXXXXXX",
-              "album": { "text": "Folge 96: Abenteuer Afrika" },
-              "artist": { "text": "Die drei !!!" },
-              "art": { "artImageStatus": "IMAGE_PRESENT", "text": "https://example.com/art.jpg" },
-              "streamTypeField": { "text": "TRACK_ONDEMAND" },
-              "time": { "text": "2", "total": "287" },
-              "repeatSetting": { "text": "REPEAT_OFF" }, "shuffleSetting": { "text": "SHUFFLE_OFF" },
-              "contentItem": { "source": "SPOTIFY", "type": "DO_NOT_RESUME", "isPresetable": "false",
-                "location": "/playback/container/XXXXXXXXXXXXXXXXXXXXXXXX",
-                "itemName": { "text": "Folge 96: Abenteuer Afrika" } }
+        { 'type': 'item-started',
+          'data': {
+            'play-state': 'PLAY_STATE', 'repeat-state': 'REPEAT_OFF', 'shuffle-state': 'SHUFFLE_OFF',
+            'contentItem': '<base64-encoded-ContentItem-xml>',
+            'nowPlaying': {
+              'source': 'SPOTIFY', 'sourceAccount': 'SpotifyConnectUserName',
+              'playStatus': 'PLAY_STATE', 'deviceID': 'DEVICE_A',
+              'track': { 'text': 'Kapitel 20: Abenteuer Afrika - Folge 96' },
+              'trackID': 'spotify:track:XXXXXXXXXXXXXXXXXXXXXXXX',
+              'album': { 'text': 'Folge 96: Abenteuer Afrika' },
+              'artist': { 'text': 'Die drei !!!' },
+              'art': { 'artImageStatus': 'IMAGE_PRESENT', 'text': 'https://example.com/art.jpg' },
+              'streamTypeField': { 'text': 'TRACK_ONDEMAND' },
+              'time': { 'text': '2', 'total': '287' },
+              'repeatSetting': { 'text': 'REPEAT_OFF' }, 'shuffleSetting': { 'text': 'SHUFFLE_OFF' },
+              'contentItem': { 'source': 'SPOTIFY', 'type': 'DO_NOT_RESUME', 'isPresetable': 'false',
+                'location': '/playback/container/XXXXXXXXXXXXXXXXXXXXXXXX',
+                'itemName': { 'text': 'Folge 96: Abenteuer Afrika' } }
             }
           }
         }
@@ -1488,22 +1488,22 @@ paths:
 
         Spotify playlist, buffering:
         ```json
-        { "type": "item-started",
-          "data": {
-            "play-state": "BUFFERING_STATE", "repeat-state": "REPEAT_OFF", "shuffle-state": "SHUFFLE_ON",
-            "contentItem": "<base64-encoded-ContentItem-xml>",
-            "nowPlaying": {
-              "source": "SPOTIFY", "sourceAccount": "spotifyUser123",
-              "playStatus": "BUFFERING_STATE", "deviceID": "DEVICE_A",
-              "track": { "text": "Take My Breath" }, "trackID": "spotify:track:XXXXXXXXXXXXXXXXXXXXXXXX",
-              "album": { "text": "Dawn FM" }, "artist": { "text": "The Weeknd" },
-              "art": { "artImageStatus": "IMAGE_PRESENT", "text": "https://example.com/art.jpg" },
-              "streamTypeField": { "text": "TRACK_ONDEMAND" },
-              "time": { "text": "0", "total": "339" },
-              "repeatSetting": { "text": "REPEAT_OFF" }, "shuffleSetting": { "text": "SHUFFLE_ON" },
-              "contentItem": { "source": "SPOTIFY", "type": "tracklisturl", "isPresetable": "true",
-                "location": "/playback/container/XXXXXXXXXXXXXXXXXXXXXXXX",
-                "itemName": { "text": "My Playlist" } }
+        { 'type': 'item-started',
+          'data': {
+            'play-state': 'BUFFERING_STATE', 'repeat-state': 'REPEAT_OFF', 'shuffle-state': 'SHUFFLE_ON',
+            'contentItem': '<base64-encoded-ContentItem-xml>',
+            'nowPlaying': {
+              'source': 'SPOTIFY', 'sourceAccount': 'spotifyUser123',
+              'playStatus': 'BUFFERING_STATE', 'deviceID': 'DEVICE_A',
+              'track': { 'text': 'Take My Breath' }, 'trackID': 'spotify:track:XXXXXXXXXXXXXXXXXXXXXXXX',
+              'album': { 'text': 'Dawn FM' }, 'artist': { 'text': 'The Weeknd' },
+              'art': { 'artImageStatus': 'IMAGE_PRESENT', 'text': 'https://example.com/art.jpg' },
+              'streamTypeField': { 'text': 'TRACK_ONDEMAND' },
+              'time': { 'text': '0', 'total': '339' },
+              'repeatSetting': { 'text': 'REPEAT_OFF' }, 'shuffleSetting': { 'text': 'SHUFFLE_ON' },
+              'contentItem': { 'source': 'SPOTIFY', 'type': 'tracklisturl', 'isPresetable': 'true',
+                'location': '/playback/container/XXXXXXXXXXXXXXXXXXXXXXXX',
+                'itemName': { 'text': 'My Playlist' } }
             }
           }
         }
@@ -1511,22 +1511,22 @@ paths:
 
         Spotify podcast, paused:
         ```json
-        { "type": "item-started",
-          "data": {
-            "play-state": "PAUSE_STATE", "repeat-state": "REPEAT_OFF", "shuffle-state": "SHUFFLE_OFF",
-            "contentItem": "<base64-encoded-ContentItem-xml>",
-            "nowPlaying": {
-              "source": "SPOTIFY", "sourceAccount": "SpotifyConnectUserName",
-              "playStatus": "PAUSE_STATE", "deviceID": "DEVICE_A",
-              "track": { "text": "Episode Title" }, "trackID": "spotify:episode:XXXXXXXXXXXXXXXXXXXXXXXX",
-              "album": { "text": "My Podcast" }, "artist": { "text": "Podcast Author" },
-              "art": { "artImageStatus": "IMAGE_PRESENT", "text": "https://example.com/art.jpg" },
-              "streamTypeField": { "text": "RADIO_STREAMING" },
-              "time": { "text": "118", "total": "2514" },
-              "repeatSetting": { "text": "REPEAT_OFF" }, "shuffleSetting": { "text": "SHUFFLE_OFF" },
-              "contentItem": { "source": "SPOTIFY", "type": "DO_NOT_RESUME", "isPresetable": "false",
-                "location": "/playback/container/XXXXXXXXXXXXXXXXXXXXXXXX",
-                "itemName": { "text": "My Podcast" } }
+        { 'type': 'item-started',
+          'data': {
+            'play-state': 'PAUSE_STATE', 'repeat-state': 'REPEAT_OFF', 'shuffle-state': 'SHUFFLE_OFF',
+            'contentItem': '<base64-encoded-ContentItem-xml>',
+            'nowPlaying': {
+              'source': 'SPOTIFY', 'sourceAccount': 'SpotifyConnectUserName',
+              'playStatus': 'PAUSE_STATE', 'deviceID': 'DEVICE_A',
+              'track': { 'text': 'Episode Title' }, 'trackID': 'spotify:episode:XXXXXXXXXXXXXXXXXXXXXXXX',
+              'album': { 'text': 'My Podcast' }, 'artist': { 'text': 'Podcast Author' },
+              'art': { 'artImageStatus': 'IMAGE_PRESENT', 'text': 'https://example.com/art.jpg' },
+              'streamTypeField': { 'text': 'RADIO_STREAMING' },
+              'time': { 'text': '118', 'total': '2514' },
+              'repeatSetting': { 'text': 'REPEAT_OFF' }, 'shuffleSetting': { 'text': 'SHUFFLE_OFF' },
+              'contentItem': { 'source': 'SPOTIFY', 'type': 'DO_NOT_RESUME', 'isPresetable': 'false',
+                'location': '/playback/container/XXXXXXXXXXXXXXXXXXXXXXXX',
+                'itemName': { 'text': 'My Podcast' } }
             }
           }
         }
@@ -1534,17 +1534,17 @@ paths:
 
         Bluetooth connecting:
         ```json
-        { "type": "item-started",
-          "data": {
-            "play-state": "INVALID_PLAY_STATUS", "repeat-state": "", "shuffle-state": "",
-            "contentItem": "<base64-encoded-ContentItem-xml>",
-            "nowPlaying": {
-              "source": "BLUETOOTH", "sourceAccount": "",
-              "playStatus": "INVALID_PLAY_STATUS", "deviceID": "DEVICE_B",
-              "connectionStatusInfo": { "deviceName": "My Phone", "status": "CONNECTING" },
-              "art": { "artImageStatus": "SHOW_DEFAULT_IMAGE", "text": "" },
-              "contentItem": { "source": "BLUETOOTH", "type": "", "isPresetable": "false",
-                "location": "", "itemName": { "text": "" } }
+        { 'type': 'item-started',
+          'data': {
+            'play-state': 'INVALID_PLAY_STATUS', 'repeat-state': '', 'shuffle-state': '',
+            'contentItem': '<base64-encoded-ContentItem-xml>',
+            'nowPlaying': {
+              'source': 'BLUETOOTH', 'sourceAccount': '',
+              'playStatus': 'INVALID_PLAY_STATUS', 'deviceID': 'DEVICE_B',
+              'connectionStatusInfo': { 'deviceName': 'My Phone', 'status': 'CONNECTING' },
+              'art': { 'artImageStatus': 'SHOW_DEFAULT_IMAGE', 'text': '' },
+              'contentItem': { 'source': 'BLUETOOTH', 'type': '', 'isPresetable': 'false',
+                'location': '', 'itemName': { 'text': '' } }
             }
           }
         }
@@ -1552,16 +1552,16 @@ paths:
 
         Unplayable item (STOP_STATE):
         ```json
-        { "type": "item-started",
-          "data": {
-            "play-state": "STOP_STATE", "repeat-state": "", "shuffle-state": "",
-            "contentItem": "<base64-encoded-ContentItem-xml>",
-            "nowPlaying": {
-              "source": "SPOTIFY", "sourceAccount": "SpotifyConnectUserName",
-              "playStatus": "STOP_STATE", "deviceID": "DEVICE_A",
-              "art": { "artImageStatus": "SHOW_DEFAULT_IMAGE", "text": "" },
-              "contentItem": { "source": "SPOTIFY", "type": "DO_NOT_RESUME", "isPresetable": "false",
-                "location": "Unplayable location string", "itemName": { "text": "" } }
+        { 'type': 'item-started',
+          'data': {
+            'play-state': 'STOP_STATE', 'repeat-state': '', 'shuffle-state': '',
+            'contentItem': '<base64-encoded-ContentItem-xml>',
+            'nowPlaying': {
+              'source': 'SPOTIFY', 'sourceAccount': 'SpotifyConnectUserName',
+              'playStatus': 'STOP_STATE', 'deviceID': 'DEVICE_A',
+              'art': { 'artImageStatus': 'SHOW_DEFAULT_IMAGE', 'text': '' },
+              'contentItem': { 'source': 'SPOTIFY', 'type': 'DO_NOT_RESUME', 'isPresetable': 'false',
+                'location': 'Unplayable location string', 'itemName': { 'text': '' } }
             }
           }
         }
@@ -1569,75 +1569,75 @@ paths:
 
         **language-changed**
         ```json
-        { "type": "language-changed",
-          "data": { "language": "DISPLAY_LANGUAGE_GERMAN" } }
+        { 'type': 'language-changed',
+          'data': { 'language': 'DISPLAY_LANGUAGE_GERMAN' } }
         ```
 
         **like-pressed**
         ```json
-        { "type": "like-pressed", "data": { "buttonId": "THUMBS_UP", "origin": "ir-remote" } }
+        { 'type': 'like-pressed', 'data': { 'buttonId': 'THUMBS_UP', 'origin': 'ir-remote' } }
         ```
 
         **masterdevice-changed**
         ```json
-        { "type": "masterdevice-changed", "data": { "masterDeviceId": "DEVICE_A" } }
+        { 'type': 'masterdevice-changed', 'data': { 'masterDeviceId': 'DEVICE_A' } }
         ```
 
         **pause-pressed**
         ```json
-        { "type": "pause-pressed", "data": { "buttonId": "PAUSE", "origin": "gabbo" } }
+        { 'type': 'pause-pressed', 'data': { 'buttonId': 'PAUSE', 'origin': 'gabbo' } }
         ```
 
         **play-item**
         ```json
-        { "type": "play-item",
-          "data": { "origin": "device", "preset": "none", "contentItem": "<base64-encoded-ContentItem-xml>" } }
+        { 'type': 'play-item',
+          'data': { 'origin': 'device', 'preset': 'none', 'contentItem': '<base64-encoded-ContentItem-xml>' } }
         ```
 
         **play-state-changed**
         ```json
-        { "type": "play-state-changed", "data": { "play-state": "BUFFERING_STATE" } }
-        { "type": "play-state-changed", "data": { "play-state": "PLAY_STATE" } }
-        { "type": "play-state-changed", "data": { "play-state": "PAUSE_STATE" } }
-        { "type": "play-state-changed", "data": { "play-state": "STOP_STATE" } }
-        { "type": "play-state-changed", "data": { "play-state": "INVALID_PLAY_STATUS" } }
+        { 'type': 'play-state-changed', 'data': { 'play-state': 'BUFFERING_STATE' } }
+        { 'type': 'play-state-changed', 'data': { 'play-state': 'PLAY_STATE' } }
+        { 'type': 'play-state-changed', 'data': { 'play-state': 'PAUSE_STATE' } }
+        { 'type': 'play-state-changed', 'data': { 'play-state': 'STOP_STATE' } }
+        { 'type': 'play-state-changed', 'data': { 'play-state': 'INVALID_PLAY_STATUS' } }
         ```
 
         **playpause-pressed**
         ```json
-        { "type": "playpause-pressed",
-          "data": { "buttonId": "PLAY_PAUSE", "origin": "ir-remote" } }
+        { 'type': 'playpause-pressed',
+          'data': { 'buttonId': 'PLAY_PAUSE', 'origin': 'ir-remote' } }
         ```
 
         **power-pressed**
         ```json
-        { "type": "power-pressed", "data": { "buttonId": "POWER", "origin": "console" } }
-        { "type": "power-pressed", "data": { "buttonId": "POWER", "origin": "ir-remote" } }
+        { 'type': 'power-pressed', 'data': { 'buttonId': 'POWER', 'origin': 'console' } }
+        { 'type': 'power-pressed', 'data': { 'buttonId': 'POWER', 'origin': 'ir-remote' } }
         ```
 
         **preset-assigned**
         ```json
-        { "type": "preset-assigned",
-          "data": { "preset": "P1", "origin": "device", "contentItem": "<base64-encoded-ContentItem-xml>" } }
+        { 'type': 'preset-assigned',
+          'data': { 'preset': 'P1', 'origin': 'device', 'contentItem': '<base64-encoded-ContentItem-xml>' } }
         ```
 
         **preset-pressed**
         ```json
-        { "type": "preset-pressed", "data": { "buttonId": "PRESET_1", "origin": "ir-remote" } }
-        { "type": "preset-pressed", "data": { "buttonId": "PRESET_6", "origin": "console" } }
+        { 'type': 'preset-pressed', 'data': { 'buttonId': 'PRESET_1', 'origin': 'ir-remote' } }
+        { 'type': 'preset-pressed', 'data': { 'buttonId': 'PRESET_6', 'origin': 'console' } }
         ```
 
         **presets-changed**
         ```json
-        { "type": "presets-changed",
-          "data": {
-            "presets": [
-              { "id": "P1", "name": "Preset 1 Name", "contentItem": "<base64-encoded-ContentItem-xml>" },
-              { "id": "P2", "name": "Preset 2 Name", "contentItem": "<base64-encoded-ContentItem-xml>" },
-              { "id": "P3", "name": "Preset 3 Name", "contentItem": "<base64-encoded-ContentItem-xml>" },
-              { "id": "P4", "name": "Preset 4 Name", "contentItem": "<base64-encoded-ContentItem-xml>" },
-              { "id": "P5", "name": "Preset 5 Name", "contentItem": "<base64-encoded-ContentItem-xml>" },
-              { "id": "P6", "name": "Preset 6 Name", "contentItem": "<base64-encoded-ContentItem-xml>" }
+        { 'type': 'presets-changed',
+          'data': {
+            'presets': [
+              { 'id': 'P1', 'name': 'Preset 1 Name', 'contentItem': '<base64-encoded-ContentItem-xml>' },
+              { 'id': 'P2', 'name': 'Preset 2 Name', 'contentItem': '<base64-encoded-ContentItem-xml>' },
+              { 'id': 'P3', 'name': 'Preset 3 Name', 'contentItem': '<base64-encoded-ContentItem-xml>' },
+              { 'id': 'P4', 'name': 'Preset 4 Name', 'contentItem': '<base64-encoded-ContentItem-xml>' },
+              { 'id': 'P5', 'name': 'Preset 5 Name', 'contentItem': '<base64-encoded-ContentItem-xml>' },
+              { 'id': 'P6', 'name': 'Preset 6 Name', 'contentItem': '<base64-encoded-ContentItem-xml>' }
             ]
           }
         }
@@ -1645,59 +1645,59 @@ paths:
 
         **shuffle-state-changed**
         ```json
-        { "type": "shuffle-state-changed", "data": { "shuffle-state": "SHUFFLE_ON" } }
-        { "type": "shuffle-state-changed", "data": { "shuffle-state": "SHUFFLE_OFF" } }
+        { 'type': 'shuffle-state-changed', 'data': { 'shuffle-state': 'SHUFFLE_ON' } }
+        { 'type': 'shuffle-state-changed', 'data': { 'shuffle-state': 'SHUFFLE_OFF' } }
         ```
 
         **skip-forward-pressed**
         ```json
-        { "type": "skip-forward-pressed", "data": { "buttonId": "NEXT_TRACK", "origin": "ir-remote" } }
+        { 'type': 'skip-forward-pressed', 'data': { 'buttonId': 'NEXT_TRACK', 'origin': 'ir-remote' } }
         ```
 
         **source-state-changed**
         ```json
-        { "type": "source-state-changed", "data": { "source-state": "SPOTIFY" } }
-        { "type": "source-state-changed", "data": { "source-state": "TUNEIN" } }
-        { "type": "source-state-changed", "data": { "source-state": "BLUETOOTH" } }
-        { "type": "source-state-changed", "data": { "source-state": "AUX" } }
-        { "type": "source-state-changed", "data": { "source-state": "INVALID_SOURCE" } }
+        { 'type': 'source-state-changed', 'data': { 'source-state': 'SPOTIFY' } }
+        { 'type': 'source-state-changed', 'data': { 'source-state': 'TUNEIN' } }
+        { 'type': 'source-state-changed', 'data': { 'source-state': 'BLUETOOTH' } }
+        { 'type': 'source-state-changed', 'data': { 'source-state': 'AUX' } }
+        { 'type': 'source-state-changed', 'data': { 'source-state': 'INVALID_SOURCE' } }
         ```
 
         **stop-pressed**
         ```json
-        { "type": "stop-pressed", "data": { "buttonId": "STOP", "origin": "gabbo" } }
+        { 'type': 'stop-pressed', 'data': { 'buttonId': 'STOP', 'origin': 'gabbo' } }
         ```
 
         **system-state-changed**
         ```json
-        { "type": "system-state-changed",
-          "data": { "system-state": "Standby",
-            "nowPlaying": { "source": "INVALID_SOURCE", "contentItem": { "source": "INVALID_SOURCE" } } } }
-        { "type": "system-state-changed",
-          "data": { "system-state": "On",
-            "nowPlaying": { "source": "SPOTIFY", "sourceAccount": "spotifyUser123",
-              "playStatus": "BUFFERING_STATE", "deviceID": "DEVICE_A",
-              "contentItem": { "source": "INVALID_SOURCE" } } } }
+        { 'type': 'system-state-changed',
+          'data': { 'system-state': 'Standby',
+            'nowPlaying': { 'source': 'INVALID_SOURCE', 'contentItem': { 'source': 'INVALID_SOURCE' } } } }
+        { 'type': 'system-state-changed',
+          'data': { 'system-state': 'On',
+            'nowPlaying': { 'source': 'SPOTIFY', 'sourceAccount': 'spotifyUser123',
+              'playStatus': 'BUFFERING_STATE', 'deviceID': 'DEVICE_A',
+              'contentItem': { 'source': 'INVALID_SOURCE' } } } }
         ```
 
         **volume-change**
         ```json
-        { "type": "volume-change",
-          "data": { "startTime": "2026-02-22T19:02:56.852408+00:00", "volume-change": [30] } }
-        { "type": "volume-change",
-          "data": { "startTime": "2026-03-12T19:22:18.861558+00:00", "volume-change": [33, 32, 31, 30, 29, 28, 27, 26, 25, 24] } }
+        { 'type': 'volume-change',
+          'data': { 'startTime': '2026-02-22T19:02:56.852408+00:00', 'volume-change': [30] } }
+        { 'type': 'volume-change',
+          'data': { 'startTime': '2026-03-12T19:22:18.861558+00:00', 'volume-change': [33, 32, 31, 30, 29, 28, 27, 26, 25, 24] } }
         ```
 
         **zone-state-changed**
         ```json
-        { "type": "zone-state-changed",
-          "data": { "masterDeviceId": "DEVICE_A",
-            "roles": [
-              { "deviceId": "DEVICE_A", "role": "MASTER" },
-              { "deviceId": "DEVICE_B", "role": "SLAVE" },
-              { "deviceId": "DEVICE_C", "role": "SLAVE" }
+        { 'type': 'zone-state-changed',
+          'data': { 'masterDeviceId': 'DEVICE_A',
+            'roles': [
+              { 'deviceId': 'DEVICE_A', 'role': 'MASTER' },
+              { 'deviceId': 'DEVICE_B', 'role': 'SLAVE' },
+              { 'deviceId': 'DEVICE_C', 'role': 'SLAVE' }
             ] } }
-        { "type": "zone-state-changed", "data": { "masterDeviceId": "", "roles": [] } }
+        { 'type': 'zone-state-changed', 'data': { 'masterDeviceId': '', 'roles': [] } }
         ```
 
       operationId: submitDeviceEvents
@@ -1712,21 +1712,21 @@ paths:
           description: Device identifier
           schema:
             type: string
-            example: "587A628A4042"
+            example: '587A628A4042'
       requestBody:
         required: true
         content:
           text/json:
             schema:
-              $ref: "#/components/schemas/DeviceEventsRequest"
+              $ref: '#/components/schemas/DeviceEventsRequest'
       responses:
-        "200":
+        '200':
           description: Successfully received device events
-        "400":
+        '400':
           description: Bad request - Invalid request body
-        "401":
+        '401':
           description: Unauthorized - Invalid or missing Bearer token
-        "500":
+        '500':
           description: Server Error
 
   /bmx/registry/v1/services:
@@ -1741,7 +1741,7 @@ paths:
       security:
         - BearerAuth: []
       responses:
-        "200":
+        '200':
           description: Successful response with list of BMX services
           headers:
             Content-Type:
@@ -1751,10 +1751,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BmxServicesResponse"
-        "401":
+                $ref: '#/components/schemas/BmxServicesResponse'
+        '401':
           description: Unauthorized - Invalid or missing Bearer token
-        "500":
+        '500':
           description: Internal server error
 
   /bmx/registry/v1/servicesAvailability:
@@ -1768,7 +1768,7 @@ paths:
       security:
         - BearerAuth: []
       responses:
-        "200":
+        '200':
           description: Successful response with services availability
           headers:
             Content-Type:
@@ -1782,7 +1782,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BmxServicesAvailabilityResponse"
+                $ref: '#/components/schemas/BmxServicesAvailabilityResponse'
               example:
                 services:
                   - canAdd: true
@@ -1791,9 +1791,9 @@ paths:
                   - canAdd: false
                     canRemove: true
                     service: SIRIUSXM_EVEREST
-        "401":
+        '401':
           description: Unauthorized - Invalid or missing Bearer token
-        "500":
+        '500':
           description: Internal server error
 
   /bmx/tunein/v1/playback/station/{stationId}:
@@ -1815,9 +1815,9 @@ paths:
           description: TuneIn station identifier (e.g., 's80044')
           schema:
             type: string
-            example: "s80044"
+            example: 's80044'
       responses:
-        "200":
+        '200':
           description: Successful response with station playback information
           headers:
             Content-Type:
@@ -1827,12 +1827,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BmxPlaybackResponse"
-        "401":
+                $ref: '#/components/schemas/BmxPlaybackResponse'
+        '401':
           description: Unauthorized - Invalid or missing Bearer token
-        "404":
+        '404':
           description: Station not found
-        "500":
+        '500':
           description: Internal server error
 
   /core02/svc-bmx-adapter-orion/prod/orion/station:
@@ -1853,12 +1853,12 @@ paths:
           required: true
           description: |
             Base64-encoded JSON containing stream information.
-            JSON structure: {"streamUrl": "...", "imageUrl": "...", "name": "..."}
+            JSON structure: {'streamUrl': '...', 'imageUrl': '...', 'name': '...'}
           schema:
             type: string
-            example: "eyJzdHJlYW1VcmwiOiJodHRwOi8vZXhhbXBsZS5jb20vc3RyZWFtIiwiaW1hZ2VVcmwiOiJodHRwOi8vZXhhbXBsZS5jb20vaW1nLnBuZyIsIm5hbWUiOiJUZXN0IFN0YXRpb24ifQ=="
+            example: 'eyJzdHJlYW1VcmwiOiJodHRwOi8vZXhhbXBsZS5jb20vc3RyZWFtIiwiaW1hZ2VVcmwiOiJodHRwOi8vZXhhbXBsZS5jb20vaW1nLnBuZyIsIm5hbWUiOiJUZXN0IFN0YXRpb24ifQ=='
       responses:
-        "200":
+        '200':
           description: Successful response with custom stream playback information
           headers:
             Content-Type:
@@ -1868,12 +1868,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BmxPlaybackResponse"
-        "400":
+                $ref: '#/components/schemas/BmxPlaybackResponse'
+        '400':
           description: Bad request - Invalid or missing data parameter
-        "401":
+        '401':
           description: Unauthorized - Invalid or missing Bearer token
-        "500":
+        '500':
           description: Internal server error
 
   /bmx/tunein/v1/token:
@@ -1892,12 +1892,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/BmxTokenRequest"
+              $ref: '#/components/schemas/BmxTokenRequest'
             example:
-              grant_type: "refresh_token"
-              refresh_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+              grant_type: 'refresh_token'
+              refresh_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
       responses:
-        "200":
+        '200':
           description: Token refreshed successfully
           headers:
             Content-Type:
@@ -1907,12 +1907,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BmxTokenResponse"
-        "400":
+                $ref: '#/components/schemas/BmxTokenResponse'
+        '400':
           description: Bad request - Invalid request body
-        "401":
+        '401':
           description: Unauthorized - Invalid or expired refresh token
-        "500":
+        '500':
           description: Internal server error
 
   /bmx/tunein/v1/report:
@@ -1947,21 +1947,21 @@ paths:
           required: false
           schema:
             type: string
-            example: "liveRadio"
+            example: 'liveRadio'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/BmxReportRequest"
+              $ref: '#/components/schemas/BmxReportRequest'
             example:
-              timeStamp: "2025-10-31T05:38:55+0000"
-              eventType: "START"
-              reason: "USER_SELECT_PLAYABLE"
+              timeStamp: '2025-10-31T05:38:55+0000'
+              eventType: 'START'
+              reason: 'USER_SELECT_PLAYABLE'
               timeIntoTrack: 0
               playbackDelay: 6664
       responses:
-        "200":
+        '200':
           description: Analytics event received
           headers:
             Content-Type:
@@ -1971,12 +1971,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BmxReportResponse"
-        "400":
+                $ref: '#/components/schemas/BmxReportResponse'
+        '400':
           description: Bad request - Invalid request body
-        "401":
+        '401':
           description: Unauthorized - Invalid or missing Bearer token
-        "500":
+        '500':
           description: Internal server error
 
 components:
@@ -1995,8 +1995,8 @@ components:
       description: Account identifier
       schema:
         type: string
-        pattern: "^[0-9a-zA-Z-]+$"
-        example: "6921042"
+        pattern: '^[0-9a-zA-Z-]+$'
+        example: '6921042'
 
     deviceId:
       name: deviceId
@@ -2005,7 +2005,7 @@ components:
       description: Device identifier
       schema:
         type: string
-        example: "587A628A4042"
+        example: '587A628A4042'
 
   schemas:
     SourceProvidersResponse:
@@ -2017,7 +2017,7 @@ components:
         sourceprovider:
           type: array
           items:
-            $ref: "#/components/schemas/SourceProvider"
+            $ref: '#/components/schemas/SourceProvider'
           xml:
             wrapped: false
 
@@ -2042,7 +2042,7 @@ components:
           type: string
           format: date-time
           description: ISO 8601 timestamp when the provider was created
-          example: "2012-09-19T12:43:00.000+00:00"
+          example: '2012-09-19T12:43:00.000+00:00'
         name:
           type: string
           description: Name/type of the streaming source provider
@@ -2051,7 +2051,7 @@ components:
           type: string
           format: date-time
           description: ISO 8601 timestamp when the provider was last updated
-          example: "2012-09-19T12:43:00.000+00:00"
+          example: '2012-09-19T12:43:00.000+00:00'
 
     RecentItemRequest:
       type: object
@@ -2069,23 +2069,23 @@ components:
           type: string
           format: date-time
           description: ISO 8601 timestamp when the item was last played
-          example: "2025-11-01T17:32:59+00:00"
+          example: '2025-11-01T17:32:59+00:00'
         sourceid:
           type: string
           description: Identifier of the source
-          example: "19989313"
+          example: '19989313'
         name:
           type: string
           description: Name of the content item
-          example: "Radio TEDDY"
+          example: 'Radio TEDDY'
         location:
           type: string
           description: Location/path of the content item
-          example: "/v1/playback/station/s80044"
+          example: '/v1/playback/station/s80044'
         contentItemType:
           type: string
           description: Type of the content item
-          example: "stationurl"
+          example: 'stationurl'
 
     RecentItemResponse:
       type: object
@@ -2108,40 +2108,40 @@ components:
           description: Unique identifier for the recent item
           xml:
             attribute: true
-          example: "2244536335"
+          example: '2244536335'
         contentItemType:
           type: string
           description: Type of the content item
-          example: "stationurl"
+          example: 'stationurl'
         createdOn:
           type: string
           format: date-time
           description: ISO 8601 timestamp when the item was created
-          example: "2018-11-27T18:20:01.000+00:00"
+          example: '2018-11-27T18:20:01.000+00:00'
         lastplayedat:
           type: string
           format: date-time
           description: ISO 8601 timestamp when the item was last played
-          example: "2025-11-01T17:32:59.000+00:00"
+          example: '2025-11-01T17:32:59.000+00:00'
         location:
           type: string
           description: Location/path of the content item
-          example: "/v1/playback/station/s80044"
+          example: '/v1/playback/station/s80044'
         name:
           type: string
           description: Name of the content item
-          example: "Radio TEDDY"
+          example: 'Radio TEDDY'
         source:
-          $ref: "#/components/schemas/Source"
+          $ref: '#/components/schemas/Source'
         sourceid:
           type: string
           description: Identifier of the source
-          example: "19989313"
+          example: '19989313'
         updatedOn:
           type: string
           format: date-time
           description: ISO 8601 timestamp when the item was last updated
-          example: "2025-11-01T17:33:00.574+00:00"
+          example: '2025-11-01T17:33:00.574+00:00'
 
     Source:
       type: object
@@ -2165,32 +2165,32 @@ components:
           description: Unique identifier for the source
           xml:
             attribute: true
-          example: "19989313"
+          example: '19989313'
         type:
           type: string
           description: Type of the source
           xml:
             attribute: true
-          example: "Audio"
+          example: 'Audio'
         createdOn:
           type: string
           format: date-time
           description: ISO 8601 timestamp when the source was created
-          example: "2018-08-11T08:55:41.000+00:00"
+          example: '2018-08-11T08:55:41.000+00:00'
         credential:
-          $ref: "#/components/schemas/Credential"
+          $ref: '#/components/schemas/Credential'
         name:
           type: string
           description: Name of the source
-          example: ""
+          example: ''
         sourceproviderid:
           type: string
           description: Identifier of the source provider
-          example: "25"
+          example: '25'
         sourcename:
           type: string
           description: Name of the source
-          example: ""
+          example: ''
         sourceSettings:
           type: object
           description: Source settings (empty object)
@@ -2200,11 +2200,11 @@ components:
           type: string
           format: date-time
           description: ISO 8601 timestamp when the source was last updated
-          example: "2019-07-20T17:48:31.000+00:00"
+          example: '2019-07-20T17:48:31.000+00:00'
         username:
           type: string
           description: Username associated with the source
-          example: ""
+          example: ''
 
     Credential:
       type: object
@@ -2220,12 +2220,12 @@ components:
           description: Type of credential
           xml:
             attribute: true
-          example: "token"
+          example: 'token'
         value:
           type: string
           description: Credential value/token
           x-isXmlText: true
-          example: "eyDu="
+          example: 'eyDu='
 
     OAuthTokenRequest:
       type: object
@@ -2237,19 +2237,19 @@ components:
         code:
           type: string
           description: Authorization code (empty for refresh token flow)
-          example: ""
+          example: ''
         grant_type:
           type: string
           description: OAuth grant type
-          example: "refresh_token"
+          example: 'refresh_token'
         redirect_uri:
           type: string
           description: Redirect URI (empty for refresh token flow)
-          example: ""
+          example: ''
         refresh_token:
           type: string
           description: Refresh token to exchange for new access token
-          example: "AQC-x0O-W2aVur-OIA"
+          example: 'AQC-x0O-W2aVur-OIA'
 
     OAuthTokenResponse:
       type: object
@@ -2262,11 +2262,11 @@ components:
         access_token:
           type: string
           description: Access token for API authorization
-          example: "123fooAccessExampleToken"
+          example: '123fooAccessExampleToken'
         token_type:
           type: string
           description: Type of the token
-          example: "Bearer"
+          example: 'Bearer'
         expires_in:
           type: integer
           description: Token expiration time in seconds
@@ -2274,7 +2274,7 @@ components:
         scope:
           type: string
           description: Space-separated list of granted scopes
-          example: "playlist-read-private playlist-read-collaborative streaming user-library-read user-library-modify playlist-modify-private playlist-modify-public user-read-email user-read-private user-top-read"
+          example: 'playlist-read-private playlist-read-collaborative streaming user-library-read user-library-modify playlist-modify-private playlist-modify-public user-read-email user-read-private user-top-read'
 
     ProviderSetting:
       type: object
@@ -2293,7 +2293,7 @@ components:
           description: Name of the provider setting key
           xml:
             attribute: true
-          example: "exampleKey"
+          example: 'exampleKey'
         value:
           type: boolean
           description: Value of the provider setting
@@ -2316,7 +2316,7 @@ components:
         providerSetting:
           type: array
           items:
-            $ref: "#/components/schemas/ProviderSetting"
+            $ref: '#/components/schemas/ProviderSetting'
           xml:
             wrapped: false
 
@@ -2338,25 +2338,25 @@ components:
           description: Account identifier
           xml:
             attribute: true
-          example: "6921042"
+          example: '6921042'
         accountStatus:
           type: string
           description: Status of the account
-          example: "CHANGE_PASSWORD"
+          example: 'CHANGE_PASSWORD'
         devices:
-          $ref: "#/components/schemas/DevicesContainer"
+          $ref: '#/components/schemas/DevicesContainer'
         mode:
           type: string
           description: Account mode
-          example: "global"
+          example: 'global'
         preferredLanguage:
           type: string
           description: Preferred language code
-          example: "de"
+          example: 'de'
         sources:
-          $ref: "#/components/schemas/SourcesContainer"
+          $ref: '#/components/schemas/SourcesContainer'
         providerSettings:
-          $ref: "#/components/schemas/ProviderSettingsContainer"
+          $ref: '#/components/schemas/ProviderSettingsContainer'
 
     DevicesContainer:
       type: object
@@ -2367,7 +2367,7 @@ components:
         device:
           type: array
           items:
-            $ref: "#/components/schemas/Device"
+            $ref: '#/components/schemas/Device'
           xml:
             wrapped: false
 
@@ -2394,43 +2394,43 @@ components:
           description: Device identifier
           xml:
             attribute: true
-          example: "123980WER"
+          example: '123980WER'
         attachedProduct:
-          $ref: "#/components/schemas/AttachedProduct"
+          $ref: '#/components/schemas/AttachedProduct'
         createdOn:
           type: string
           format: date-time
           description: ISO 8601 timestamp when the device was created
-          example: "2018-08-11T08:55:25.000+00:00"
+          example: '2018-08-11T08:55:25.000+00:00'
         margeAccountId:
           type: string
-          description: "The account ID this device is paired with, or UN_PAIRED"
-          example: "12345-abcde"
+          description: 'The account ID this device is paired with, or UN_PAIRED'
+          example: '12345-abcde'
         firmwareVersion:
           type: string
           description: Firmware version of the device
-          example: "27.0.6.46330.5043500 epdbuild.trunk.hepdswbld04.2022-08-04T11:20:29"
+          example: '27.0.6.46330.5043500 epdbuild.trunk.hepdswbld04.2022-08-04T11:20:29'
         ipaddress:
           type: string
           description: IP address of the device
-          example: "192.168.178.2"
+          example: '192.168.178.2'
         name:
           type: string
           description: Name of the device
-          example: "Foobar"
+          example: 'Foobar'
         presets:
-          $ref: "#/components/schemas/PresetsContainer"
+          $ref: '#/components/schemas/PresetsContainer'
         recents:
-          $ref: "#/components/schemas/RecentsContainer"
+          $ref: '#/components/schemas/RecentsContainer'
         serialNumber:
           type: string
           description: Serial number of the device
-          example: "PUP43434234"
+          example: 'PUP43434234'
         updatedOn:
           type: string
           format: date-time
           description: ISO 8601 timestamp when the device was last updated
-          example: "2025-09-06T08:25:49.000+00:00"
+          example: '2025-09-06T08:25:49.000+00:00'
 
     AttachedProduct:
       type: object
@@ -2448,7 +2448,7 @@ components:
           description: Product code
           xml:
             attribute: true
-          example: "SoundTouch 10 sm2"
+          example: 'SoundTouch 10 sm2'
         components:
           type: object
           description: Components (empty object)
@@ -2457,11 +2457,11 @@ components:
         productlabel:
           type: string
           description: Product label
-          example: "soundtouch_10"
+          example: 'soundtouch_10'
         serialnumber:
           type: string
           description: Serial number of the product
-          example: "123SERIA1"
+          example: '123SERIA1'
 
     PresetsContainer:
       type: object
@@ -2472,7 +2472,7 @@ components:
         preset:
           type: array
           items:
-            $ref: "#/components/schemas/Preset"
+            $ref: '#/components/schemas/Preset'
           xml:
             wrapped: false
 
@@ -2501,34 +2501,34 @@ components:
         containerArt:
           type: string
           description: URL to the container art
-          example: "https://example.org/s80044q.png"
+          example: 'https://example.org/s80044q.png'
         contentItemType:
           type: string
           description: Type of content item
-          example: "stationurl"
+          example: 'stationurl'
         createdOn:
           type: string
           format: date-time
           description: ISO 8601 timestamp when the preset was created
-          example: "2018-11-26T18:40:45.000+00:00"
+          example: '2018-11-26T18:40:45.000+00:00'
         location:
           type: string
           description: Location/path of the content
-          example: "/v1/playback/station/s80044"
+          example: '/v1/playback/station/s80044'
         name:
           type: string
           description: Name of the preset
-          example: "Radio Foobar"
+          example: 'Radio Foobar'
         source:
-          $ref: "#/components/schemas/Source"
+          $ref: '#/components/schemas/Source'
         updatedOn:
           type: string
           format: date-time
           description: ISO 8601 timestamp when the preset was last updated
-          example: "2018-11-26T18:40:45.000+00:00"
+          example: '2018-11-26T18:40:45.000+00:00'
         username:
           type: string
-          example: "Radio Foobar"
+          example: 'Radio Foobar'
 
     PresetUpdateRequest:
       type: object
@@ -2553,27 +2553,27 @@ components:
         sourceid:
           type: string
           description: Identifier of the source
-          example: "19989621"
+          example: '19989621'
         name:
           type: string
           description: Name of the preset
-          example: "Radio Mix"
+          example: 'Radio Mix'
         username:
           type: string
           description: Username associated with the preset
-          example: "Radio Mix"
+          example: 'Radio Mix'
         location:
           type: string
           description: Location/path of the content
-          example: "/playback/container/c3BvdGlmeTpwbGF5bGlzdDoyM1NNZHlPSEE2S2t6SG9QT0o1S1E5"
+          example: '/playback/container/c3BvdGlmeTpwbGF5bGlzdDoyM1NNZHlPSEE2S2t6SG9QT0o1S1E5'
         contentItemType:
           type: string
           description: Type of content item
-          example: "tracklisturl"
+          example: 'tracklisturl'
         containerArt:
           type: string
           description: URL to the container art
-          example: "https://image-cdn-ak.spotifycdn.com/image/ab67706c0000da84993ee084406c4089ad8f4b2a"
+          example: 'https://image-cdn-ak.spotifycdn.com/image/ab67706c0000da84993ee084406c4089ad8f4b2a'
 
     PresetUpdateResponse:
       type: object
@@ -2600,35 +2600,35 @@ components:
         containerArt:
           type: string
           description: URL to the container art
-          example: "https://image-cdn-ak.spotifycdn.com/image/ab67706c0000da84993ee084406c4089ad8f4b2a"
+          example: 'https://image-cdn-ak.spotifycdn.com/image/ab67706c0000da84993ee084406c4089ad8f4b2a'
         contentItemType:
           type: string
           description: Type of content item
-          example: "tracklisturl"
+          example: 'tracklisturl'
         createdOn:
           type: string
           format: date-time
           description: ISO 8601 timestamp when the preset was created
-          example: "2018-11-14T18:27:39.000+00:00"
+          example: '2018-11-14T18:27:39.000+00:00'
         location:
           type: string
           description: Location/path of the content
-          example: "/playback/container/c3BvdGlmeTpwbGF5bGlzdDoyM1NNZHlPSEE2S2t6SG9QT0o1S1E5"
+          example: '/playback/container/c3BvdGlmeTpwbGF5bGlzdDoyM1NNZHlPSEE2S2t6SG9QT0o1S1E5'
         name:
           type: string
           description: Name of the preset
-          example: "Radio Mix"
+          example: 'Radio Mix'
         source:
-          $ref: "#/components/schemas/Source"
+          $ref: '#/components/schemas/Source'
         updatedOn:
           type: string
           format: date-time
           description: ISO 8601 timestamp when the preset was last updated
-          example: "2025-12-28T16:38:41.000+00:00"
+          example: '2025-12-28T16:38:41.000+00:00'
         username:
           type: string
           description: Username associated with the preset
-          example: "Radio Mix"
+          example: 'Radio Mix'
 
     RecentsContainer:
       type: object
@@ -2639,7 +2639,7 @@ components:
         recent:
           type: array
           items:
-            $ref: "#/components/schemas/RecentItem"
+            $ref: '#/components/schemas/RecentItem'
           xml:
             wrapped: false
 
@@ -2664,40 +2664,40 @@ components:
           description: Unique identifier for the recent item
           xml:
             attribute: true
-          example: "123"
+          example: '123'
         contentItemType:
           type: string
           description: Type of content item
-          example: "tracklisturl"
+          example: 'tracklisturl'
         createdOn:
           type: string
           format: date-time
           description: ISO 8601 timestamp when the item was created
-          example: "2025-11-09T11:40:37.000+00:00"
+          example: '2025-11-09T11:40:37.000+00:00'
         lastplayedat:
           type: string
           format: date-time
           description: ISO 8601 timestamp when the item was last played
-          example: "2025-11-09T19:42:09.000+00:00"
+          example: '2025-11-09T19:42:09.000+00:00'
         location:
           type: string
           description: Location/path of the content
-          example: "/playback/container/35546f3"
+          example: '/playback/container/35546f3'
         name:
           type: string
           description: Name of the recent item
-          example: "A Name"
+          example: 'A Name'
         source:
-          $ref: "#/components/schemas/Source"
+          $ref: '#/components/schemas/Source'
         sourceid:
           type: string
           description: Identifier of the source
-          example: "19989643"
+          example: '19989643'
         updatedOn:
           type: string
           format: date-time
           description: ISO 8601 timestamp when the item was last updated
-          example: "2025-11-09T19:42:11.000+00:00"
+          example: '2025-11-09T19:42:11.000+00:00'
 
     SourcesContainer:
       type: object
@@ -2708,7 +2708,7 @@ components:
         source:
           type: array
           items:
-            $ref: "#/components/schemas/Source"
+            $ref: '#/components/schemas/Source'
           xml:
             wrapped: false
 
@@ -2723,17 +2723,17 @@ components:
           description: Unique group identifier
           xml:
             attribute: true
-          example: "1225842"
+          example: '1225842'
         masterDeviceId:
           type: string
           description: Device ID of the master device in the group
-          example: "587A628A4042"
+          example: '587A628A4042'
         name:
           type: string
           description: Name of the group
-          example: "Living Room Stereo"
+          example: 'Living Room Stereo'
         roles:
-          $ref: "#/components/schemas/GroupRoles"
+          $ref: '#/components/schemas/GroupRoles'
 
     GroupRequest:
       type: object
@@ -2748,13 +2748,13 @@ components:
         masterDeviceId:
           type: string
           description: Device ID of the master device in the group
-          example: "587A628A4042"
+          example: '587A628A4042'
         name:
           type: string
           description: Name of the group
-          example: "Living Room Stereo"
+          example: 'Living Room Stereo'
         roles:
-          $ref: "#/components/schemas/GroupRoles"
+          $ref: '#/components/schemas/GroupRoles'
 
     GroupUpdateRequest:
       type: object
@@ -2768,11 +2768,11 @@ components:
         masterDeviceId:
           type: string
           description: Device ID of master (must be LEFT or RIGHT device in the group)
-          example: "44EAD8A18888"
+          example: '44EAD8A18888'
         name:
           type: string
           description: Group name
-          example: "Updated Stereo"
+          example: 'Updated Stereo'
 
     GroupRoles:
       type: object
@@ -2783,7 +2783,7 @@ components:
         groupRole:
           type: array
           items:
-            $ref: "#/components/schemas/GroupRole"
+            $ref: '#/components/schemas/GroupRole'
           xml:
             wrapped: false
 
@@ -2799,12 +2799,12 @@ components:
         deviceId:
           type: string
           description: Device ID
-          example: "587A628A4042"
+          example: '587A628A4042'
         role:
           type: string
           description: Role of the device in the group
           enum: [LEFT, RIGHT]
-          example: "LEFT"
+          example: 'LEFT'
 
     PowerOnRequest:
       type: object
@@ -2813,9 +2813,9 @@ components:
         name: device-data
       properties:
         device:
-          $ref: "#/components/schemas/PowerOnDevice"
+          $ref: '#/components/schemas/PowerOnDevice'
         diagnostic-data:
-          $ref: "#/components/schemas/DiagnosticData"
+          $ref: '#/components/schemas/DiagnosticData'
 
     PowerOnProduct:
       type: object
@@ -2828,19 +2828,19 @@ components:
           description: Product code identifier
           xml:
             attribute: true
-          example: "SoundTouch 10 sm2"
+          example: 'SoundTouch 10 sm2'
         type:
           type: string
           description: Product type identifier
           xml:
             attribute: true
-          example: "5"
+          example: '5'
         serialnumber:
           type: string
           description: Product serial number
-          example: "069123456789010AE"
+          example: '069123456789010AE'
         components:
-          $ref: "#/components/schemas/PowerOnComponents"
+          $ref: '#/components/schemas/PowerOnComponents'
 
     PowerOnComponents:
       type: object
@@ -2852,7 +2852,7 @@ components:
           type: array
           description: List of product components
           items:
-            $ref: "#/components/schemas/PowerOnComponent"
+            $ref: '#/components/schemas/PowerOnComponent'
           xml:
             name: component
             wrapped: false
@@ -2868,17 +2868,17 @@ components:
           description: Component type identifier
           xml:
             attribute: true
-          example: ""
+          example: ''
         serialnumber:
           type: string
           description: Component serial number
-          example: "n/a"
+          example: 'n/a'
         firmware-version:
           type: string
           description: Component firmware version
           xml:
             name: firmware-version
-          example: "1.8.1.12410"
+          example: '1.8.1.12410'
 
     PowerOnDevice:
       type: object
@@ -2891,19 +2891,19 @@ components:
           description: Device identifier
           xml:
             attribute: true
-          example: "587A628A4042"
+          example: '587A628A4042'
         serialnumber:
           type: string
           description: Device serial number
-          example: "P123456789101123456789"
+          example: 'P123456789101123456789'
         firmware-version:
           type: string
           description: Firmware version string
           xml:
             name: firmware-version
-          example: "27.0.6.46330.5043500 epdbuild.trunk.hepdswbld04.2022-08-04T11:20:29"
+          example: '27.0.6.46330.5043500 epdbuild.trunk.hepdswbld04.2022-08-04T11:20:29'
         product:
-          $ref: "#/components/schemas/PowerOnProduct"
+          $ref: '#/components/schemas/PowerOnProduct'
 
     MacAddresses:
       type: object
@@ -2916,7 +2916,7 @@ components:
           description: List of MAC addresses
           items:
             type: string
-            example: "587A628A4042"
+            example: '587A628A4042'
           xml:
             name: macaddress
             wrapped: false
@@ -2930,27 +2930,27 @@ components:
         rssi:
           type: string
           description: Signal strength indicator
-          example: "Good"
+          example: 'Good'
         gateway-ip-address:
           type: string
           description: Gateway IP address
           xml:
             name: gateway-ip-address
-          example: "192.168.178.1"
+          example: '192.168.178.1'
         macaddresses:
-          $ref: "#/components/schemas/MacAddresses"
+          $ref: '#/components/schemas/MacAddresses'
         ip-address:
           type: string
           description: Device IP address
           xml:
             name: ip-address
-          example: "192.168.178.50"
+          example: '192.168.178.50'
         network-connection-type:
           type: string
           description: Type of network connection
           xml:
             name: network-connection-type
-          example: "Wireless"
+          example: 'Wireless'
 
     NetworkLandscape:
       type: object
@@ -2971,9 +2971,9 @@ components:
         name: diagnostic-data
       properties:
         device-landscape:
-          $ref: "#/components/schemas/DeviceLandscape"
+          $ref: '#/components/schemas/DeviceLandscape'
         network-landscape:
-          $ref: "#/components/schemas/NetworkLandscape"
+          $ref: '#/components/schemas/NetworkLandscape'
 
     ErrorResponse:
       type: object
@@ -2984,13 +2984,13 @@ components:
         message:
           type: string
           description: Error message
-          example: "Server Error: java.lang.RuntimeException: Failed : HTTP error code : 403"
+          example: 'Server Error: java.lang.RuntimeException: Failed : HTTP error code : 403'
         status-code:
           type: string
           description: Status code
           xml:
             name: status-code
-          example: "500"
+          example: '500'
 
     SoftwareUpdateResponse:
       type: object
@@ -3001,7 +3001,7 @@ components:
         softwareUpdateLocation:
           type: string
           description: Location URL for software update (empty if no update available)
-          example: ""
+          example: ''
 
     DeviceUpdateRequest:
       type: object
@@ -3018,15 +3018,15 @@ components:
           description: Device identifier
           xml:
             attribute: true
-          example: "587A628A4042"
+          example: '587A628A4042'
         name:
           type: string
           description: Device name
-          example: "Test Device"
+          example: 'Test Device'
         macaddress:
           type: string
           description: MAC address of the device
-          example: "587A628A4042"
+          example: '587A628A4042'
 
     DeviceUpdateResponse:
       type: object
@@ -3045,25 +3045,25 @@ components:
           description: Device identifier
           xml:
             attribute: true
-          example: "587A628A4042"
+          example: '587A628A4042'
         createdOn:
           type: string
           format: date-time
           description: ISO 8601 timestamp when device was first seen
-          example: "2018-08-11T08:55:25.000+00:00"
+          example: '2018-08-11T08:55:25.000+00:00'
         ipaddress:
           type: string
           description: Device IP address
-          example: "192.168.178.33"
+          example: '192.168.178.33'
         name:
           type: string
           description: Device name
-          example: "Test Device"
+          example: 'Test Device'
         updatedOn:
           type: string
           format: date-time
           description: ISO 8601 timestamp when device was last updated
-          example: "2026-01-02T11:12:09.074+00:00"
+          example: '2026-01-02T11:12:09.074+00:00'
 
     CustomerSupportRequest:
       type: object
@@ -3072,9 +3072,9 @@ components:
         name: device-data
       properties:
         device:
-          $ref: "#/components/schemas/PowerOnDevice"
+          $ref: '#/components/schemas/PowerOnDevice'
         diagnostic-data:
-          $ref: "#/components/schemas/DiagnosticData"
+          $ref: '#/components/schemas/DiagnosticData'
 
     DeviceEventsRequest:
       type: object
@@ -3084,9 +3084,9 @@ components:
         - payload
       properties:
         envelope:
-          $ref: "#/components/schemas/EventEnvelope"
+          $ref: '#/components/schemas/EventEnvelope'
         payload:
-          $ref: "#/components/schemas/EventPayload"
+          $ref: '#/components/schemas/EventPayload'
 
     EventEnvelope:
       type: object
@@ -3106,24 +3106,24 @@ components:
         payloadProtocolVersion:
           type: string
           description: Payload protocol version
-          example: "3.1"
+          example: '3.1'
         payloadType:
           type: string
           description: Type of payload
-          example: "scmudc"
+          example: 'scmudc'
         protocolVersion:
           type: string
           description: Protocol version
-          example: "1.0"
+          example: '1.0'
         time:
           type: string
           format: date-time
           description: ISO 8601 timestamp
-          example: "2026-01-09T08:02:32.874426+00:00"
+          example: '2026-01-09T08:02:32.874426+00:00'
         uniqueId:
           type: string
           description: Unique device identifier
-          example: "587A628A4042"
+          example: '587A628A4042'
 
     EventPayload:
       type: object
@@ -3133,12 +3133,12 @@ components:
         - events
       properties:
         deviceInfo:
-          $ref: "#/components/schemas/EventDeviceInfo"
+          $ref: '#/components/schemas/EventDeviceInfo'
         events:
           type: array
           description: Array of events
           items:
-            $ref: "#/components/schemas/DeviceEvent"
+            $ref: '#/components/schemas/DeviceEvent'
 
     EventDeviceInfo:
       type: object
@@ -3154,27 +3154,27 @@ components:
         boseID:
           type: string
           description: Bose account ID
-          example: "6921042"
+          example: '6921042'
         deviceID:
           type: string
           description: Device identifier
-          example: "587A628A4042"
+          example: '587A628A4042'
         deviceType:
           type: string
           description: Type of device
-          example: "SoundTouch 20"
+          example: 'SoundTouch 20'
         serialNumber:
           type: string
           description: Device serial number
-          example: "P123456789101123456789"
+          example: 'P123456789101123456789'
         softwareVersion:
           type: string
           description: Software version string
-          example: "27.0.6.46330.5043500 epdbuild.trunk.hepdswbld04.2022-08-04T11:20:29"
+          example: '27.0.6.46330.5043500 epdbuild.trunk.hepdswbld04.2022-08-04T11:20:29'
         systemSerialNumber:
           type: string
           description: System serial number
-          example: "069236P81556160AE"
+          example: '069236P81556160AE'
 
     DeviceEvent:
       type: object
@@ -3190,7 +3190,7 @@ components:
           description: Event-specific data (structure varies by type)
           additionalProperties: true
           example:
-            source-state: "SPOTIFY"
+            source-state: 'SPOTIFY'
         monoTime:
           type: integer
           description: Monotonic time value
@@ -3199,11 +3199,11 @@ components:
           type: string
           format: date-time
           description: ISO 8601 timestamp
-          example: "2026-01-09T08:02:32.873379+00:00"
+          example: '2026-01-09T08:02:32.873379+00:00'
         type:
           type: string
           description: Event type identifier
-          example: "source-state-changed"
+          example: 'source-state-changed'
 
     # BMX Schemas
     BmxServicesResponse:
@@ -3215,7 +3215,7 @@ components:
         - bmx_services
       properties:
         _links:
-          $ref: "#/components/schemas/BmxLinks"
+          $ref: '#/components/schemas/BmxLinks'
         askAgainAfter:
           type: integer
           description: Milliseconds until client should request service list again
@@ -3224,30 +3224,30 @@ components:
           type: array
           description: List of available BMX streaming services
           items:
-            $ref: "#/components/schemas/BmxService"
+            $ref: '#/components/schemas/BmxService'
 
     BmxLinks:
       type: object
       description: HAL-style links for BMX responses
       properties:
         bmx_services_availability:
-          $ref: "#/components/schemas/BmxLink"
+          $ref: '#/components/schemas/BmxLink'
         bmx_logout:
-          $ref: "#/components/schemas/BmxLink"
+          $ref: '#/components/schemas/BmxLink'
         bmx_navigate:
-          $ref: "#/components/schemas/BmxLink"
+          $ref: '#/components/schemas/BmxLink'
         bmx_token:
-          $ref: "#/components/schemas/BmxLink"
+          $ref: '#/components/schemas/BmxLink'
         bmx_favorite:
-          $ref: "#/components/schemas/BmxLink"
+          $ref: '#/components/schemas/BmxLink'
         bmx_nowplaying:
-          $ref: "#/components/schemas/BmxLinkWithClient"
+          $ref: '#/components/schemas/BmxLinkWithClient'
         bmx_reporting:
-          $ref: "#/components/schemas/BmxLink"
+          $ref: '#/components/schemas/BmxLink'
         bmx_availability:
-          $ref: "#/components/schemas/BmxLink"
+          $ref: '#/components/schemas/BmxLink'
         self:
-          $ref: "#/components/schemas/BmxLink"
+          $ref: '#/components/schemas/BmxLink'
 
     BmxLink:
       type: object
@@ -3258,7 +3258,7 @@ components:
         href:
           type: string
           description: Link URL
-          example: "/v1/navigate"
+          example: '/v1/navigate'
 
     BmxLinkWithClient:
       type: object
@@ -3269,12 +3269,12 @@ components:
         href:
           type: string
           description: Link URL
-          example: "/v1/now-playing/station/s80044"
+          example: '/v1/now-playing/station/s80044'
         useInternalClient:
           type: string
           description: When to use internal client
-          enum: ["ALWAYS", "NEVER", "FALLBACK"]
-          example: "ALWAYS"
+          enum: ['ALWAYS', 'NEVER', 'FALLBACK']
+          example: 'ALWAYS'
 
     BmxService:
       type: object
@@ -3287,13 +3287,13 @@ components:
         - authenticationModel
       properties:
         _links:
-          $ref: "#/components/schemas/BmxLinks"
+          $ref: '#/components/schemas/BmxLinks'
         askAdapter:
           type: boolean
           description: Whether to ask adapter for service info
           example: false
         assets:
-          $ref: "#/components/schemas/BmxServiceAssets"
+          $ref: '#/components/schemas/BmxServiceAssets'
         authenticationModel:
           type: object
           description: Authentication model for the service
@@ -3305,20 +3305,20 @@ components:
         baseUrl:
           type: string
           description: Base URL for service API calls
-          example: "https://localhost:8080/bmx/tunein"
+          example: 'https://localhost:8080/bmx/tunein'
         id:
-          $ref: "#/components/schemas/BmxServiceId"
+          $ref: '#/components/schemas/BmxServiceId'
         signupUrl:
           type: string
           description: URL for user signup (optional)
-          example: "https://www.tunein.com/signup"
+          example: 'https://www.tunein.com/signup'
         streamTypes:
           type: array
           description: Types of streams supported
           items:
             type: string
-            enum: ["liveRadio", "onDemand"]
-          example: ["liveRadio", "onDemand"]
+            enum: ['liveRadio', 'onDemand']
+          example: ['liveRadio', 'onDemand']
 
     BmxServiceId:
       type: object
@@ -3330,7 +3330,7 @@ components:
         name:
           type: string
           description: Service name
-          example: "TUNEIN"
+          example: 'TUNEIN'
         value:
           type: integer
           description: Numeric service ID
@@ -3348,21 +3348,21 @@ components:
         color:
           type: string
           description: Brand color in hex format
-          example: "#000000"
+          example: '#000000'
         description:
           type: string
           description: Service description
-          example: "With TuneIn on SoundTouch, listen to more than 100,000 stations"
+          example: 'With TuneIn on SoundTouch, listen to more than 100,000 stations'
         icons:
-          $ref: "#/components/schemas/BmxServiceIcons"
+          $ref: '#/components/schemas/BmxServiceIcons'
         name:
           type: string
           description: Service display name
-          example: "TuneIn"
+          example: 'TuneIn'
         shortDescription:
           type: string
           description: Short service description (optional)
-          example: "Over 100,000 radio stations"
+          example: 'Over 100,000 radio stations'
 
     BmxServiceIcons:
       type: object
@@ -3376,23 +3376,23 @@ components:
         defaultAlbumArt:
           type: string
           description: Default album art URL
-          example: "https://cdn.example.com/default-art.png"
+          example: 'https://cdn.example.com/default-art.png'
         largeSvg:
           type: string
           description: Large SVG icon URL
-          example: "https://cdn.example.com/large.svg"
+          example: 'https://cdn.example.com/large.svg'
         monochromePng:
           type: string
           description: Monochrome PNG icon URL
-          example: "https://cdn.example.com/mono.png"
+          example: 'https://cdn.example.com/mono.png'
         monochromeSvg:
           type: string
           description: Monochrome SVG icon URL
-          example: "https://cdn.example.com/mono.svg"
+          example: 'https://cdn.example.com/mono.svg'
         smallSvg:
           type: string
           description: Small SVG icon URL
-          example: "https://cdn.example.com/small.svg"
+          example: 'https://cdn.example.com/small.svg'
 
     BmxPlaybackResponse:
       type: object
@@ -3404,13 +3404,13 @@ components:
         - streamType
       properties:
         _links:
-          $ref: "#/components/schemas/BmxLinks"
+          $ref: '#/components/schemas/BmxLinks'
         audio:
-          $ref: "#/components/schemas/BmxAudio"
+          $ref: '#/components/schemas/BmxAudio'
         imageUrl:
           type: string
           description: Station/stream logo URL
-          example: "http://cdn-profiles.tunein.com/s80044/images/logog.png"
+          example: 'http://cdn-profiles.tunein.com/s80044/images/logog.png'
         isFavorite:
           type: boolean
           description: Whether station is marked as favorite
@@ -3418,12 +3418,12 @@ components:
         name:
           type: string
           description: Station/stream name
-          example: "Radio TEDDY"
+          example: 'Radio TEDDY'
         streamType:
           type: string
           description: Type of stream
-          enum: ["liveRadio", "onDemand"]
-          example: "liveRadio"
+          enum: ['liveRadio', 'onDemand']
+          example: 'liveRadio'
 
     BmxAudio:
       type: object
@@ -3449,12 +3449,12 @@ components:
         streamUrl:
           type: string
           description: Primary stream URL
-          example: "https://stream.example.com/radio"
+          example: 'https://stream.example.com/radio'
         streams:
           type: array
           description: List of available streams
           items:
-            $ref: "#/components/schemas/BmxStream"
+            $ref: '#/components/schemas/BmxStream'
 
     BmxStream:
       type: object
@@ -3465,7 +3465,7 @@ components:
         - streamUrl
       properties:
         _links:
-          $ref: "#/components/schemas/BmxLinks"
+          $ref: '#/components/schemas/BmxLinks'
         bufferingTimeout:
           type: integer
           description: Buffering timeout in seconds
@@ -3485,7 +3485,7 @@ components:
         streamUrl:
           type: string
           description: Stream URL
-          example: "https://stream.example.com/radio"
+          example: 'https://stream.example.com/radio'
 
     BmxTokenRequest:
       type: object
@@ -3497,12 +3497,12 @@ components:
         grant_type:
           type: string
           description: OAuth grant type
-          enum: ["refresh_token"]
-          example: "refresh_token"
+          enum: ['refresh_token']
+          example: 'refresh_token'
         refresh_token:
           type: string
           description: Refresh token to exchange for access token
-          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
 
     BmxTokenResponse:
       type: object
@@ -3513,7 +3513,7 @@ components:
         access_token:
           type: string
           description: New access token
-          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
 
     BmxReportRequest:
       type: object
@@ -3522,16 +3522,16 @@ components:
         timeStamp:
           type: string
           description: Timestamp of the event, ISO 8601 with numeric UTC offset (e.g. +0000)
-          example: "2025-10-31T05:38:55+0000"
+          example: '2025-10-31T05:38:55+0000'
         eventType:
           type: string
           description: Type of event
-          enum: ["START", "STOP", "PAUSE", "RESUME", "TIMED"]
-          example: "START"
+          enum: ['START', 'STOP', 'PAUSE', 'RESUME', 'TIMED']
+          example: 'START'
         reason:
           type: string
           description: Reason for the event
-          example: "USER_SELECT_PLAYABLE"
+          example: 'USER_SELECT_PLAYABLE'
         reasonSubCode:
           type: string
           description: Sub-code providing additional detail about the reason
@@ -3549,7 +3549,7 @@ components:
       description: Analytics report response
       properties:
         _links:
-          $ref: "#/components/schemas/BmxLinks"
+          $ref: '#/components/schemas/BmxLinks'
         nextReportIn:
           type: integer
           description: Seconds until next report should be sent
@@ -3565,7 +3565,7 @@ components:
           type: array
           description: List of services with their availability status
           items:
-            $ref: "#/components/schemas/BmxServiceAvailability"
+            $ref: '#/components/schemas/BmxServiceAvailability'
 
     BmxServiceAvailability:
       type: object
