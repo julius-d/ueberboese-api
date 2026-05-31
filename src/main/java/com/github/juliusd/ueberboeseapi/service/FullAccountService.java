@@ -452,7 +452,11 @@ public class FullAccountService {
           .getSources()
           .addSourceItem(
               new SourceApiDto()
-                  .id(String.valueOf(account.id() + 1000)) // Increment with 1000 to avoid collision with existing sources
+                  .id(
+                      String.valueOf(
+                          account.id()
+                              + 1000)) // Increment with 1000 to avoid collision with existing
+                  // sources
                   .type("Audio")
                   .sourceproviderid(SPOTIFY_PROVIDER_ID)
                   .username(account.spotifyUserId())

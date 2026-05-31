@@ -111,14 +111,13 @@ class SpotifyAccountRepositoryTest extends TestBase {
     // Given
     OffsetDateTime now = OffsetDateTime.now();
     SpotifyAccount original =
-        new SpotifyAccount(null, "user_update", "Original Name", "token1", now, now, null);
+        new SpotifyAccount(1L, "user_update", "Original Name", "token1", now, now, null);
     SpotifyAccount saved = repository.save(original);
 
     // When - save with same ID but different data
     OffsetDateTime now2 = OffsetDateTime.now();
     SpotifyAccount updated =
-        new SpotifyAccount(
-            null, "user_update", "Updated Name", "token2", now, now2, saved.version());
+        new SpotifyAccount(1L, "user_update", "Updated Name", "token2", now, now2, saved.version());
     repository.save(updated);
 
     // Then

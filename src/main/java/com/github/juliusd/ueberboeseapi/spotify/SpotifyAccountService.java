@@ -28,17 +28,33 @@ public class SpotifyAccountService {
   public String saveAccount(String spotifyUserId, String displayName, String refreshToken) {
     log.debug("Attempting to save Spotify account for userId: {}", spotifyUserId);
 
-    OffsetDateTime now = OffsetDateTime.now();
-
-    // Check if account exists to preserve createdAt and version
     Optional<SpotifyAccount> existing = repository.findBySpotifyUserId(spotifyUserId);
-    OffsetDateTime createdAt = existing.map(SpotifyAccount::createdAt).orElse(now);
-    Long version = existing.map(SpotifyAccount::version).orElse(null);
 
-    SpotifyAccount account =
-        new SpotifyAccount(null, spotifyUserId, displayName, refreshToken, createdAt, now, version);
+    SpotifyAccount accountToSave;
+    if (existing.isPresent()) {
+      accountToSave =
+          new SpotifyAccount(
+              existing.get().id(),
+              spotifyUserId,
+              displayName,
+              refreshToken,
+              existing.get().createdAt(),
+              OffsetDateTime.now(),
+              existing.get().version());
+    } else {
+      accountToSave =
+          new SpotifyAccount(
+              null,
+              spotifyUserId,
+              displayName,
+              refreshToken,
+              OffsetDateTime.now(),
+              OffsetDateTime.now(),
+              null);
+    }
 
-    repository.save(account);
+    repository.save(accountToSave);
+
     log.info("Successfully saved Spotify account for accountId: {}", spotifyUserId);
     return spotifyUserId;
   }

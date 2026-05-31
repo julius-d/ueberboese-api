@@ -404,7 +404,7 @@ class FullAccountServiceTest {
     // Mock SpotifyAccountService to return matching account
     SpotifyAccount spotifyAccount =
         new SpotifyAccount(
-            null,
+            1L,
             spotifyUserId,
             "Test User",
             newRefreshToken,
@@ -451,7 +451,7 @@ class FullAccountServiceTest {
     // Mock SpotifyAccountService to return accounts
     SpotifyAccount spotifyAccount =
         new SpotifyAccount(
-            null,
+            1L,
             "user123",
             "Test User",
             "new-token",
@@ -491,13 +491,7 @@ class FullAccountServiceTest {
     // Mock SpotifyAccountService to return different account
     SpotifyAccount differentAccount =
         new SpotifyAccount(
-            null,
-            "different-user",
-            "Different User",
-            "different-token",
-            createdAt,
-            updatedAt,
-            null);
+            1L, "different-user", "Different User", "different-token", createdAt, updatedAt, null);
     when(spotifyAccountService.listAllAccounts()).thenReturn(List.of(differentAccount));
 
     // Mock account data service
@@ -517,7 +511,7 @@ class FullAccountServiceTest {
     // The missing Spotify account is added as a new source
     assertThat(result.get().getSources().getSource()).hasSize(2);
     SourceApiDto addedSource = result.get().getSources().getSource().get(1);
-    assertThat(addedSource.getId()).isEqualTo("10");
+    assertThat(addedSource.getId()).isEqualTo("1001");
     assertThat(addedSource.getUsername()).isEqualTo("different-user");
     assertThat(addedSource.getSourcename()).isEqualTo("Different User");
     assertThat(addedSource.getCredential().getValue()).isEqualTo("different-token");
@@ -593,7 +587,7 @@ class FullAccountServiceTest {
     // Mock SpotifyAccountService to return matching account
     SpotifyAccount spotifyAccount =
         new SpotifyAccount(
-            null,
+            1L,
             spotifyUserId,
             "Test User",
             "new-token",
@@ -647,10 +641,10 @@ class FullAccountServiceTest {
     OffsetDateTime updatedTimestamp3 = OffsetDateTime.now().minusDays(2);
     SpotifyAccount account1 =
         new SpotifyAccount(
-            null, "user1", "User 1", "new-token1", OffsetDateTime.now(), updatedTimestamp1, null);
+            1L, "user1", "User 1", "new-token1", OffsetDateTime.now(), updatedTimestamp1, null);
     SpotifyAccount account3 =
         new SpotifyAccount(
-            null, "user3", "User 3", "new-token3", OffsetDateTime.now(), updatedTimestamp3, null);
+            1L, "user3", "User 3", "new-token3", OffsetDateTime.now(), updatedTimestamp3, null);
     when(spotifyAccountService.listAllAccounts()).thenReturn(List.of(account1, account3));
 
     when(accountDataService.hasAccountData(accountId)).thenReturn(true);
@@ -870,7 +864,7 @@ class FullAccountServiceTest {
     // Mock SpotifyAccountService
     SpotifyAccount spotifyAccount =
         new SpotifyAccount(
-            null,
+            1L,
             spotifyUserId,
             "Test User",
             newRefreshToken,
@@ -904,7 +898,7 @@ class FullAccountServiceTest {
     var spotifyAccountUpdatedAt = now.minusDays(2);
     var spotifyAccount =
         new SpotifyAccount(
-            null, SPOTIFY_USER_ID, "Test User", newRefreshToken, now, spotifyAccountUpdatedAt, 1L);
+            1L, SPOTIFY_USER_ID, "Test User", newRefreshToken, now, spotifyAccountUpdatedAt, 1L);
     when(spotifyAccountService.listAllAccounts()).thenReturn(List.of(spotifyAccount));
 
     var fullAccount = createFullAccountDto(accountId);
@@ -1019,7 +1013,7 @@ class FullAccountServiceTest {
     // Mock SpotifyAccountService
     SpotifyAccount spotifyAccount =
         new SpotifyAccount(
-            null,
+            1L,
             spotifyUserId,
             "Test User",
             newRefreshToken,
@@ -1111,9 +1105,9 @@ class FullAccountServiceTest {
     response.setDevices(new DevicesContainerApiDto());
 
     SpotifyAccount account1 =
-        new SpotifyAccount(null, "user-a", "Alice", "token-a", createdAt1, updatedAt1, null);
+        new SpotifyAccount(1L, "user-a", "Alice", "token-a", createdAt1, updatedAt1, null);
     SpotifyAccount account2 =
-        new SpotifyAccount(null, "user-b", "Bob", "token-b", createdAt2, updatedAt2, null);
+        new SpotifyAccount(1L, "user-b", "Bob", "token-b", createdAt2, updatedAt2, null);
     when(spotifyAccountService.listAllAccounts()).thenReturn(List.of(account1, account2));
 
     when(accountDataService.hasAccountData(accountId)).thenReturn(true);
@@ -1130,7 +1124,7 @@ class FullAccountServiceTest {
     assertThat(sources).hasSize(2);
 
     SourceApiDto source1 = sources.get(0);
-    assertThat(source1.getId()).isEqualTo("10");
+    assertThat(source1.getId()).isEqualTo("1001");
     assertThat(source1.getType()).isEqualTo("Audio");
     assertThat(source1.getSourceproviderid()).isEqualTo("15");
     assertThat(source1.getUsername()).isEqualTo("user-a");
@@ -1141,7 +1135,7 @@ class FullAccountServiceTest {
     assertThat(source1.getCredential().getValue()).isEqualTo("token-a");
 
     SourceApiDto source2 = sources.get(1);
-    assertThat(source2.getId()).isEqualTo("11");
+    assertThat(source2.getId()).isEqualTo("1001");
     assertThat(source2.getUsername()).isEqualTo("user-b");
     assertThat(source2.getSourcename()).isEqualTo("Bob");
     assertThat(source2.getCredential().getValue()).isEqualTo("token-b");
@@ -1160,7 +1154,7 @@ class FullAccountServiceTest {
 
     SpotifyAccount account =
         new SpotifyAccount(
-            null, spotifyUserId, "Existing User", "new-token", createdAt, updatedAt, null);
+            1L, spotifyUserId, "Existing User", "new-token", createdAt, updatedAt, null);
     when(spotifyAccountService.listAllAccounts()).thenReturn(List.of(account));
 
     when(accountDataService.hasAccountData(accountId)).thenReturn(true);
@@ -1193,7 +1187,7 @@ class FullAccountServiceTest {
 
     SpotifyAccount account =
         new SpotifyAccount(
-            null, "spotify-user-x", "Player X", "refresh-x", createdAt, updatedAt, null);
+            1L, "spotify-user-x", "Player X", "refresh-x", createdAt, updatedAt, null);
     when(spotifyAccountService.listAllAccounts()).thenReturn(List.of(account));
 
     // When
@@ -1210,7 +1204,7 @@ class FullAccountServiceTest {
 
     // Second source is Spotify
     SourceApiDto spotifySource = sources.get(1);
-    assertThat(spotifySource.getId()).isEqualTo("10");
+    assertThat(spotifySource.getId()).isEqualTo("1001");
     assertThat(spotifySource.getSourceproviderid()).isEqualTo("15");
     assertThat(spotifySource.getUsername()).isEqualTo("spotify-user-x");
     assertThat(spotifySource.getSourcename()).isEqualTo("Player X");
