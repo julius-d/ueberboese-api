@@ -308,24 +308,24 @@ public class UeberboeseController implements DefaultApi {
             && fullAccountData.getDevices().getDevice() != null) {
           for (var device : fullAccountData.getDevices().getDevice()) {
             if (deviceId.equals(device.getDeviceid())) {
-        log.info(
+              log.info(
                   "Successfully found device {} in full account data. Returning its enriched presets.",
-            deviceId);
+                  deviceId);
 
               PresetsContainerApiDto finalPresets = device.getPresets();
               if (finalPresets == null) {
                 finalPresets = new PresetsContainerApiDto();
               }
 
-        return ResponseEntity.ok()
-            .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
-            .header("Access-Control-Allow-Origin", "*")
-            .header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-            .header(
-                "Access-Control-Allow-Headers",
-                "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization")
-            .header("Access-Control-Expose-Headers", "Authorization")
-            .body(finalPresets);
+              return ResponseEntity.ok()
+                  .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
+                  .header("Access-Control-Allow-Origin", "*")
+                  .header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+                  .header(
+                      "Access-Control-Allow-Headers",
+                      "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization")
+                  .header("Access-Control-Expose-Headers", "Authorization")
+                  .body(finalPresets);
             }
           }
         }
@@ -337,8 +337,8 @@ public class UeberboeseController implements DefaultApi {
       List<PresetApiDto> dbPresetDtos = presetMapper.convertToApiDtos(dbPresets, new ArrayList<>());
       PresetsContainerApiDto fallbackPresets = presetMapper.mergePresets(null, dbPresetDtos);
 
-        return ResponseEntity.ok()
-            .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
+      return ResponseEntity.ok()
+          .header("Content-Type", "application/vnd.bose.streaming-v1.2+xml")
           .body(fallbackPresets);
 
     } catch (Exception e) {
