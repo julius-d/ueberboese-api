@@ -1,5 +1,6 @@
 package com.github.juliusd.ueberboeseapi;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.InputStream;
 import lombok.extern.slf4j.Slf4j;
@@ -15,8 +16,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class NoiseController {
 
   @GetMapping("/")
-  public ResponseEntity<Void> index() {
-    log.info("/ requested");
+  public ResponseEntity<Void> index(HttpServletRequest request) {
+    String queryString = request.getQueryString();
+    String fullUrl = queryString != null ? "/?" + queryString : "/";
+    log.info("{} requested", fullUrl);
     return ResponseEntity.ok().build();
   }
 
