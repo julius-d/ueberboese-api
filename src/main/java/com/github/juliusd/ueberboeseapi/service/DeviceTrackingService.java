@@ -5,6 +5,7 @@ import com.github.juliusd.ueberboeseapi.device.DeviceRepository;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import lombok.Builder;
 import lombok.NonNull;
@@ -132,10 +133,11 @@ public class DeviceTrackingService {
     if (margeAccountId == null) {
       return List.of();
     }
-    
+
     var devices = deviceRepository.findAllByMargeAccountIdOrderByLastSeenDesc(margeAccountId);
-    log.debug("Retrieving tracked devices for account: {} (count: {})", margeAccountId, devices.size());
-    
+    log.debug(
+        "Retrieving tracked devices for account: {} (count: {})", margeAccountId, devices.size());
+
     return devices.stream()
         .map(
             device ->

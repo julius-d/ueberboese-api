@@ -13,7 +13,7 @@ public interface DeviceRepository extends CrudRepository<Device, String> {
 
   @Query("SELECT * FROM DEVICE WHERE MARGE_ACCOUNT_ID = :margeAccountId ORDER BY LAST_SEEN DESC")
   List<Device> findAllByMargeAccountIdOrderByLastSeenDesc(String margeAccountId);
-  
+
   @Query("SELECT * FROM DEVICE WHERE MARGE_ACCOUNT_ID = :margeAccountId")
   List<Device> findAllByMargeAccountId(String margeAccountId);
 }
