@@ -122,6 +122,28 @@ public class DeviceTrackingService {
         .toList();
   }
 
+  /**
+   * Returns tracked devices for a specific account.
+   *
+   * @param margeAccountId The account ID to filter by
+   * @return Collection of DeviceInfo objects matching the account ID
+   */
+  public Collection<DeviceInfo> getDevicesByAccountId(String margeAccountId) {
+    if (margeAccountId == null) {
+      return List.of();
+    }
+    
+    var devices = deviceRepository.findAllByMargeAccountIdOrderByLastSeenDesc(margeAccountId);
+    log.debug("Retrieving tracked devices for account: {} (count: {})", margeAccountId, devices.size());
+    
+    return devices.stream()
+        .map(
+            device ->
+                new DeviceInfo(
+                    device.deviceId(), device.ipAddress(), device.firstSeen(), device.lastSeen()))
+        .toList();
+  }
+
   /** Data class representing information about a tracked device. */
   public record DeviceInfo(
       String deviceId, String ipAddress, OffsetDateTime firstSeen, OffsetDateTime lastSeen) {}
