@@ -85,7 +85,7 @@ public class SpotifyAccountService {
               OffsetDateTime now = OffsetDateTime.now();
               SpotifyAccount updatedAccount =
                   new SpotifyAccount(
-                      null,
+                      existingAccount.id(),
                       existingAccount.spotifyUserId(),
                       existingAccount.displayName(),
                       newRefreshToken,
