@@ -307,6 +307,45 @@ paths:
                     error: "Internal server error"
                     message: "Failed to retrieve Spotify accounts"
 
+  /mgmt/accounts:
+    get:
+      summary: List all unique account IDs
+      description: |
+        Retrieves a list of all distinct account IDs (marge_account_id) currently associated with active devices.
+      operationId: listAccountIds
+      tags:
+        - Account Management
+      responses:
+        '200':
+          description: Successfully retrieved list of unique account IDs
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - accountIds
+                properties:
+                  accountIds:
+                    type: array
+                    description: List of distinct marge account IDs
+                    items:
+                      type: string
+                      example: "6921042"
+              examples:
+                success:
+                  summary: Response with distinct accounts
+                  value:
+                    accountIds:
+                      - "0"
+                      - "6921042"
+                      - "7543119"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /mgmt/accounts/{accountId}/speakers:
     get:
       summary: List speakers for an account
