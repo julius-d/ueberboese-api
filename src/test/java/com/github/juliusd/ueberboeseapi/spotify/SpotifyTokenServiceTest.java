@@ -36,17 +36,17 @@ class SpotifyTokenServiceTest {
     OffsetDateTime newest = OffsetDateTime.now().minusDays(1);
     SpotifyAccount newestAccount =
         new SpotifyAccount(
-            "user_newest", "Newest User", "refresh_token_newest", newest, newest, 0L);
+            null, "user_newest", "Newest User", "refresh_token_newest", newest, newest, 0L);
 
     OffsetDateTime middle = OffsetDateTime.now().minusDays(5);
     SpotifyAccount middleAccount =
         new SpotifyAccount(
-            "user_middle", "Middle User", "refresh_token_middle", middle, middle, 0L);
+            null, "user_middle", "Middle User", "refresh_token_middle", middle, middle, 0L);
 
     OffsetDateTime oldest = OffsetDateTime.now().minusDays(10);
     SpotifyAccount oldestAccount =
         new SpotifyAccount(
-            "user_oldest", "Oldest User", "refresh_token_oldest", oldest, oldest, 0L);
+            null, "user_oldest", "Oldest User", "refresh_token_oldest", oldest, oldest, 0L);
 
     // listAllAccounts returns sorted by createdAt descending (newest first)
     List<SpotifyAccount> accounts = List.of(newestAccount, middleAccount, oldestAccount);
@@ -101,7 +101,8 @@ class SpotifyTokenServiceTest {
     // Given: Only one account exists
     OffsetDateTime now = OffsetDateTime.now().minusDays(1);
     SpotifyAccount singleAccount =
-        new SpotifyAccount("user_single", "Single User", "refresh_token_single", now, now, 0L);
+        new SpotifyAccount(
+            null, "user_single", "Single User", "refresh_token_single", now, now, 0L);
 
     when(mockAccountService.listAllAccounts()).thenReturn(List.of(singleAccount));
 
