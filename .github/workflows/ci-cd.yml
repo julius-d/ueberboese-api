@@ -26,7 +26,7 @@ jobs:
 
     - name: Calculate semantic version
       id: semver
-      uses: paulhatch/semantic-version@v6.0.2
+      uses: paulhatch/semantic-version@v6.0.3
       with:
         bump_each_commit: true
         tag_prefix: "v"
