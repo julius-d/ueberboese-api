@@ -33,6 +33,7 @@ import com.github.juliusd.ueberboeseapi.service.AccountDataService;
 import com.github.juliusd.ueberboeseapi.service.DeviceTrackingService;
 import com.github.juliusd.ueberboeseapi.service.DeviceTrackingService.PowerOnData;
 import com.github.juliusd.ueberboeseapi.service.FullAccountService;
+import com.github.juliusd.ueberboeseapi.service.SpeakerProvisioningService;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.net.URI;
@@ -42,6 +43,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -61,8 +63,12 @@ public class UeberboeseController implements DefaultApi {
   private final PresetMapper presetMapper;
   private final DeviceService deviceService;
   private final DeviceRepository deviceRepository;
+  private final SpeakerProvisioningService speakerProvisioningService;
 
   @Autowired private HttpServletRequest request;
+
+  @Value("${ueberboese.auto-provisioning.enabled:true}")
+  private boolean autoProvisioningEnabled;
 
   @Override
   public ResponseEntity<RecentItemResponseApiDto> addRecentItem(
@@ -505,6 +511,9 @@ public class UeberboeseController implements DefaultApi {
             .productSerialNumber(product.getSerialnumber());
       }
       deviceTrackingService.recordDevicePowerOn(powerOnDataBuilder.build());
+      if (autoProvisioningEnabled) {
+        speakerProvisioningService.provisionIfNeeded(deviceId, ipAddress);
+      }
 
       log.info("Successfully processed power_on for device: {} at IP: {}", deviceId, ipAddress);
 

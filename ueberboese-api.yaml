@@ -12,6 +12,40 @@ info:
     - **bmx**: API for streaming radio services (TuneIn, Custom Stations, etc.)
   version: 1.2.0
 paths:
+  /:
+    get:
+      summary: Speaker account registration
+      description: |
+        Initial registration call made by never-paired (factory-reset) devices.
+        When a speaker calls `GET /?serialnumber=<SN>`, this endpoint returns a minimal
+        account XML so the device can store its accountId and proceed to fetch full account data.
+        Devices that are already paired call `GET /` without a serialnumber parameter.
+      operationId: getAccountBySerialNumber
+      tags:
+        - noise
+      parameters:
+        - name: serialnumber
+          in: query
+          required: true
+          schema:
+            type: string
+          description: The device serial number, used as the accountId in the response
+          example: "0123456789AB"
+      responses:
+        '200':
+          description: Minimal account XML for device registration
+          content:
+            application/vnd.bose.streaming-v1.2+xml:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+              example: |
+                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                <account id="0123456789AB">
+                  <accountStatus>ACTIVE</accountStatus>
+                  <mode>global</mode>
+                  <preferredLanguage>en</preferredLanguage>
+                </account>
+
   /streaming/sourceproviders:
     get:
       summary: Get streaming source providers
@@ -2008,6 +2042,28 @@ components:
         example: "587A628A4042"
 
   schemas:
+    AccountResponse:
+      type: object
+      description: Minimal account response returned during device registration
+      xml:
+        name: account
+      properties:
+        id:
+          type: string
+          description: Account ID (serial number for never-paired devices)
+          xml:
+            attribute: true
+          example: "0123456789AB"
+        accountStatus:
+          type: string
+          example: "ACTIVE"
+        mode:
+          type: string
+          example: "global"
+        preferredLanguage:
+          type: string
+          example: "en"
+
     SourceProvidersResponse:
       type: object
       description: XML response containing list of source providers
