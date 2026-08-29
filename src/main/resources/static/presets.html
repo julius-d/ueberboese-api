@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Überböse — Presets</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #111; color: #eee; padding: 1rem; max-width: 700px; margin: 0 auto; }
+    h1 { font-size: 1.3rem; margin-bottom: 0.2rem; }
+    .subtitle { color: #888; font-size: 0.85rem; margin-bottom: 1.25rem; }
+    .config { display: flex; gap: 0.5rem; margin-bottom: 1.25rem; }
+    .config input { flex: 1; padding: 0.5rem 0.75rem; border-radius: 6px; border: 1px solid #333; background: #1e1e1e; color: #eee; font-size: 0.9rem; }
+    .config button { padding: 0.5rem 1rem; border-radius: 6px; border: none; background: #2563eb; color: #fff; cursor: pointer; font-size: 0.9rem; }
+
+    .preset-card { background: #1a1a1a; border-radius: 10px; border: 1px solid #2a2a2a; margin-bottom: 0.75rem; overflow: hidden; }
+    .preset-header { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; }
+    .preset-num { font-size: 1.3rem; font-weight: 700; color: #60a5fa; width: 1.8rem; text-align: center; flex-shrink: 0; }
+    .preset-art { width: 42px; height: 42px; border-radius: 6px; object-fit: cover; background: #2a2a2a; flex-shrink: 0; }
+    .preset-art-empty { width: 42px; height: 42px; border-radius: 6px; background: #2a2a2a; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #444; font-size: 1.2rem; }
+    .preset-info { flex: 1; min-width: 0; }
+    .preset-name { font-weight: 600; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .preset-source { font-size: 0.75rem; color: #888; margin-top: 0.1rem; }
+    .preset-btns { display: flex; gap: 0.4rem; flex-shrink: 0; }
+    .btn { padding: 0.35rem 0.65rem; border-radius: 5px; border: none; cursor: pointer; font-size: 0.78rem; font-weight: 500; }
+    .btn-play { background: #166534; color: #86efac; }
+    .btn-play:hover { background: #15803d; }
+    .btn-edit { background: #1e3a8a; color: #93c5fd; }
+    .btn-edit:hover { background: #1d4ed8; }
+    .btn-edit.active { background: #1d4ed8; }
+    .btn-remove { background: #450a0a; color: #fca5a5; }
+    .btn-remove:hover { background: #7f1d1d; }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .editor { display: none; border-top: 1px solid #2a2a2a; padding: 0.875rem; background: #141414; }
+    .editor.open { display: block; }
+    .editor-row { display: flex; gap: 0.5rem; margin-bottom: 0.6rem; flex-wrap: wrap; }
+    .editor-row label { font-size: 0.75rem; color: #888; display: block; margin-bottom: 0.2rem; }
+    .editor-row input, .editor-row select { width: 100%; padding: 0.45rem 0.65rem; border-radius: 5px; border: 1px solid #333; background: #1a1a1a; color: #eee; font-size: 0.85rem; }
+    .editor-row input:focus, .editor-row select:focus { outline: none; border-color: #3b82f6; }
+    .f-half { flex: 1; min-width: 130px; }
+    .f-full { flex: 1 0 100%; }
+    .search-row { display: flex; gap: 0.4rem; margin-bottom: 0.6rem; }
+    .search-row input { flex: 1; padding: 0.45rem 0.65rem; border-radius: 5px; border: 1px solid #333; background: #1a1a1a; color: #eee; font-size: 0.85rem; }
+    .search-row input:focus { outline: none; border-color: #3b82f6; }
+    .search-row button { padding: 0.45rem 0.8rem; border-radius: 5px; border: none; background: #2563eb; color: #fff; cursor: pointer; font-size: 0.82rem; white-space: nowrap; }
+    .results { max-height: 200px; overflow-y: auto; border-radius: 6px; border: 1px solid #2a2a2a; margin-bottom: 0.7rem; display: none; }
+    .result-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.45rem 0.6rem; cursor: pointer; border-bottom: 1px solid #222; }
+    .result-item:last-child { border-bottom: none; }
+    .result-item:hover { background: #1e1e1e; }
+    .result-item img { width: 28px; height: 28px; border-radius: 4px; object-fit: cover; flex-shrink: 0; }
+    .result-item .r-name { font-size: 0.85rem; font-weight: 500; }
+    .result-item .r-sub { font-size: 0.72rem; color: #888; }
+    .editor-actions { display: flex; gap: 0.5rem; margin-top: 0.4rem; }
+    .btn-save { flex: 1; padding: 0.5rem; border-radius: 6px; border: none; background: #2563eb; color: #fff; cursor: pointer; font-weight: 600; font-size: 0.88rem; }
+    .btn-save:hover { background: #1d4ed8; }
+    .btn-cancel { padding: 0.5rem 0.8rem; border-radius: 6px; border: 1px solid #333; background: none; color: #888; cursor: pointer; font-size: 0.88rem; }
+    .msg { font-size: 0.78rem; margin-top: 0.5rem; }
+    .msg.ok { color: #4ade80; }
+    .msg.err { color: #f87171; }
+    #status { margin-top: 0.75rem; font-size: 0.82rem; color: #888; }
+    #status.ok { color: #4ade80; }
+    #status.err { color: #f87171; }
+  </style>
+</head>
+<body>
+  <h1>Überböse Presets</h1>
+  <p class="subtitle">Manage speaker preset buttons 1–6</p>
+
+  <div class="config">
+    <input id="speakerIp" placeholder="Speaker IP  (e.g. 192.168.30.10)">
+    <button onclick="loadSpeaker()">Load</button>
+  </div>
+
+  <div id="presets"></div>
+  <p id="status"></p>
+
+  <script>
+    let speakerIp = '';
+    let accountId = '';
+    let deviceId = '';
+    let currentPresets = {};
+
+    function setStatus(msg, type) {
+      const el = document.getElementById('status');
+      el.textContent = msg;
+      el.className = type || '';
+    }
+
+    async function loadSpeaker() {
+      speakerIp = document.getElementById('speakerIp').value.trim();
+      if (!speakerIp) { setStatus('Enter speaker IP', 'err'); return; }
+      setStatus('Loading…');
+      try {
+        const infoResp = await fetch(`/speaker-proxy/speaker-info/${speakerIp}`);
+        if (!infoResp.ok) throw new Error('Cannot reach speaker at ' + speakerIp);
+        const xml = await infoResp.text();
+        const macMatch = xml.match(/deviceID="([^"]+)"/);
+        const uuidMatch = xml.match(/<margeAccountUUID>([^<]+)<\/margeAccountUUID>/);
+        deviceId = macMatch ? macMatch[1] : speakerIp.replace(/\./g,'');
+        accountId = (uuidMatch && uuidMatch[1]) ? uuidMatch[1] : deviceId;
+        await loadPresets();
+      } catch(e) {
+        setStatus('Error: ' + e.message, 'err');
+      }
+    }
+
+    async function loadPresets() {
+      const resp = await fetch(`/streaming/account/${accountId}/device/${deviceId}/presets`, {
+        headers: { Accept: 'application/vnd.bose.streaming-v1.2+xml' }
+      });
+      const xml = await resp.text();
+      currentPresets = {};
+      const doc = new DOMParser().parseFromString(xml, 'application/xml');
+      doc.querySelectorAll('preset').forEach(p => {
+        const n = parseInt(p.getAttribute('buttonNumber'));
+        currentPresets[n] = {
+          name: p.querySelector('name')?.textContent || '',
+          location: p.querySelector('location')?.textContent || '',
+          contentItemType: p.querySelector('contentItemType')?.textContent || '',
+          containerArt: p.querySelector('containerArt')?.textContent || '',
+          sourceid: p.querySelector('source')?.getAttribute('id') || '',
+          sourceproviderid: p.querySelector('sourceproviderid')?.textContent || '',
+        };
+      });
+      renderAll();
+      setStatus('');
+    }
+
+    function renderAll() {
+      const c = document.getElementById('presets');
+      c.innerHTML = '';
+      for (let i = 1; i <= 6; i++) c.appendChild(makeCard(i));
+    }
+
+    function makeCard(n) {
+      const p = currentPresets[n];
+      const isTuneIn = p && p.sourceproviderid === '25';
+      const isRadio = p && (p.sourceproviderid === '11' || p.sourceproviderid === '2');
+      const sourceLabel = p ? (isTuneIn ? 'TuneIn' : isRadio ? 'Internet Radio' : 'Source') : 'Empty';
+
+      const card = document.createElement('div');
+      card.className = 'preset-card';
+      card.id = 'card-' + n;
+
+      const artHtml = (p && p.containerArt)
+        ? `<img class="preset-art" src="${esc(httpsImg(p.containerArt))}" onerror="this.style.display='none';this.nextSibling.style.display='flex'"><div class="preset-art-empty" style="display:none">♪</div>`
+        : `<div class="preset-art-empty">♪</div>`;
+
+      const stationId = isTuneIn ? ((p.location||'').match(/\/v1\/playback\/station\/(s?\d+)/)?.[1]||'') : '';
+      const defaultType = isTuneIn ? 'tunein' : (isRadio ? 'radio' : 'tunein');
+
+      card.innerHTML = `
+        <div class="preset-header">
+          <div class="preset-num">${n}</div>
+          ${artHtml}
+          <div class="preset-info">
+            <div class="preset-name">${p ? esc(p.name) : '<span style="color:#444;font-style:italic">Empty</span>'}</div>
+            <div class="preset-source">${sourceLabel}</div>
+          </div>
+          <div class="preset-btns">
+            <button class="btn btn-play" onclick="playPreset(${n})" ${!p?'disabled':''}>▶</button>
+            <button class="btn btn-edit" id="edit-btn-${n}" onclick="toggleEditor(${n})">✎ Edit</button>
+            <button class="btn btn-remove" onclick="removePreset(${n})" ${!p?'disabled':''}>✕</button>
+          </div>
+        </div>
+        <div class="editor" id="editor-${n}">
+          <div class="editor-row">
+            <div class="f-half">
+              <label>Source type</label>
+              <select id="type-${n}" onchange="onTypeChange(${n})">
+                <option value="tunein" ${defaultType==='tunein'?'selected':''}>TuneIn radio</option>
+                <option value="radio" ${defaultType==='radio'?'selected':''}>Internet radio URL</option>
+              </select>
+            </div>
+            <div class="f-half" id="sid-field-${n}">
+              <label>Station ID</label>
+              <input id="sid-${n}" placeholder="s24903" value="${esc(stationId)}">
+            </div>
+            <div class="f-half" id="url-field-${n}" style="display:none">
+              <label>Stream URL</label>
+              <input id="url-${n}" placeholder="http://…" value="${esc(isTuneIn||!p?'':p.location||'')}">
+            </div>
+          </div>
+          <div class="search-row" id="search-row-${n}">
+            <input id="search-${n}" placeholder="Search TuneIn…" onkeydown="if(event.key==='Enter')doSearch(${n})">
+            <button onclick="doSearch(${n})">Search</button>
+          </div>
+          <div class="results" id="results-${n}"></div>
+          <div class="editor-row">
+            <div class="f-half">
+              <label>Name</label>
+              <input id="name-${n}" placeholder="Station name" value="${esc(p?p.name:'')}">
+            </div>
+            <div class="f-half">
+              <label>Artwork URL (optional)</label>
+              <input id="art-${n}" placeholder="https://…" value="${esc(p?p.containerArt:'')}">
+            </div>
+          </div>
+          <div class="editor-actions">
+            <button class="btn-cancel" onclick="toggleEditor(${n})">Cancel</button>
+            <button class="btn-save" onclick="savePreset(${n})">Save to preset ${n}</button>
+          </div>
+          <div class="msg" id="msg-${n}"></div>
+        </div>`;
+      return card;
+    }
+
+    function toggleEditor(n) {
+      const ed = document.getElementById('editor-' + n);
+      const btn = document.getElementById('edit-btn-' + n);
+      const isOpen = ed.classList.contains('open');
+      // Close all
+      document.querySelectorAll('.editor.open').forEach(e => e.classList.remove('open'));
+      document.querySelectorAll('.btn-edit.active').forEach(b => b.classList.remove('active'));
+      if (!isOpen) {
+        ed.classList.add('open');
+        btn.classList.add('active');
+        onTypeChange(n);
+      }
+    }
+
+    function onTypeChange(n) {
+      const t = document.getElementById('type-' + n)?.value;
+      const sid = document.getElementById('sid-field-' + n);
+      const url = document.getElementById('url-field-' + n);
+      const sr = document.getElementById('search-row-' + n);
+      if (sid) sid.style.display = t === 'tunein' ? '' : 'none';
+      if (url) url.style.display = t === 'radio' ? '' : 'none';
+      if (sr) sr.style.display = t === 'tunein' ? '' : 'none';
+      const res = document.getElementById('results-' + n);
+      if (res) res.style.display = 'none';
+    }
+
+    async function doSearch(n) {
+      const q = document.getElementById('search-' + n).value.trim();
+      if (!q) return;
+      const res = document.getElementById('results-' + n);
+      res.innerHTML = '<div class="result-item"><span style="color:#888;font-size:0.83rem">Searching…</span></div>';
+      res.style.display = 'block';
+      try {
+        const data = await fetch('/speaker-proxy/tunein-search?q=' + encodeURIComponent(q)).then(r => r.json());
+        const items = (data.body || []).filter(i => i.type === 'audio' || i.item === 'station');
+        if (!items.length) {
+          res.innerHTML = '<div class="result-item"><span style="color:#888;font-size:0.83rem">No results</span></div>';
+          return;
+        }
+        res.innerHTML = items.slice(0, 15).map(item => {
+          const sid = (item.guide_id || item.preset_id || '').replace(/^s/,'');
+          const name = esc(item.text || '');
+          const sub = esc(item.subtext || item.formats || '');
+          const img = item.image ? `<img src="${esc(httpsImg(item.image))}" onerror="this.remove()">` : '';
+          const safeName = (item.text||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+          const safeImg  = httpsImg(item.image||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+          return `<div class="result-item" onclick="pickStation(${n},'s${sid}','${safeName}','${safeImg}')">
+            ${img}<div><div class="r-name">${name}</div><div class="r-sub">${sub}</div></div>
+          </div>`;
+        }).join('');
+      } catch(e) {
+        res.innerHTML = `<div class="result-item"><span style="color:#f87171;font-size:0.83rem">Error: ${e.message}</span></div>`;
+      }
+    }
+
+    function pickStation(n, stationId, name, imageUrl) {
+      document.getElementById('sid-' + n).value = stationId;
+      if (name && !document.getElementById('name-' + n).value)
+        document.getElementById('name-' + n).value = name;
+      if (imageUrl && !document.getElementById('art-' + n).value)
+        document.getElementById('art-' + n).value = imageUrl;
+      document.getElementById('results-' + n).style.display = 'none';
+      document.getElementById('search-' + n).value = '';
+    }
+
+    // Send a command directly to the speaker from the browser (bypasses CORS using no-cors mode).
+    // Used for fire-and-forget operations where we don't need the response.
+    function speakerPost(path, body) {
+      return fetch(`http://${speakerIp}:8090${path}`, {
+        method: 'POST', mode: 'no-cors', body,
+      }).catch(() => {});
+    }
+
+    async function playPreset(n) {
+      await speakerPost('/key', `<key state="press" sender="Gabbo">PRESET_${n}</key>`);
+      await speakerPost('/key', `<key state="release" sender="Gabbo">PRESET_${n}</key>`);
+      setStatus('Playing preset ' + n, 'ok');
+    }
+
+    async function removePreset(n) {
+      if (!confirm(`Remove preset ${n}?`)) return;
+      await speakerPost('/removePreset', `<preset buttonNumber="${n}"/>`);
+      await fetch(`/streaming/account/${accountId}/device/${deviceId}/preset/${n}`, {method:'DELETE'});
+      await loadPresets();
+      setStatus('Preset ' + n + ' removed', 'ok');
+    }
+
+    async function savePreset(n) {
+      const type = document.getElementById('type-' + n).value;
+      const name = document.getElementById('name-' + n).value.trim();
+      const art = document.getElementById('art-' + n).value.trim();
+      const msgEl = document.getElementById('msg-' + n);
+
+      let location, contentItemType, speakerXml;
+
+      if (type === 'tunein') {
+        const raw = document.getElementById('sid-' + n).value.trim();
+        const sid = raw.replace(/^s/,'');
+        if (!sid) { msgEl.textContent = 'Enter a station ID or search above'; msgEl.className = 'msg err'; return; }
+        location = `/v1/playback/station/s${sid}`;
+        contentItemType = 'stationurl';
+        speakerXml = `<ContentItem source="TUNEIN" type="stationurl" location="${location}" sourceAccount="" isPresetable="true"><itemName>${esc(name)}</itemName></ContentItem>`;
+      } else {
+        const url = document.getElementById('url-' + n).value.trim();
+        if (!url) { msgEl.textContent = 'Enter a stream URL'; msgEl.className = 'msg err'; return; }
+        const encoded = btoa(JSON.stringify({ name, imageUrl: art, streamUrl: url }));
+        location = `/core02/svc-bmx-adapter-orion/prod/orion/station?data=${encoded}`;
+        contentItemType = 'stationurl';
+        speakerXml = `<ContentItem source="LOCAL_INTERNET_RADIO" type="stationurl" location="${location}" sourceAccount="" isPresetable="true"><itemName>${esc(name)}</itemName></ContentItem>`;
+      }
+
+      msgEl.textContent = 'Saving…'; msgEl.className = 'msg';
+
+      // Push to speaker directly (no-cors, fire-and-forget)
+      await speakerPost('/storePreset', `<preset buttonNumber="${n}">${speakerXml}</preset>`);
+
+      // Save to Überböse API DB
+      const apiBody = `<?xml version="1.0" encoding="UTF-8"?><preset buttonNumber="${n}"><sourceid>1</sourceid><name>${esc(name)}</name><username>${esc(name)}</username><location>${esc(location)}</location><contentItemType>${contentItemType}</contentItemType><containerArt>${esc(art)}</containerArt></preset>`;
+      await fetch(`/streaming/account/${accountId}/device/${deviceId}/preset/${n}`, {
+        method:'PUT',
+        headers:{'Content-Type':'application/vnd.bose.streaming-v1.2+xml'},
+        body: apiBody
+      });
+
+      msgEl.textContent = '✓ Saved'; msgEl.className = 'msg ok';
+      setTimeout(() => { msgEl.textContent = ''; }, 2000);
+      await loadPresets();
+    }
+
+    function esc(s) {
+      return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // Proxy TuneIn CDN images through the API to avoid ad-blocker blocks
+    function httpsImg(url) {
+      if (!url) return '';
+      if (url.includes('tunein.com')) return '/speaker-proxy/image?url=' + encodeURIComponent(url);
+      return url;
+    }
+
+    const params = new URLSearchParams(location.search);
+    if (params.get('ip')) {
+      document.getElementById('speakerIp').value = params.get('ip');
+      window.addEventListener('load', loadSpeaker);
+    }
+  </script>
+</body>
+</html>
