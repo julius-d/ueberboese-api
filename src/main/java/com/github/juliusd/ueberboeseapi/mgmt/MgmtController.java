@@ -3,11 +3,13 @@ package com.github.juliusd.ueberboeseapi.mgmt;
 import com.github.juliusd.ueberboeseapi.bmx.report.RadioReportEvent;
 import com.github.juliusd.ueberboeseapi.bmx.report.RadioReportStorageService;
 import com.github.juliusd.ueberboeseapi.bmx.report.RadioSessionReport;
+import com.github.juliusd.ueberboeseapi.device.DeviceRepository;
 import com.github.juliusd.ueberboeseapi.generated.mgmt.AccountManagementApi;
 import com.github.juliusd.ueberboeseapi.generated.mgmt.EventManagementApi;
 import com.github.juliusd.ueberboeseapi.generated.mgmt.dtos.DeviceEventApiDto;
 import com.github.juliusd.ueberboeseapi.generated.mgmt.dtos.ErrorApiDto;
 import com.github.juliusd.ueberboeseapi.generated.mgmt.dtos.GetDeviceEvents200ResponseApiDto;
+import com.github.juliusd.ueberboeseapi.generated.mgmt.dtos.ListAccountIds200ResponseApiDto;
 import com.github.juliusd.ueberboeseapi.generated.mgmt.dtos.ListSpeakers200ResponseApiDto;
 import com.github.juliusd.ueberboeseapi.generated.mgmt.dtos.RadioReportEventApiDto;
 import com.github.juliusd.ueberboeseapi.generated.mgmt.dtos.RadioReportSessionApiDto;
@@ -31,6 +33,20 @@ public class MgmtController implements AccountManagementApi, EventManagementApi 
   private final DeviceTrackingService deviceTrackingService;
   private final EventStorageService eventStorageService;
   private final RadioReportStorageService radioReportStorageService;
+  private final DeviceRepository deviceRepository;
+
+  @Override
+  public ResponseEntity<ListAccountIds200ResponseApiDto> listAccountIds() {
+    log.info("Retrieving all unique marge account IDs from active devices");
+
+    List<String> distinctAccountIds = deviceRepository.findDistinctMargeAccountIds();
+
+    ListAccountIds200ResponseApiDto response = new ListAccountIds200ResponseApiDto();
+    response.setAccountIds(distinctAccountIds);
+
+    log.info("Successfully found {} unique account ID(s)", distinctAccountIds.size());
+    return ResponseEntity.ok().header("Content-Type", "application/json").body(response);
+  }
 
   @Override
   public ResponseEntity<ListSpeakers200ResponseApiDto> listSpeakers(String accountId) {
