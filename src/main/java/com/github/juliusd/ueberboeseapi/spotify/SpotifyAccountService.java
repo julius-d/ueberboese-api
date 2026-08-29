@@ -28,17 +28,33 @@ public class SpotifyAccountService {
   public String saveAccount(String spotifyUserId, String displayName, String refreshToken) {
     log.debug("Attempting to save Spotify account for userId: {}", spotifyUserId);
 
-    OffsetDateTime now = OffsetDateTime.now();
+    Optional<SpotifyAccount> existing = repository.findBySpotifyUserId(spotifyUserId);
 
-    // Check if account exists to preserve createdAt and version
-    Optional<SpotifyAccount> existing = repository.findById(spotifyUserId);
-    OffsetDateTime createdAt = existing.map(SpotifyAccount::createdAt).orElse(now);
-    Long version = existing.map(SpotifyAccount::version).orElse(null);
+    SpotifyAccount accountToSave;
+    if (existing.isPresent()) {
+      accountToSave =
+          new SpotifyAccount(
+              existing.get().id(),
+              spotifyUserId,
+              displayName,
+              refreshToken,
+              existing.get().createdAt(),
+              OffsetDateTime.now(),
+              existing.get().version());
+    } else {
+      accountToSave =
+          new SpotifyAccount(
+              null,
+              spotifyUserId,
+              displayName,
+              refreshToken,
+              OffsetDateTime.now(),
+              OffsetDateTime.now(),
+              null);
+    }
 
-    SpotifyAccount account =
-        new SpotifyAccount(spotifyUserId, displayName, refreshToken, createdAt, now, version);
+    repository.save(accountToSave);
 
-    repository.save(account);
     log.info("Successfully saved Spotify account for accountId: {}", spotifyUserId);
     return spotifyUserId;
   }
@@ -54,7 +70,7 @@ public class SpotifyAccountService {
     log.debug("Checking refresh token update requirements for userId: {}", spotifyUserId);
 
     repository
-        .findById(spotifyUserId)
+        .findBySpotifyUserId(spotifyUserId)
         .ifPresentOrElse(
             existingAccount -> {
               // Check if the token has actually changed
@@ -69,6 +85,7 @@ public class SpotifyAccountService {
               OffsetDateTime now = OffsetDateTime.now();
               SpotifyAccount updatedAccount =
                   new SpotifyAccount(
+                      existingAccount.id(),
                       existingAccount.spotifyUserId(),
                       existingAccount.displayName(),
                       newRefreshToken,
@@ -96,7 +113,7 @@ public class SpotifyAccountService {
   public Optional<SpotifyAccount> getAccountBySpotifyUserId(String spotifyUserId) {
     log.debug("Attempting to load Spotify account for userId: {}", spotifyUserId);
 
-    Optional<SpotifyAccount> account = repository.findById(spotifyUserId);
+    Optional<SpotifyAccount> account = repository.findBySpotifyUserId(spotifyUserId);
 
     if (account.isPresent()) {
       log.debug("Successfully loaded Spotify account for accountId: {}", spotifyUserId);

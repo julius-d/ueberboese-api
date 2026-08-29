@@ -98,6 +98,7 @@ public class TestBase {
     // Add test Spotify accounts for patching tests
     spotifyAccountRepository.save(
         new SpotifyAccount(
+            null,
             "mockuser123",
             "Mock User 1",
             "mockTokenUser1",
@@ -106,6 +107,7 @@ public class TestBase {
             null));
     spotifyAccountRepository.save(
         new SpotifyAccount(
+            null,
             "user1namespot",
             "Mock User 2",
             "mockTokenUser2",
