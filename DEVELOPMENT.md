@@ -2,21 +2,21 @@
 
 ## Prerequisites
 
-- Java 25
-- Maven 3.6+
-- Docker (optional, for local container testing)
+- Java 25 (run `mise i` to install it via [mise](https://mise.jdx.dev/))
+- Maven is not needed: the included `./mvnw` wrapper downloads it
+- Docker (optional, for local container testing; with [Dockerfile.dev](Dockerfile.dev) you can build without a local Java or Maven install, see [Local Docker Build](#local-docker-build))
 
 ### Running the Application
 
 ```bash
 # Generate OpenAPI code
-mvn generate-sources
+./mvnw generate-sources
 
 # Run tests
-mvn test
+./mvnw test
 
 # Start the application
-UEBERBOESE_DATA_DIRECTORY=./data mvn spring-boot:run
+UEBERBOESE_DATA_DIRECTORY=./data ./mvnw spring-boot:run
 ```
 
 The application will be available at `http://localhost:8080`.
@@ -35,7 +35,7 @@ The application will be available at `http://localhost:8080`.
 
 ```bash
 # Build Docker image using Spring Boot buildpacks
-mvn spring-boot:build-image
+./mvnw spring-boot:build-image
 
 # Run the container (expose both main and management ports)
 docker run -p 8080:8080 -p 8081:8081 ueberboese-api:0.0.1-SNAPSHOT
@@ -51,7 +51,7 @@ The project uses a GitHub Actions workflow (`ci-cd.yml`) for continuous integrat
   - Available for use in subsequent jobs
 
 2. **Test Application Job**: Runs on all pushes and pull requests
-  - Sets up Java 21 with Maven caching
+  - Sets up Java 25 with Maven caching
   - Generates OpenAPI sources
   - Builds and tests the project with Maven using calculated semantic version
   - Uploads test results and JAR artifacts
@@ -62,7 +62,7 @@ The project uses a GitHub Actions workflow (`ci-cd.yml`) for continuous integrat
   - Tags images with semantic version, commit SHA, and branch-specific tags
 
 
-*Supply Chain Security**:
+**Supply Chain Security**:
 
 All Docker images published to GitHub Container Registry include:
 
@@ -122,7 +122,7 @@ The calculated semantic version is automatically:
 - Used for Docker image tagging in GitHub Container Registry
 - Stored in the built JAR file manifest
 
-### Docker
+### Published Docker Images
 
 #### GitHub Container Registry
 
@@ -154,10 +154,10 @@ The project includes comprehensive tests using REST Assured:
 
 ```bash
 # Run all tests
-mvn test
+./mvnw test
 
 # Run specific test class
-mvn test -Dtest=UeberboeseControllerTest
+./mvnw test -Dtest=UeberboeseControllerTest
 ```
 
 ### API Endpoints
