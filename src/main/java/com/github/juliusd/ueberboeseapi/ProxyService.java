@@ -10,6 +10,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -33,11 +34,14 @@ public class ProxyService implements CommandLineRunner {
   private boolean isProxyEnabled;
 
   public ProxyService(
-      ProxyProperties proxyProperties, LocationHeaderRewriter locationHeaderRewriter) {
+      ProxyProperties proxyProperties,
+      LocationHeaderRewriter locationHeaderRewriter,
+      ReactorClientHttpConnector outboundClientHttpConnector) {
     this.proxyProperties = proxyProperties;
     this.locationHeaderRewriter = locationHeaderRewriter;
     this.webClient =
         WebClient.builder()
+            .clientConnector(outboundClientHttpConnector)
             .codecs(
                 configurer ->
                     configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024)) // 10MB buffer
