@@ -41,6 +41,25 @@ mvn spring-boot:build-image
 docker run -p 8080:8080 -p 8081:8081 ueberboese-api:0.0.1-SNAPSHOT
 ```
 
+##### Without local Java
+
+If you don't have Java installed, build the image with [Dockerfile.dev](Dockerfile.dev).
+Only Docker is needed: the JDK and Maven run inside the build container.
+
+```bash
+# Build the image from your local checkout
+docker build -f Dockerfile.dev -t ueberboese-api:dev .
+
+# Run it, keeping the data directory on the host
+docker run --rm -p 8080:8080 -p 8081:8081 \
+  -e UEBERBOESE_DATA_DIRECTORY=/data -v "$(pwd)/data:/data" \
+  ueberboese-api:dev
+```
+
+This build skips tests and formatting checks, so it's meant for quickly trying a change,
+e.g. on a real speaker. Run `./mvnw verify` (or let CI run it on your PR) before merging.
+Released images are built by CI with `spring-boot:build-image`, not with this Dockerfile.
+
 ### CI/CD Pipeline
 
 The project uses a GitHub Actions workflow (`ci-cd.yml`) for continuous integration and deployment with **automatic semantic versioning**:
