@@ -349,20 +349,21 @@ curl http://localhost:8081/actuator/health
 
 ### Environment Variables
 
-| Variable                            | Default                           | Description                                                                      |
-|-------------------------------------|-----------------------------------|----------------------------------------------------------------------------------|
-| `PROXY_TARGET_HOST`                 | `https://streaming.bose.com`      | Default target host for proxying unknown requests                                |
-| `PROXY_AUTH_TARGET_HOST`            | `https://streamingoauth.bose.com` | Auth-specific target host for requests with Host header containing "auth"        |
-| `PROXY_SOFTWARE_UPDATE_TARGET_HOST` | `https://downloads.bose.com`      | Software update target host for requests with Host header containing "downloads" |
-| `UEBERBOESE_DATA_DIRECTORY`         | `/data`                           | Directory for cached account data (must be mounted as volume!)                   |
-| `UEBERBOESE_OAUTH_ENABLED`          | `false`                           | Enable OAuth token endpoints (set to `true` to activate)                         |
-| `UEBERBOESE_MGMT_USERNAME`          | `admin`                           | Username for Basic Auth on `/mgmt/**` endpoints                                  |
-| `UEBERBOESE_MGMT_PASSWORD`          | `change_me!`                      | Password for Basic Auth on `/mgmt/**` endpoints (change this!)                   |
-| `SPOTIFY_AUTH_CLIENT_ID`            | -                                 | Spotify API client ID from developer dashboard (required for OAuth)              |
-| `SPOTIFY_AUTH_CLIENT_SECRET`        | -                                 | Spotify API client secret from developer dashboard (required for OAuth)          |
-| `SERVER_PORT`                       | `8080`                            | Port the main application runs on                                                |
-| `MANAGEMENT_SERVER_PORT`            | `8081`                            | Port for actuator/management endpoints                                           |
-| `PROXY_ENABLED`                     | `true`                            | Enable/Disable proxyService mechanism (can be false since shutdown)              |
+| Variable                                  | Default                           | Description                                                                       |
+|-------------------------------------------|-----------------------------------|-----------------------------------------------------------------------------------|
+| `PROXY_TARGET_HOST`                       | `https://streaming.bose.com`      | Default target host for proxying unknown requests                                 |
+| `PROXY_AUTH_TARGET_HOST`                  | `https://streamingoauth.bose.com` | Auth-specific target host for requests with Host header containing "auth"         |
+| `PROXY_SOFTWARE_UPDATE_TARGET_HOST`       | `https://downloads.bose.com`      | Software update target host for requests with Host header containing "downloads"  |
+| `UEBERBOESE_DATA_DIRECTORY`               | `/data`                           | Directory for cached account data (must be mounted as volume!)                    |
+| `UEBERBOESE_OAUTH_ENABLED`                | `false`                           | Enable OAuth token endpoints (set to `true` to activate)                          |
+| `UEBERBOESE_MGMT_USERNAME`                | `admin`                           | Username for Basic Auth on `/mgmt/**` endpoints                                   |
+| `UEBERBOESE_MGMT_PASSWORD`                | `change_me!`                      | Password for Basic Auth on `/mgmt/**` endpoints (change this!)                    |
+| `SPOTIFY_AUTH_CLIENT_ID`                  | -                                 | Spotify API client ID from developer dashboard (required for OAuth)               |
+| `SPOTIFY_AUTH_CLIENT_SECRET`              | -                                 | Spotify API client secret from developer dashboard (required for OAuth)           |
+| `SERVER_PORT`                             | `8080`                            | Port the main application runs on                                                 |
+| `MANAGEMENT_SERVER_PORT`                  | `8081`                            | Port for actuator/management endpoints                                            |
+| `PROXY_ENABLED`                           | `true`                            | Enable/Disable proxyService mechanism (can be false since shutdown)               |
+| `UEBERBOESE_LOCAL_INTERNET_RADIO_ENABLED` | `false`                           | Offer the LOCAL_INTERNET_RADIO source, so speakers can play custom radio stations |
 
 ### Persistent Data
 

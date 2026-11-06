@@ -24,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -34,6 +35,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -45,6 +47,9 @@ public class BmxService {
 
   private final TuneInClient tuneInClient;
   private final RadioReportStorageService radioReportStorageService;
+
+  @Value("${ueberboese.local-internet-radio.enabled:false}")
+  private boolean localInternetRadioEnabled;
 
   private static final DateTimeFormatter REPORT_TS_FORMATTER =
       new DateTimeFormatterBuilder()
@@ -93,10 +98,14 @@ public class BmxService {
   public BmxServicesAvailabilityResponseApiDto getBmxServicesAvailability() {
     log.debug("Building BMX services availability");
 
-    var services =
+    List<BmxServiceAvailabilityApiDto> services =
         List.of(
             createServiceAvailability("TUNEIN", true, false),
             createServiceAvailability("SIRIUSXM_EVEREST", false, true));
+    if (localInternetRadioEnabled) {
+      services = new ArrayList<>(services);
+      services.add(createServiceAvailability("LOCAL_INTERNET_RADIO", true, false));
+    }
 
     BmxServicesAvailabilityResponseApiDto response = new BmxServicesAvailabilityResponseApiDto();
     response.setServices(services);

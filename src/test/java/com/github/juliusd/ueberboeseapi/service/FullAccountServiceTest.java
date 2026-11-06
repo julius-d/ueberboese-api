@@ -1227,4 +1227,104 @@ class FullAccountServiceTest {
     assertThat(result).isPresent();
     assertThat(result.get().getDevices().getDevice()).isEmpty();
   }
+
+  @Test
+  void testLocalInternetRadio_Enabled_SourceAddedWhenMissing() throws IOException {
+    // Given
+    ReflectionTestUtils.setField(fullAccountService, "localInternetRadioEnabled", true);
+    String accountId = "test-account-lir-missing";
+    FullAccountResponseApiDto response = new FullAccountResponseApiDto();
+    response.setId(accountId);
+    SourcesContainerApiDto sources = new SourcesContainerApiDto();
+    sources.setSource(new ArrayList<>(List.of(createSource("25", "user123", "token-25"))));
+    response.setSources(sources);
+    stubCachedAccount(accountId, response);
+
+    // When
+    Optional<FullAccountResponseApiDto> result =
+        fullAccountService.getFullAccount(accountId, request);
+
+    // Then
+    assertThat(result).isPresent();
+    List<SourceApiDto> resultSources = result.get().getSources().getSource();
+    assertThat(resultSources).hasSize(2);
+    SourceApiDto lirSource = resultSources.get(1);
+    assertThat(lirSource.getId()).isEqualTo("2");
+    assertThat(lirSource.getType()).isEqualTo("Audio");
+    assertThat(lirSource.getSourceproviderid()).isEqualTo("11");
+    assertThat(lirSource.getCredential().getType()).isEqualTo("token");
+    assertThat(lirSource.getCredential().getValue()).isEqualTo("eyJduTune=");
+  }
+
+  @Test
+  void testLocalInternetRadio_Enabled_ExistingSourceNotDuplicated() throws IOException {
+    // Given
+    ReflectionTestUtils.setField(fullAccountService, "localInternetRadioEnabled", true);
+    String accountId = "test-account-lir-present";
+    FullAccountResponseApiDto response = new FullAccountResponseApiDto();
+    response.setId(accountId);
+    SourcesContainerApiDto sources = new SourcesContainerApiDto();
+    sources.setSource(new ArrayList<>(List.of(createSource("11", null, "existing-token"))));
+    response.setSources(sources);
+    stubCachedAccount(accountId, response);
+
+    // When
+    Optional<FullAccountResponseApiDto> result =
+        fullAccountService.getFullAccount(accountId, request);
+
+    // Then - existing source kept as-is, nothing added
+    assertThat(result).isPresent();
+    List<SourceApiDto> resultSources = result.get().getSources().getSource();
+    assertThat(resultSources).hasSize(1);
+    assertThat(resultSources.getFirst().getCredential().getValue()).isEqualTo("existing-token");
+  }
+
+  @Test
+  void testLocalInternetRadio_Enabled_NullSources_SourceAdded() throws IOException {
+    // Given
+    ReflectionTestUtils.setField(fullAccountService, "localInternetRadioEnabled", true);
+    String accountId = "test-account-lir-null-sources";
+    FullAccountResponseApiDto response = new FullAccountResponseApiDto();
+    response.setId(accountId);
+    response.setSources(null);
+    stubCachedAccount(accountId, response);
+
+    // When
+    Optional<FullAccountResponseApiDto> result =
+        fullAccountService.getFullAccount(accountId, request);
+
+    // Then
+    assertThat(result).isPresent();
+    List<SourceApiDto> resultSources = result.get().getSources().getSource();
+    assertThat(resultSources).hasSize(1);
+    assertThat(resultSources.getFirst().getSourceproviderid()).isEqualTo("11");
+  }
+
+  @Test
+  void testLocalInternetRadio_Disabled_NoSourceAdded() throws IOException {
+    // Given - flag defaults to false
+    String accountId = "test-account-lir-disabled";
+    FullAccountResponseApiDto response = new FullAccountResponseApiDto();
+    response.setId(accountId);
+    SourcesContainerApiDto sources = new SourcesContainerApiDto();
+    sources.setSource(new ArrayList<>());
+    response.setSources(sources);
+    stubCachedAccount(accountId, response);
+
+    // When
+    Optional<FullAccountResponseApiDto> result =
+        fullAccountService.getFullAccount(accountId, request);
+
+    // Then
+    assertThat(result).isPresent();
+    assertThat(result.get().getSources().getSource()).isEmpty();
+  }
+
+  private void stubCachedAccount(String accountId, FullAccountResponseApiDto response)
+      throws IOException {
+    when(spotifyAccountService.listAllAccounts()).thenReturn(List.of());
+    when(accountDataService.hasAccountData(accountId)).thenReturn(true);
+    when(accountDataService.loadFullAccountData(accountId)).thenReturn(response);
+    when(deviceRepository.findAllByMargeAccountId(accountId)).thenReturn(List.of());
+  }
 }

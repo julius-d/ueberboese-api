@@ -2,6 +2,7 @@ package com.github.juliusd.ueberboeseapi.service;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.github.juliusd.ueberboeseapi.DataDirectoryProperties;
@@ -85,6 +86,8 @@ class AccountDataServiceTest {
     // Create file but make it unreadable (this test might not work on all systems)
     Files.writeString(filePath, "<account></account>");
     filePath.toFile().setReadable(false);
+    // Skip where file permissions can't revoke read access (e.g. Windows, root user)
+    assumeFalse(Files.isReadable(filePath), "Cannot make file unreadable on this system");
 
     // When & Then
     try {

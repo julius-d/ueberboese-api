@@ -48,6 +48,9 @@ import org.springframework.stereotype.Service;
 public class FullAccountService {
 
   private static final String SPOTIFY_PROVIDER_ID = String.valueOf(SourceProvider.SPOTIFY.getId());
+  private static final String LOCAL_INTERNET_RADIO_PROVIDER_ID =
+      String.valueOf(SourceProvider.LOCAL_INTERNET_RADIO.getId());
+  private static final String LOCAL_INTERNET_RADIO_SOURCE_ID = "2";
 
   private final AccountDataService accountDataService;
   private final ProxyService proxyService;
@@ -62,6 +65,9 @@ public class FullAccountService {
   // Inject flag directly to control standalone behavior natively
   @Value("${proxy.enabled:true}")
   private boolean isProxyEnabled;
+
+  @Value("${ueberboese.local-internet-radio.enabled:false}")
+  private boolean localInternetRadioEnabled;
 
   @Value("${debug.isolate.matching.ip:false}")
   private boolean isolateMatchingIp;
@@ -155,6 +161,9 @@ public class FullAccountService {
       FullAccountResponseApiDto response, String accountId, String clientIp) {
     injectDevicesFromDatabase(response, accountId);
     injectSpotifySources(response);
+    if (localInternetRadioEnabled) {
+      injectLocalInternetRadioSource(response);
+    }
     injectRecentsFromDatabase(response, accountId);
     injectPresetsFromDatabase(response, accountId);
     patch(response);
@@ -389,6 +398,34 @@ public class FullAccountService {
     }
     List<SpotifyAccount> spotifyAccounts = spotifyAccountService.listAllAccounts();
     addMissingSpotifySources(response, spotifyAccounts);
+  }
+
+  /**
+   * Ensures the account contains a LOCAL_INTERNET_RADIO source. Without it, the speaker drops
+   * LOCAL_INTERNET_RADIO from its Sources.xml at boot and custom stations cannot be played.
+   */
+  private void injectLocalInternetRadioSource(FullAccountResponseApiDto response) {
+    if (response.getSources() == null) {
+      response.setSources(new SourcesContainerApiDto());
+    }
+    boolean present =
+        response.getSources().getSource() != null
+            && response.getSources().getSource().stream()
+                .anyMatch(s -> LOCAL_INTERNET_RADIO_PROVIDER_ID.equals(s.getSourceproviderid()));
+    if (present) {
+      return;
+    }
+    response
+        .getSources()
+        .addSourceItem(
+            new SourceApiDto()
+                .id(LOCAL_INTERNET_RADIO_SOURCE_ID)
+                .type("Audio")
+                .createdOn(OffsetDateTime.parse("2018-08-11T08:55:41+00:00"))
+                .updatedOn(OffsetDateTime.parse("2019-07-20T17:48:31+00:00"))
+                .sourceproviderid(LOCAL_INTERNET_RADIO_PROVIDER_ID)
+                .credential(new CredentialApiDto("token", "eyJduTune=")));
+    log.info("Added LOCAL_INTERNET_RADIO source to account");
   }
 
   private void patch(FullAccountResponseApiDto response) {
