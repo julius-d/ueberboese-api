@@ -28,13 +28,23 @@ public class HttpClientConfig {
   }
 
   /**
-   * Connector using the shared pool. {@code compress(true)} matches Spring's default connector: it
-   * decompresses gzip responses, which upstream servers send when the client asks for them.
+   * Connector using the shared pool.
+   *
+   * <p>{@code compress(true)} matches Spring's default connector: it decompresses gzip responses,
+   * which upstream servers send when the client asks for them.
+   *
+   * <p>{@code responseTimeout} fails a request when no response data arrives for that long. Without
+   * it, a request on a silently dropped connection waits until the operating system gives up on TCP
+   * retransmissions, which takes about 15 minutes on Linux.
    */
   @Bean
   public ReactorClientHttpConnector outboundClientHttpConnector(
-      ConnectionProvider outboundConnectionProvider) {
+      ConnectionProvider outboundConnectionProvider,
+      @Value("${ueberboese.http-client.response-timeout:25s}") Duration responseTimeout) {
+    log.info("Outbound HTTP client: response timeout {}", responseTimeout);
     return new ReactorClientHttpConnector(
-        HttpClient.create(outboundConnectionProvider).compress(true));
+        HttpClient.create(outboundConnectionProvider)
+            .compress(true)
+            .responseTimeout(responseTimeout));
   }
 }

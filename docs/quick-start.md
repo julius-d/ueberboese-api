@@ -364,6 +364,7 @@ curl http://localhost:8081/actuator/health
 | `MANAGEMENT_SERVER_PORT`            | `8081`                            | Port for actuator/management endpoints                                           |
 | `PROXY_ENABLED`                     | `true`                            | Enable/Disable proxyService mechanism (can be false since shutdown)              |
 | `UEBERBOESE_HTTP_CLIENT_MAX_IDLE_TIME` | `60s`                          | Close idle outbound connections after this time (e.g. `30s`, `2m`)               |
+| `UEBERBOESE_HTTP_CLIENT_RESPONSE_TIMEOUT` | `25s`                       | Fail outbound requests (Bose, TuneIn) when no response arrives within this time  |
 
 ### Persistent Data
 
