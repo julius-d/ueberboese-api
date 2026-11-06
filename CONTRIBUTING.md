@@ -19,6 +19,8 @@ To locally start the server you can run
   UEBERBOESE_DATA_DIRECTORY=./data ./mvnw spring-boot:run
 ```
 
+To build and run it in Docker without installing Java, see [Local Docker Build](DEVELOPMENT.md#local-docker-build).
+
 When you are done with programming,
 execute `./mvnw spotless:apply -o` to reformat the code
 then execute `./mvnw verify` to execute all test and checks.
