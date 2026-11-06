@@ -9,6 +9,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.w3c.dom.Document;
@@ -28,8 +29,10 @@ public class TuneInClient {
   private final WebClient webClient;
   private final TuneInApiUrlProperties urlProperties;
 
-  public TuneInClient(TuneInApiUrlProperties urlProperties) {
-    this.webClient = WebClient.builder().build();
+  public TuneInClient(
+      TuneInApiUrlProperties urlProperties,
+      ReactorClientHttpConnector outboundClientHttpConnector) {
+    this.webClient = WebClient.builder().clientConnector(outboundClientHttpConnector).build();
     this.urlProperties = urlProperties;
   }
 
